@@ -11,11 +11,10 @@ hex_digit             = "0" … "9" | "A" … "F" | "a" | "f" .
 
 identifier = letter { letter | ascii_digit } .
 
-keywords = "break" | "default" | "func" | "interface" | "select" |
-           "case" | "defer" | "map" | "struct" | "chan" | "else" |
-           "goto" | "package" | "switch" | "const" | "fallthrough" |
-           "if" | "range" | "type" | "continue" | "for" | "import" |
-           "return" | "var" .
+keywords = "break" | "default" | "func" | "interface" | "case" |
+           "defer" | "map" | "struct" | "else" | "goto" | "package" |
+           "switch" | "const" | "fallthrough" | "if" | "range" | "type" |
+           "continue" | "for" | "import" | "return" | "var" .
 
 int_lit     = decimal_lit | octal_lit | hex_lit .
 decimal_lit = decimal_digit_wo_zero { decimal_digit } .
@@ -136,7 +135,6 @@ Selector       = "." identifier .
 Index          = "[" Expression "]" .
 Slice          = "[" [ Expression ] ":" [ Expression ] "]" |
                  "[" [ Expression ] ":" Expression ":" Expression "]" .
-// Maybe remove type assertion.. runtime??
 TypeAssertion  = "." "(" Type ")" .
 Arguments      = "(" [ ( ExpressionList | Type [ "," ExpressionList ] ) [ "..." ] [ "," ] ] ")" .
 
@@ -153,7 +151,6 @@ mul_op     = "*" | "/" | "%" | "<<" | ">>" | "&" | "&^" .
 
 unary_op   = "+" | "-" | "!" | "^" | "*" | "&" | "<-" .
 
-// Maybe type conversion?
 Conversion = Type "(" Expression [ "," ] ")" .
 
 Statement =
@@ -179,18 +176,11 @@ assign_op = [ add_op | mul_op ] "=" .
 
 IfStmt = "if" [ SimpleStmt ";" ] Expression Block [ "else" ( IfStmt | Block ) ] .
 
-// Maybe remove type assertion.. runtime??
-SwitchStmt = ExprSwitchStmt | TypeSwitchStmt .
+SwitchStmt = ExprSwitchStmt .
 
 ExprSwitchStmt = "switch" [ SimpleStmt ";" ] [ Expression ] "{" { ExprCaseClause } "}" .
 ExprCaseClause = ExprSwitchCase ":" StatementList .
 ExprSwitchCase = "case" ExpressionList | "default" .
-
-TypeSwitchStmt  = "switch" [ SimpleStmt ";" ] TypeSwitchGuard "{" { TypeCaseClause } "}" .
-TypeSwitchGuard = [ identifier ":=" ] PrimaryExpr "." "(" "type" ")" .
-TypeCaseClause  = TypeSwitchCase ":" StatementList .
-TypeSwitchCase  = "case" TypeList | "default" .
-TypeList        = Type { "," Type } .
 
 ForStmt = "for" [ Condition | ForClause | RangeClause ] Block .
 Condition = Expression .
