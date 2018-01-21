@@ -10,7 +10,6 @@ octal_digit           = "0" … "7" .
 hex_digit             = "0" … "9" | "A" … "F" | "a" | "f" .
 
 identifier = letter { letter | ascii_digit } .
-// TODO: Predeclared identifiers
 
 keywords = "break" | "default" | "func" | "interface" | "select" |
            "case" | "defer" | "map" | "struct" | "chan" | "else" |
@@ -40,7 +39,6 @@ string_lit             = raw_string_lit | interpreted_string_lit .
 raw_string_lit         = "`" { ascii_char | newline } "`" .
 interpreted_string_lit = `"` { ascii_value | byte_value } `"` .
 
-// TODO: Maybe drop Maps
 Type      = TypeName | TypeLit | "(" Type ")" .
 TypeName  = identifier | QualifiedIdent .
 TypeLit   = ArrayType | StructType | PointerType | FunctionType | InterfaceType | SliceType | MapType .
@@ -70,7 +68,6 @@ MethodSpec         = MethodName Signature | InterfaceTypeName .
 MethodName         = identifier .
 InterfaceTypeName  = TypeName .
 
-// TODO: Maybe drop maps
 MapType     = "map" "[" KeyType "]" ElementType .
 KeyType     = Type .
 
