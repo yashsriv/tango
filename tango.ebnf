@@ -1,18 +1,22 @@
-newline        = /* the Unicode code point U+000A */ .
-unicode_char   = /* an arbitrary Unicode code point except newline */ .
-unicode_letter = /* a Unicode code point classified as "Letter" */ .
-unicode_digit  = /* a Unicode code point classified as "Number, decimal digit" */ .
+newline        = /* the Ascii code point \x0A */ .
+ascii_char     = /* an arbitrary ascii code point except newline */ .
+ascii_letter   = "a" … "z" | "A" … "Z" .
+ascii_digit    = "0" … "9" .
 
-letter        = unicode_letter | "_" .
+letter                = ascii_letter | "_" .
 decimal_digit_wo_zero = "1" … "9" .
-decimal_digit = "0" | decimal_digit_wo_zero .
-octal_digit   = "0" … "7" .
-hex_digit     = "0" … "9" | "A" … "F" | "a" | "f" .
+decimal_digit         = "0" | decimal_digit_wo_zero .
+octal_digit           = "0" … "7" .
+hex_digit             = "0" … "9" | "A" … "F" | "a" | "f" .
 
-identifier = letter { letter | unicode_digit } .
+identifier = letter { letter | ascii_digit } .
 // TODO: Predeclared identifiers
 
-keywords = "break" | "default" | "func" | "interface" | "select" | "case" | "defer" | "go" | "map" | "struct" | "chan" | "else" | "goto" | "package" | "switch" | "const" | "fallthrough" | "if" | "range" | "type" | "continue" | "for" | "import" | "return" | "var" .
+keywords = "break" | "default" | "func" | "interface" | "select" |
+           "case" | "defer" | "map" | "struct" | "chan" | "else" |
+           "goto" | "package" | "switch" | "const" | "fallthrough" |
+           "if" | "range" | "type" | "continue" | "for" | "import" |
+           "return" | "var" .
 
 int_lit     = decimal_lit | octal_lit | hex_lit .
 decimal_lit = decimal_digit_wo_zero { decimal_digit } .
@@ -25,19 +29,16 @@ float_lit = decimals "." [ decimals ] [ exponent ] |
 decimals  = decimal_digit { decimal_digit } .
 exponent  = ( "e" | "E" ) [ "+" | "-" ] decimals .
 
-rune_lit         = "'" ( unicode_value | byte_value ) "'" .
-unicode_value    = unicode_char | little_u_value | big_u_value | escaped_char .
+rune_lit         = "'" ( ascii_value | byte_value ) "'" .
+ascii_value      = ascii_char | escaped_char .
 byte_value       = octal_byte_value | hex_byte_value .
 octal_byte_value = `\` octal_digit octal_digit octal_digit .
 hex_byte_value   = `\` "x" hex_digit hex_digit .
-little_u_value   = `\` "u" hex_digit hex_digit hex_digit hex_digit .
-big_u_value      = `\` "U" hex_digit hex_digit hex_digit hex_digit
-                           hex_digit hex_digit hex_digit hex_digit .
 escaped_char     = `\` ( "a" | "b" | "f" | "n" | "r" | "t" | "v" | `\` | "'" | `"` ) .
 
 string_lit             = raw_string_lit | interpreted_string_lit .
-raw_string_lit         = "`" { unicode_char | newline } "`" .
-interpreted_string_lit = `"` { unicode_value | byte_value } `"` .
+raw_string_lit         = "`" { ascii_char | newline } "`" .
+interpreted_string_lit = `"` { ascii_value | byte_value } `"` .
 
 // TODO: Maybe drop Maps
 Type      = TypeName | TypeLit | "(" Type ")" .
