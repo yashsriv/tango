@@ -1,0 +1,85 @@
+!whitespace : ' ' | '\t' | '\n' | '\r' ;
+
+_newline        : '\x0A' ;
+_ascii_char     : '\x00'-'\x09' | '\x0B'-'\xFF' ;
+_ascii_letter   : 'a'-'z' | 'A'-'Z' ;
+_ascii_digit    : '0'-'9' ;
+
+_letter                : _ascii_letter | '_' ;
+_decimal_digit_wo_zero : '1'-'9' ;
+_decimal_digit         : '0' | _decimal_digit_wo_zero ;
+_octal_digit           : '0' - '7' ;
+_hex_digit             : '0' - '9' | 'A' - 'F' | 'a' - 'f' ;
+
+_decimal_lit : _decimal_digit_wo_zero { _decimal_digit } ;
+_octal_lit   : '0' { _octal_digit } ;
+_hex_lit     : '0' ( 'x' | 'X' ) _hex_digit { _hex_digit } ;
+
+_decimals  : _decimal_digit { _decimal_digit } ;
+_exponent  : ( 'e' | 'E' ) [ '+' | '-' ] _decimals ;
+
+_ascii_value      : _ascii_char | _escaped_char ;
+_byte_value       : _octal_byte_value | _hex_byte_value ;
+_octal_byte_value : '\\' _octal_digit _octal_digit _octal_digit ;
+_hex_byte_value   : '\\' 'x' _hex_digit _hex_digit ;
+_escaped_char     : '\\' ( 'a' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' | '\\' | '"' | '\'' ) ;
+
+_raw_string_lit         : '`' { _ascii_char | _newline } '`' ;
+_interpreted_string_lit : '"' { _ascii_value | _byte_value } '"' ;
+
+keyword_break      : 'b' 'r' 'e' 'a' 'k' ;
+keyword_default    : 'd' 'e' 'f' 'a' 'u' 'l' 't' ;
+keyword_func       : 'f' 'u' 'n' 'c' ;
+keyword_interface  : 'i' 'n' 't' 'e' 'r' 'f' 'a' 'c' 'e' ;
+keyword_case       : 'c' 'a' 's' 'e' ;
+keyword_defer      : 'd' 'e' 'f' 'e' 'r' ;
+keyword_map        : 'm' 'a' 'p' ;
+keyword_struct     : 's' 't' 'r' 'u' 'c' 't' ;
+keyword_else       : 'e' 'l' 's' 'e' ;
+keyword_goto       : 'g' 'o' 't' 'o' ;
+keyword_package    : 'p' 'a' 'c' 'k' 'a' 'g' 'e' ;
+keyword_switch     : 's' 'w' 'i' 't' 'c' 'h' ;
+keyword_const      : 'c' 'o' 'n' 's' 't' ;
+keyword_fallthrough: 'f' 'a' 'l' 'l' 't' 'h' 'r' 'o' 'u' 'g' 'h' ;
+keyword_if         : 'i' 'f' ;
+keyword_range      : 'r' 'a' 'n' 'g' 'e' ;
+keyword_type       : 't' 'y' 'p' 'e' ;
+keyword_continue   : 'c' 'o' 'n' 't' 'i' 'n' 'u' 'e' ;
+keyword_for        : 'f' 'o' 'r' ;
+keyword_import     : 'i' 'm' 'p' 'o' 'r' 't' ;
+keyword_return     : 'r' 'e' 't' 'u' 'r' 'n' ;
+keyword_var        : 'v' 'a' 'r' ;
+
+identifier         : _letter { _letter | _ascii_digit } ;
+
+int_lit            : _decimal_lit | _octal_lit | _hex_lit ;
+float_lit          : _decimals '.' [ _decimals ] [ _exponent ] | _decimals _exponent | '.' _decimals [ _exponent ] ;
+rune_lit           : '\'' ( _ascii_value | _byte_value ) '\'' ;
+string_literal     : _raw_string_lit | _interpreted_string_lit ;
+
+_binary_op  : '|' '|' | '&' '&' | _rel_op | _add_op | _mul_op ;
+_rel_op     : '=' '=' | '!' '=' | '<' | '<' '=' | '>' | '>' '=' ;
+_add_op     : '+' | '-' | '|' | '^' ;
+_mul_op     : '*' | '/' | '%' | '<' '<' | '>' '>' | '&' | '&' '^' ;
+_unary_op   : '+' | '-' | '!' | '^' | '*' | '&' ;
+
+inc_dec_op  : '+' '+' | '-' '-' ;
+ops         : _binary_op | _unary_op ;
+
+_norm_assign_op : [ _add_op | _mul_op ] '=' ;
+_auto_assign_op : ':' '=' ;
+
+assign_op : _norm_assign_op | _auto_assign_op ;
+
+spread_op : '.' '.' '.' ;
+
+left_block_bracket : '{' ;
+right_block_bracket: '}' ;
+left_paren         : '(' ;
+right_paren        : ')' ;
+left_sq_paren      : '[' ;
+right_sq_paren     : ']' ;
+label_op           : ':' ;
+stmt_end           : ';' ;
+comma              : ',' ;
+dot                : '.' ;

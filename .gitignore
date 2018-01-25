@@ -1,3 +1,7 @@
 src/github.com
 bin
 pkg
+src/tango/lexer/*
+src/tango/token
+src/tango/util
+!src/tango/lexer/main.go
