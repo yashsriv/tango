@@ -1,9 +1,9 @@
-!whitespace : ' ' | '\t' | '\n' | '\r' ;
+!whitespace : ' ' | '\t' | '\n' | '\r' | '/' '/' {.};
 
-_newline        : '\x0A' ;
-_ascii_char     : '\x00'-'\x09' | '\x0B'-'\xFF' ;
-_ascii_letter   : 'a'-'z' | 'A'-'Z' ;
-_ascii_digit    : '0'-'9' ;
+_newline      : '\x0A' ;
+_ascii_char   : '\x00'-'\x09' | '\x0B'-'\x21' | '\x23'-'\x26' | '\x28'-'\x59' | '\x61'-'\xFF' ;
+_ascii_letter : 'a'-'z' | 'A'-'Z' ;
+_ascii_digit  : '0'-'9' ;
 
 _letter                : _ascii_letter | '_' ;
 _decimal_digit_wo_zero : '1'-'9' ;
@@ -18,14 +18,15 @@ _hex_lit     : '0' ( 'x' | 'X' ) _hex_digit { _hex_digit } ;
 _decimals  : _decimal_digit { _decimal_digit } ;
 _exponent  : ( 'e' | 'E' ) [ '+' | '-' ] _decimals ;
 
-_ascii_value      : _ascii_char | _escaped_char ;
-_byte_value       : _octal_byte_value | _hex_byte_value ;
-_octal_byte_value : '\\' _octal_digit _octal_digit _octal_digit ;
-_hex_byte_value   : '\\' 'x' _hex_digit _hex_digit ;
-_escaped_char     : '\\' ( 'a' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' | '\\' | '"' | '\'' ) ;
+_ascii_value_rune   : _ascii_char | '"'  | '`'  | _escaped_char ;
+_ascii_value_string : _ascii_char | '\'' | '`'  | _escaped_char ;
+_byte_value         : _octal_byte_value | _hex_byte_value ;
+_octal_byte_value   : '\\' _octal_digit _octal_digit _octal_digit ;
+_hex_byte_value     : '\\' 'x' _hex_digit _hex_digit ;
+_escaped_char       : '\\' ( 'a' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' | '\\' | '"' | '\'' ) ;
 
-_raw_string_lit         : '`' { _ascii_char | _newline } '`' ;
-_interpreted_string_lit : '"' { _ascii_value | _byte_value } '"' ;
+_raw_string_lit         : '`' { _ascii_char | '"' | '\'' | _newline } '`' ;
+_interpreted_string_lit : '"' { _ascii_value_string | _byte_value } '"' ;
 
 keyword_break      : 'b' 'r' 'e' 'a' 'k' ;
 keyword_default    : 'd' 'e' 'f' 'a' 'u' 'l' 't' ;
@@ -54,7 +55,7 @@ identifier         : _letter { _letter | _ascii_digit } ;
 
 int_lit            : _decimal_lit | _octal_lit | _hex_lit ;
 float_lit          : _decimals '.' [ _decimals ] [ _exponent ] | _decimals _exponent | '.' _decimals [ _exponent ] ;
-rune_lit           : '\'' ( _ascii_value | _byte_value ) '\'' ;
+rune_lit           : '\'' ( _ascii_value_rune | _byte_value ) '\'' ;
 string_literal     : _raw_string_lit | _interpreted_string_lit ;
 
 _binary_op  : '|' '|' | '&' '&' | _rel_op | _add_op | _mul_op ;

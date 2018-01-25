@@ -3,7 +3,7 @@ current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
 GOCC := ./bin/gocc
 
-.Phony: all clean
+.PHONY: all clean test
 
 all: export GOPATH=$(current_dir)
 all: export GOBIN=$(current_dir)/bin
@@ -13,13 +13,18 @@ bin/gocc:
 	@echo -e "\e[1;34mFetching gocc \e[0m"
 	go get -v github.com/goccmack/gocc
 
-bin/lexer: src/tango/lexer/main.go src/tango/lexer/lexer.go
+bin/lexer: src/tango/main/lexer/lexer.go src/tango/lexer/lexer.go
 	@echo -e "\e[1;34mCompiling Lexer \e[0m"
-	go install $(current_dir)/src/tango/lexer/main.go
+	go install $(current_dir)/src/tango/main/lexer/lexer.go
 
 src/tango/lexer/lexer.go: src/tango/tango.ebnf
 	@echo -e "\e[1;34mGenerating Lexer \e[0m"
 	cd $(current_dir)/src/tango && $(GOBIN)/gocc tango.ebnf
+
+test: export GOPATH=$(current_dir)
+test: export GOBIN=$(current_dir)/bin
+test:
+	go test tango/lexer
 
 clean:
 	@echo -e "\e[1;34mCleaning Files \e[0m"
