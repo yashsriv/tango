@@ -3,15 +3,21 @@ current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
 GOCC := ./bin/gocc
 
-.PHONY: all clean test
+.PHONY: all clean libs test
 
 all: export GOPATH=$(current_dir)
 all: export GOBIN=$(current_dir)/bin
-all: bin/gocc bin/lexer
+all: libs bin/lexer
+
+libs: bin/gocc src/github.com/ryanuber/columnize
 
 bin/gocc:
 	@echo -e "\e[1;34mFetching gocc \e[0m"
 	go get -v github.com/goccmack/gocc
+
+src/github.com/ryanuber/columnize:
+	@echo -e "\e[1;34mFetching columnize \e[0m"
+	go get -v github.com/ryanuber/columnize
 
 bin/lexer: src/tango/main/lexer/lexer.go src/tango/lexer/lexer.go
 	@echo -e "\e[1;34mCompiling Lexer \e[0m"
