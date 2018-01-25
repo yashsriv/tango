@@ -20,11 +20,11 @@ src/github.com/ryanuber/columnize:
 	go get -v github.com/ryanuber/columnize
 
 bin/lexer: src/tango/main/lexer/lexer.go src/tango/lexer/lexer.go
-	@echo -e "\e[1;34mCompiling Lexer \e[0m"
+	@echo -e "\e[1;32mCompiling Lexer \e[0m"
 	go install $(current_dir)/src/tango/main/lexer/lexer.go
 
 src/tango/lexer/lexer.go: src/tango/tango.ebnf
-	@echo -e "\e[1;34mGenerating Lexer \e[0m"
+	@echo -e "\e[1;33mGenerating Lexer \e[0m"
 	cd $(current_dir)/src/tango && $(GOBIN)/gocc tango.ebnf
 
 test: export GOPATH=$(current_dir)
@@ -33,10 +33,16 @@ test:
 	go test tango/lexer
 
 clean:
-	@echo -e "\e[1;34mCleaning Files \e[0m"
+	@echo -e "\e[1;31mCleaning Files \e[0m"
+	@echo -e "\e[1;31m  Clearing pkg and bin \e[0m"
 	@rm -rf $(current_dir)/pkg $(current_dir)/bin/**
+	@echo -e "\e[1;31m  Clearing generated files \e[0m"
 	@rm -rf $(current_dir)/src/tango/util
 	@rm -rf $(current_dir)/src/tango/token
-	@rm $(current_dir)/src/tango/lexer/lexer.go
-	@rm $(current_dir)/src/tango/lexer/acttab.go
-	@rm $(current_dir)/src/tango/lexer/transitiontable.go
+	@rm -rf $(current_dir)/src/tango/lexer/lexer.go
+	@rm -rf $(current_dir)/src/tango/lexer/acttab.go
+	@rm -rf $(current_dir)/src/tango/lexer/transitiontable.go
+
+nuke: clean
+	@echo -e "\e[1;31m  Clearing downloaded libraries \e[0m"
+	@rm -rf $(current_dir)/src/github.com
