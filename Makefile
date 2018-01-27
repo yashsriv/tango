@@ -1,12 +1,13 @@
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
-GOCC := ./bin/gocc
+export GOPATH=$(current_dir)
+export GOBIN=$(current_dir)/bin
+
+GOCC := $(current_dir)/bin/gocc
 
 .PHONY: all clean libs test
 
-all: export GOPATH=$(current_dir)
-all: export GOBIN=$(current_dir)/bin
 all: libs bin/lexer
 
 libs: bin/gocc src/github.com/olekukonko/tablewriter
@@ -25,10 +26,8 @@ bin/lexer: src/tango/main/lexer/lexer.go src/tango/lexer/lexer.go
 
 src/tango/lexer/lexer.go: src/tango/tango.ebnf
 	@echo -e "\e[1;33mGenerating Lexer \e[0m"
-	cd $(current_dir)/src/tango && $(GOBIN)/gocc tango.ebnf
+	cd $(current_dir)/src/tango && $(GOCC) tango.ebnf
 
-test: export GOPATH=$(current_dir)
-test: export GOBIN=$(current_dir)/bin
 test:
 	go test tango/lexer
 
