@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/ryanuber/columnize"
+	"github.com/olekukonko/tablewriter"
 
 	"tango/lexer"
 	"tango/token"
@@ -42,22 +42,24 @@ func main() {
 			sets[tok.Type] = set
 		}
 	}
-	lines := make([]string, 1)
-	lines[0] = fmt.Sprintf("Token λ Occurrances λ Lexemes")
+	data := make([][]string, 0)
 	for t, count := range counts {
-		line1 := fmt.Sprintf("%s λ %d λ ", token.TokMap.Id(t), count)
-		line1Done := false
+		tokenID := token.TokMap.Id(t)
+		countAsString := fmt.Sprintf("%d", count)
+		firstEntry := []string{tokenID, countAsString, ""}
+		firstEntryDone := false
 		for lit := range sets[t] {
-			if !line1Done {
-				line1 += lit
-				lines = append(lines, line1)
-				line1Done = true
-			} else {
-				lines = append(lines, fmt.Sprintf("λ λ %s", lit))
+			if !firstEntryDone {
+				firstEntry[2] = lit
+				firstEntryDone = true
+				data = append(data, firstEntry)
+				continue
 			}
+			data = append(data, []string{"", "", lit})
 		}
 	}
-	config := columnize.DefaultConfig()
-	config.Delim = "λ"
-	fmt.Println(columnize.Format(lines, config))
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Token", "Occurrences", "Lexemes"})
+	table.AppendBulk(data)
+	table.Render()
 }

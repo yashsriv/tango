@@ -9,15 +9,15 @@ all: export GOPATH=$(current_dir)
 all: export GOBIN=$(current_dir)/bin
 all: libs bin/lexer
 
-libs: bin/gocc src/github.com/ryanuber/columnize
+libs: bin/gocc src/github.com/olekukonko/tablewriter
 
 bin/gocc:
 	@echo -e "\e[1;34mFetching gocc \e[0m"
 	go get -v github.com/goccmack/gocc
 
-src/github.com/ryanuber/columnize:
-	@echo -e "\e[1;34mFetching columnize \e[0m"
-	go get -v github.com/ryanuber/columnize
+src/github.com/olekukonko/tablewriter:
+	@echo -e "\e[1;34mFetching tablewriter \e[0m"
+	go get -v github.com/olekukonko/tablewriter
 
 bin/lexer: src/tango/main/lexer/lexer.go src/tango/lexer/lexer.go
 	@echo -e "\e[1;32mCompiling Lexer \e[0m"
