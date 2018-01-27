@@ -30,7 +30,7 @@ func main() {
 	for tok := l.Scan(); tok.Type != token.EOF; tok = l.Scan() {
 		switch {
 		case tok.Type == token.INVALID:
-			fmt.Printf("Invalid token found: %s\n", tok.Lit)
+			fmt.Printf("Invalid token found: %s at Line %d, Col %d\n", tok.Lit, tok.Pos.Line, tok.Pos.Column)
 			os.Exit(2)
 		default:
 			counts[tok.Type]++
