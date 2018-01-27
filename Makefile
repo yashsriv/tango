@@ -42,6 +42,12 @@ clean:
 	@rm -rf $(current_dir)/src/tango/lexer/acttab.go
 	@rm -rf $(current_dir)/src/tango/lexer/transitiontable.go
 
+# Prepare for submitting. Warning don't run this lightly.
 nuke: clean
 	@echo -e "\e[1;31m  Clearing downloaded libraries \e[0m"
 	@rm -rf $(current_dir)/src/github.com
+	@echo -e "\e[1;31m  Clearing git stuff \e[0m"
+	@rm -rf $(current_dir)/.git
+	@rm -rf $(current_dir)/.gitignore
+	@rm -rf $(current_dir)/README.md
+	@rm -rf $(current_dir)/tango.ebnf
