@@ -4,4 +4,5 @@ pkg
 src/tango/lexer/*
 src/tango/token
 src/tango/util
-!src/tango/lexer/main.go
+!src/tango/lexer/lexer_test.go
+!src/tango/lexer/lexer_wrapper.go

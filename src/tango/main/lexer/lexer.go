@@ -26,7 +26,7 @@ func main() {
 		fmt.Printf("Unable to read file: %s\n", os.Args[1])
 		return
 	}
-	l := lexer.NewLexer(input)
+	l := lexer.NewWrapper(input)
 	for tok := l.Scan(); tok.Type != token.EOF; tok = l.Scan() {
 		switch {
 		case tok.Type == token.INVALID:

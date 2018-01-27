@@ -5,10 +5,17 @@ export GOPATH=$(current_dir)
 export GOBIN=$(current_dir)/bin
 
 GOCC := $(current_dir)/bin/gocc
+GOFLAGS :=
 
 .PHONY: all clean libs test
 
 all: libs bin/lexer
+
+debug: GOFLAGS += -tags debug
+debug: all
+
+test-debug: GOFLAGS += -tags debug
+test-debug: test
 
 libs: bin/gocc src/github.com/olekukonko/tablewriter
 
@@ -20,16 +27,16 @@ src/github.com/olekukonko/tablewriter:
 	@echo -e "\e[1;34mFetching tablewriter \e[0m"
 	go get -v github.com/olekukonko/tablewriter
 
-bin/lexer: src/tango/main/lexer/lexer.go src/tango/lexer/lexer.go
+bin/lexer: src/tango/main/lexer/lexer.go src/tango/lexer/lexer.go src/tango/lexer/lexer_wrapper.go
 	@echo -e "\e[1;32mCompiling Lexer \e[0m"
-	go install $(current_dir)/src/tango/main/lexer/lexer.go
+	go install $(GOFLAGS) $(current_dir)/src/tango/main/lexer/lexer.go
 
 src/tango/lexer/lexer.go: src/tango/tango.ebnf
 	@echo -e "\e[1;33mGenerating Lexer \e[0m"
 	cd $(current_dir)/src/tango && $(GOCC) tango.ebnf
 
 test:
-	go test tango/lexer
+	go test $(GOFLAGS) tango/lexer
 
 clean:
 	@echo -e "\e[1;31mCleaning Files \e[0m"
