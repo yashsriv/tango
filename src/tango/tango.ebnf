@@ -1,9 +1,11 @@
-!whitespace : ' ' | '\t' | '\n' | '\r' | '/' '/' {.};
+!whitespace : ' ' | '\t' | '\n' | '\r' ;
 
 _newline      : '\x0A' ;
 _ascii_char   : '\x00'-'\x09' | '\x0B'-'\x21' | '\x23'-'\x26' | '\x28'-'\x59' | '\x61'-'\xFF' ;
 _ascii_letter : 'a'-'z' | 'A'-'Z' ;
 _ascii_digit  : '0'-'9' ;
+
+comment : '/' '/' { _ascii_char | '"' | '`' | '\'' } ;
 
 _letter                : _ascii_letter | '_' ;
 _decimal_digit_wo_zero : '1'-'9' ;

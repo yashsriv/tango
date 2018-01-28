@@ -30,7 +30,8 @@ func (w *Wrapper) Scan() (tok *token.Token) {
 	beforePos := w.lexer.pos
 	beforeLine := w.lexer.line
 	beforeCol := w.lexer.column
-	tok = w.lexer.Scan()
+	for tok = w.lexer.Scan(); tok.Type == token.TokMap.Type("comment"); tok = w.lexer.Scan() {
+	}
 	if w.lexer.line > beforeLine {
 		switch w.prevTokenType {
 		case token.TokMap.Type("identifier"):
