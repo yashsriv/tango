@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"tango/token"
+	"tango/src/tango/token"
 )
 
 var files = []string{

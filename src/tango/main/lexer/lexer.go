@@ -7,8 +7,8 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 
-	"tango/lexer"
-	"tango/token"
+	"tango/src/tango/lexer"
+	"tango/src/tango/token"
 )
 
 type countMap map[token.Type]int

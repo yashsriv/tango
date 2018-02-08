@@ -3,7 +3,7 @@
 package lexer
 
 import (
-	"tango/token"
+	"tango/src/tango/token"
 )
 
 // Wrapper around the main lexer for inserting semicolons as needed.

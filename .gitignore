@@ -1,6 +1,6 @@
-src/github.com
 bin
 pkg
+vendor
 src/tango/lexer/*
 src/tango/token
 src/tango/util
