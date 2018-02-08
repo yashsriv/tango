@@ -133,4 +133,10 @@ PARAM arg1   // pass arg1 as function argument
 CALL target  // calls the function at target
 RET          // return to the return address
 HALT         // halts the program
+PRINT_INT a      // Prints a
+PRINT_CHAR a      // Prints a
+PRINT_STR a      // Prints a
+SCAN_INT  addr      // Scan into a
+SCAN_CHAR  addr      // Scan into a
+SCAN_STR  addr      // Scan into a
 ```

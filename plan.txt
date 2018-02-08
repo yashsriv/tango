@@ -1,0 +1,64 @@
+CSV for IR Code (Well not exacty csv)
+[Label:]op,dst,arg1,arg2 [-target]
+
+
+struct IRIns {
+type IRType
+op IROp
+arg1 *SymbolTableEntry
+arg2 *SymbolTableEntry
+dst *SymbolTableEntry
+(also need to store liveness and next use info) # DISCUSS
+target IRTarget (cannot be literal, only a label)
+}
+
+struct SymbolTableEntry {
+lexeme string
+type SymType
+relAddr
+AddrDescriptor
+liveAt
+NextUse
+}
+
+IRCode is the list of IRIns
+SymbolTable is the list of SymbolTableEntry
+
+Will also need a LabelMap storing address of labels
+LabelMap map[string]*IRIns
+------------------------------------------------------------- Done loading
+
+Dividing the IRCode into BasicBlocks
+
+struct BasicBlockEntry {
+leader *IRIns
+tail *IRIns
+size int
+}
+BasicBlocks is the list of BasicBlockEntry
+
+Can be done in a single pass of the IRCode using following rules
+- The first 3AC is the leader
+- Any target of a conditional or unconditional jump is a leader
+  Can model this as all instructions with labels if we allow only labels as
+  target of jumps in the IR
+- Any instruction that follows a conditional or unconditional jump is a leader
+
+Next Use Information
+
+Need to attach liveness and next use info to each instrcution of its operands
+Algo (in dragon book):
+ Loop backwards in a BB
+ for ins: z = x+y in instructions
+- Attach info of x,y,z to ins i
+- In symbol table, set x to "not live" & "no next use"
+- Set y,z to "live" and next use as i
+
+------------------------------------------------------------- Done with BB
+
+Register Descriptor:
+Address Descriptor:
+getReg
+
+And now THE CODE GENERATION ALGORITHM
+
