@@ -64,6 +64,10 @@ func main() {
 		code = append(code, ins)
 	}
 
+	cg.GenBBLList(code)
+
+	fmt.Printf("%v\n", cg.BBLList)
+
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}

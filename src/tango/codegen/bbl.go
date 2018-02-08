@@ -12,7 +12,7 @@ type UseInfo struct {
 
 var BBLList []BBLEntry
 
-var symbolMap = make(map[SymbolTableEntry]UseInfo)
+var symbolInfo = make(map[SymbolTableEntry]UseInfo)
 
 func GenBBLList(IRCode []IRIns) {
 	if len(IRCode) == 0 {
@@ -22,17 +22,17 @@ func GenBBLList(IRCode []IRIns) {
 	for index, ins := range IRCode {
 		if arg1 := ins.Arg1; arg1 != nil {
 			if _, isRegister := arg1.(SymbolTableRegisterEntry); isRegister {
-				symbolMap[arg1] = UseInfo{true, -1}
+				symbolInfo[arg1] = UseInfo{true, -1}
 			}
 		}
 		if arg2 := ins.Arg2; arg2 != nil {
 			if _, isRegister := arg2.(SymbolTableRegisterEntry); isRegister {
-				symbolMap[arg2] = UseInfo{true, -1}
+				symbolInfo[arg2] = UseInfo{true, -1}
 			}
 		}
 		if dst := ins.Dst; dst != nil {
 			if _, isRegister := dst.(SymbolTableRegisterEntry); isRegister {
-				symbolMap[dst] = UseInfo{true, -1}
+				symbolInfo[dst] = UseInfo{true, -1}
 			}
 		}
 		if ins.Label != "" && index != prevIndex {
@@ -53,24 +53,25 @@ func GenBBLList(IRCode []IRIns) {
 
 // Adds Operands' UseInfo in the BBL
 func addUseInfo(bbl BBLEntry) BBLEntry {
+	bbl.Info = make([]map[SymbolTableEntry]UseInfo, len(bbl.Block))
 	for i := len(bbl.Block) - 1; i >= 0; i-- {
 		bbl.Info[i] = make(map[SymbolTableEntry]UseInfo)
 		if dst := bbl.Block[i].Dst; dst != nil {
 			if _, isRegister := dst.(SymbolTableRegisterEntry); isRegister {
-				bbl.Info[i][dst] = symbolMap[dst]
-				symbolMap[dst] = UseInfo{false, -1}
+				bbl.Info[i][dst] = symbolInfo[dst]
+				symbolInfo[dst] = UseInfo{false, -1}
 			}
 		}
 		if arg1 := bbl.Block[i].Arg1; arg1 != nil {
-			if _, isRegister := dst.(SymbolTableRegisterEntry); isRegister {
-				bbl.Info[i][arg1] = symbolMap[arg1]
-				symbolMap[arg1] = UseInfo{true, i}
+			if _, isRegister := arg1.(SymbolTableRegisterEntry); isRegister {
+				bbl.Info[i][arg1] = symbolInfo[arg1]
+				symbolInfo[arg1] = UseInfo{true, i}
 			}
 		}
 		if arg2 := bbl.Block[i].Arg2; arg2 != nil {
-			if _, isRegister := dst.(SymbolTableRegisterEntry); isRegister {
-				bbl.Info[i][arg2] = symbolMap[arg2]
-				symbolMap[arg2] = UseInfo{true, i}
+			if _, isRegister := arg2.(SymbolTableRegisterEntry); isRegister {
+				bbl.Info[i][arg2] = symbolInfo[arg2]
+				symbolInfo[arg2] = UseInfo{true, i}
 			}
 		}
 	}

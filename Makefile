@@ -8,7 +8,7 @@ GOFLAGS :=
 
 .PHONY: all clean test
 
-all: vendor bin/lexer
+all: vendor bin/lexer bin/codegen
 
 debug: GOFLAGS += -tags debug
 debug: all
@@ -22,6 +22,10 @@ vendor:
 bin/lexer: src/tango/main/lexer/lexer.go src/tango/lexer/lexer.go src/tango/lexer/lexer_wrapper.go
 	@echo -e "\e[1;32mCompiling Lexer \e[0m"
 	go install $(GOFLAGS) $(current_dir)/src/tango/main/lexer/lexer.go
+
+bin/codegen: src/tango/main/codegen/codegen.go src/tango/codegen/*.go
+	@echo -e "\e[1;32mCompiling Codegen \e[0m"
+	go install $(GOFLAGS) $(current_dir)/src/tango/main/codegen/codegen.go
 
 src/tango/lexer/lexer.go: src/tango/tango.ebnf
 	@echo -e "\e[1;33mGenerating Lexer \e[0m"
