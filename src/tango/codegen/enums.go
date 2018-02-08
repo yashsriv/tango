@@ -43,13 +43,14 @@ const (
 
 // Unary Ops
 const (
-	NEG  IROp = "neg"
-	NOT       = "!"
-	INC       = "inc"
-	DEC       = "dec"
-	BNOT      = "not"
-	VAL       = "val"
-	ADDR      = "addr"
+	NEG   IROp = "neg"
+	PARAM      = "param"
+	NOT        = "!"
+	INC        = "inc"
+	DEC        = "dec"
+	BNOT       = "not"
+	VAL        = "val"
+	ADDR       = "addr"
 )
 
 // Assignment Operation
@@ -70,8 +71,7 @@ const (
 
 // Key Operations
 const (
-	PARAM     IROp = "param"
-	CALL           = "call"
+	CALL      IROp = "call"
 	RET            = "ret"
 	HALT           = "halt"
 	PRINTINT       = "printi"
