@@ -1,19 +1,23 @@
 package codegen
 
+// BBLEntry is Single entry in BBL List
 type BBLEntry struct {
 	Block []IRIns
 	Info  []map[SymbolTableEntry]UseInfo
 }
 
+// UseInfo stores life and next Use Information of a variable
 type UseInfo struct {
 	Live    bool
 	NextUse int
 }
 
+// BBLList is the list of all the Basic Blocks
 var BBLList []BBLEntry
 
 var symbolInfo = make(map[SymbolTableEntry]UseInfo)
 
+// GenBBLList takes the IRCode (list of IRIns) as input & creates list of basic blocks
 func GenBBLList(IRCode []IRIns) {
 	if len(IRCode) == 0 {
 		return
@@ -54,26 +58,31 @@ func GenBBLList(IRCode []IRIns) {
 // Adds Operands' UseInfo in the BBL
 func addUseInfo(bbl BBLEntry) BBLEntry {
 	bbl.Info = make([]map[SymbolTableEntry]UseInfo, len(bbl.Block))
+	infomap := make(map[SymbolTableEntry]UseInfo)
 	for i := len(bbl.Block) - 1; i >= 0; i-- {
-		bbl.Info[i] = make(map[SymbolTableEntry]UseInfo)
 		if dst := bbl.Block[i].Dst; dst != nil {
 			if _, isRegister := dst.(SymbolTableRegisterEntry); isRegister {
-				bbl.Info[i][dst] = symbolInfo[dst]
+				infomap[dst] = symbolInfo[dst]
 				symbolInfo[dst] = UseInfo{false, -1}
 			}
 		}
 		if arg1 := bbl.Block[i].Arg1; arg1 != nil {
 			if _, isRegister := arg1.(SymbolTableRegisterEntry); isRegister {
-				bbl.Info[i][arg1] = symbolInfo[arg1]
+				infomap[arg1] = symbolInfo[arg1]
 				symbolInfo[arg1] = UseInfo{true, i}
 			}
 		}
 		if arg2 := bbl.Block[i].Arg2; arg2 != nil {
 			if _, isRegister := arg2.(SymbolTableRegisterEntry); isRegister {
-				bbl.Info[i][arg2] = symbolInfo[arg2]
+				infomap[arg2] = symbolInfo[arg2]
 				symbolInfo[arg2] = UseInfo{true, i}
 			}
 		}
+		ninfomap := make(map[SymbolTableEntry]UseInfo)
+		for k, v := range infomap {
+			ninfomap[k] = v
+		}
+		bbl.Info[i] = ninfomap
 	}
 	return bbl
 }
