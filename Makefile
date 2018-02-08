@@ -6,9 +6,9 @@ export GOBIN=$(current_dir)/bin
 GOCC := gorunpkg github.com/goccmack/gocc
 GOFLAGS :=
 
-.PHONY: all clean libs test
+.PHONY: all clean test
 
-all: libs bin/lexer
+all: vendor bin/lexer
 
 debug: GOFLAGS += -tags debug
 debug: all
@@ -16,7 +16,7 @@ debug: all
 test-debug: GOFLAGS += -tags debug
 test-debug: test
 
-libs: vendor
+vendor:
 	dep ensure -v
 
 bin/lexer: src/tango/main/lexer/lexer.go src/tango/lexer/lexer.go src/tango/lexer/lexer_wrapper.go
