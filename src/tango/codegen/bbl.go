@@ -28,6 +28,14 @@ var BBLList []BBLEntry
 
 var symbolInfo = make(map[*SymbolTableRegisterEntry]UseInfo)
 
+func setSymbolInfo(arg SymbolTableEntry) {
+	if arg != nil {
+		if arg, isRegister := arg.(*SymbolTableRegisterEntry); isRegister {
+			symbolInfo[arg] = UseInfo{true, -1}
+		}
+	}
+}
+
 // GenBBLList takes the IRCode (list of IRIns) as input & creates list of basic blocks
 func GenBBLList(IRCode []IRIns) {
 	if len(IRCode) == 0 {
@@ -35,21 +43,9 @@ func GenBBLList(IRCode []IRIns) {
 	}
 	prevIndex := 0
 	for index, ins := range IRCode {
-		if arg1 := ins.Arg1; arg1 != nil {
-			if arg1, isRegister := arg1.(*SymbolTableRegisterEntry); isRegister {
-				symbolInfo[arg1] = UseInfo{true, -1}
-			}
-		}
-		if arg2 := ins.Arg2; arg2 != nil {
-			if arg2, isRegister := arg2.(*SymbolTableRegisterEntry); isRegister {
-				symbolInfo[arg2] = UseInfo{true, -1}
-			}
-		}
-		if dst := ins.Dst; dst != nil {
-			if dst, isRegister := dst.(*SymbolTableRegisterEntry); isRegister {
-				symbolInfo[dst] = UseInfo{true, -1}
-			}
-		}
+		setSymbolInfo(ins.Arg1)
+		setSymbolInfo(ins.Arg2)
+		setSymbolInfo(ins.Dst)
 		if ins.Typ == LBL && index != prevIndex {
 			bbl := BBLEntry{Block: IRCode[prevIndex:index]}
 			bbl = addUseInfo(bbl)
@@ -66,28 +62,30 @@ func GenBBLList(IRCode []IRIns) {
 	}
 }
 
+func isRegister(entry SymbolTableEntry) (*SymbolTableRegisterEntry, bool) {
+	if entry != nil {
+		entry, ok := entry.(*SymbolTableRegisterEntry)
+		return entry, ok
+	}
+	return nil, false
+}
+
 // Adds Operands' UseInfo in the BBL
 func addUseInfo(bbl BBLEntry) BBLEntry {
 	bbl.Info = make([]map[*SymbolTableRegisterEntry]UseInfo, len(bbl.Block))
 	infomap := make(map[*SymbolTableRegisterEntry]UseInfo)
 	for i := len(bbl.Block) - 1; i >= 0; i-- {
-		if dst := bbl.Block[i].Dst; dst != nil {
-			if dst, isRegister := dst.(*SymbolTableRegisterEntry); isRegister {
-				infomap[dst] = symbolInfo[dst]
-				symbolInfo[dst] = UseInfo{false, -1}
-			}
+		if dst, isReg := isRegister(bbl.Block[i].Dst); isReg {
+			infomap[dst] = symbolInfo[dst]
+			symbolInfo[dst] = UseInfo{false, -1}
 		}
-		if arg1 := bbl.Block[i].Arg1; arg1 != nil {
-			if arg1, isRegister := arg1.(*SymbolTableRegisterEntry); isRegister {
-				infomap[arg1] = symbolInfo[arg1]
-				symbolInfo[arg1] = UseInfo{true, i}
-			}
+		if arg1, isReg := isRegister(bbl.Block[i].Arg1); isReg {
+			infomap[arg1] = symbolInfo[arg1]
+			symbolInfo[arg1] = UseInfo{true, i}
 		}
-		if arg2 := bbl.Block[i].Arg2; arg2 != nil {
-			if arg2, isRegister := arg2.(*SymbolTableRegisterEntry); isRegister {
-				infomap[arg2] = symbolInfo[arg2]
-				symbolInfo[arg2] = UseInfo{true, i}
-			}
+		if arg2, isReg := isRegister(bbl.Block[i].Arg2); isReg {
+			infomap[arg2] = symbolInfo[arg2]
+			symbolInfo[arg2] = UseInfo{true, i}
 		}
 		ninfomap := make(map[*SymbolTableRegisterEntry]UseInfo)
 		for k, v := range infomap {
