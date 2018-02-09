@@ -84,39 +84,42 @@ func InsertToSymbolTable(val string) SymbolTableEntry {
 }
 
 // GetRegs populates symbol table and gets virtual registers
-func GetRegs(splitted []string, typ IRType, op IROp) (SymbolTableEntry, SymbolTableEntry, SymbolTableEntry, error) {
-
-	var arg1, arg2, dst SymbolTableEntry
+func GetRegs(splitted []string, typ IRType, op IROp) (arg1, arg2, dst SymbolTableEntry, err error) {
 
 	if typ == LBL {
-		return nil, nil, nil, errors.New("We Should never GetRegs for a label")
+		err = errors.New("We Should never GetRegs for a label")
+		return
 	}
 
 	if typ == BOP || typ == CBR {
 		if len(splitted) < 4 {
-			return nil, nil, nil, errors.New("Not enough args to a binary operand")
+			err = errors.New("Not enough args to a binary operand")
+			return
 		}
 		dst = InsertToSymbolTable(splitted[1])
 		arg1 = InsertToSymbolTable(splitted[2])
 		arg2 = InsertToSymbolTable(splitted[3])
 	} else if typ == UOP || typ == ASN {
 		if len(splitted) < 3 {
-			return nil, nil, nil, errors.New("Not enough args to a unary operand")
+			err = errors.New("Not enough args to a unary operand")
+			return
 		}
 		dst = InsertToSymbolTable(splitted[1])
 		arg1 = InsertToSymbolTable(splitted[2])
 	} else if typ == JMP {
 		if len(splitted) < 2 {
-			return nil, nil, nil, errors.New("Not enough args to a jump operand")
+			err = errors.New("Not enough args to a jump operand")
+			return
 		}
 		arg1 = InsertToSymbolTable(splitted[1])
 	} else if typ == KEY {
 		if !(op == RET || op == HALT) {
 			if len(splitted) < 2 {
-				return nil, nil, nil, errors.New("Not enough args to a call/key operand")
+				err = errors.New("Not enough args to a call/key operand")
+				return
 			}
 			arg1 = InsertToSymbolTable(splitted[1])
 		}
 	}
-	return arg1, arg2, dst, nil
+	return
 }
