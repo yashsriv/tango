@@ -1,8 +1,8 @@
 bin
 pkg
 vendor
-src/tango/lexer/*
-src/tango/token
-src/tango/util
-!src/tango/lexer/lexer_test.go
-!src/tango/lexer/lexer_wrapper.go
+src/lexer/*
+src/token
+src/util
+!src/lexer/lexer_test.go
+!src/lexer/lexer_wrapper.go

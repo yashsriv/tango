@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	cg "tango/src/tango/codegen"
+	cg "tango/src/codegen"
 )
 
 func main() {
