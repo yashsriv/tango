@@ -1,12 +1,14 @@
 package codegen
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 )
 
 // SymbolTableEntry is an entry in the SymbolTable
 type SymbolTableEntry interface {
+	SymbolTableString() string
 }
 
 // SymbolTableLiteralEntry refers to a literal in the symbol table
@@ -15,9 +17,19 @@ type SymbolTableLiteralEntry struct {
 	Value int
 }
 
+// SymbolTableString returns a string representation and also ensures types
+func (s SymbolTableLiteralEntry) SymbolTableString() string {
+	return fmt.Sprintf("$%d", s.Value)
+}
+
 // SymbolTableTargetEntry refers to a target in the symbol table
 type SymbolTableTargetEntry struct {
 	Target string
+}
+
+// SymbolTableString returns a string representation and also ensures types
+func (s SymbolTableTargetEntry) SymbolTableString() string {
+	return fmt.Sprintf("#%s", s.Target)
 }
 
 // SymbolTableRegisterEntry refers to a register in the symbol table
@@ -25,11 +37,16 @@ type SymbolTableRegisterEntry struct {
 	Register string
 }
 
+// SymbolTableString returns a string representation and also ensures types
+func (s SymbolTableRegisterEntry) SymbolTableString() string {
+	return fmt.Sprintf("%%%s", s.Register)
+}
+
 // SymbolTable is an array of SymbolTableEntries
 var SymbolTable []SymbolTableEntry
-var symbolMap = make(map[string]SymbolTableEntry)
+var SymbolMap = make(map[string]SymbolTableEntry)
 
-func insertToSymbolTable(val string) SymbolTableEntry {
+func InsertToSymbolTable(val string) SymbolTableEntry {
 	var entry SymbolTableEntry
 	switch val[0] {
 	case '$':
@@ -50,6 +67,10 @@ func insertToSymbolTable(val string) SymbolTableEntry {
 		entry = &SymbolTableRegisterEntry{
 			Register: val,
 		}
+	default:
+		entry = &SymbolTableTargetEntry{
+			Target: val,
+		}
 	}
 	SymbolTable = append(SymbolTable, entry)
 	return entry
@@ -60,51 +81,51 @@ func GetRegs(splitted []string, typ IRType, op IROp) (SymbolTableEntry, SymbolTa
 
 	var arg1, arg2, dst SymbolTableEntry
 	if typ == BOP || typ == CBR {
-		if val, ok := symbolMap[splitted[1]]; ok {
+		if val, ok := SymbolMap[splitted[1]]; ok {
 			dst = val
 		} else {
-			dst = insertToSymbolTable(splitted[1])
-			symbolMap[splitted[1]] = dst
+			dst = InsertToSymbolTable(splitted[1])
+			SymbolMap[splitted[1]] = dst
 		}
-		if val, ok := symbolMap[splitted[2]]; ok {
+		if val, ok := SymbolMap[splitted[2]]; ok {
 			arg1 = val
 		} else {
-			arg1 = insertToSymbolTable(splitted[2])
-			symbolMap[splitted[1]] = arg1
+			arg1 = InsertToSymbolTable(splitted[2])
+			SymbolMap[splitted[2]] = arg1
 		}
-		if val, ok := symbolMap[splitted[3]]; ok {
+		if val, ok := SymbolMap[splitted[3]]; ok {
 			arg2 = val
 		} else {
-			arg2 = insertToSymbolTable(splitted[3])
-			symbolMap[splitted[1]] = arg2
+			arg2 = InsertToSymbolTable(splitted[3])
+			SymbolMap[splitted[3]] = arg2
 		}
 	} else if typ == UOP || typ == ASN {
-		if val, ok := symbolMap[splitted[1]]; ok {
+		if val, ok := SymbolMap[splitted[1]]; ok {
 			dst = val
 		} else {
-			dst = insertToSymbolTable(splitted[1])
-			symbolMap[splitted[1]] = dst
+			dst = InsertToSymbolTable(splitted[1])
+			SymbolMap[splitted[1]] = dst
 		}
-		if val, ok := symbolMap[splitted[2]]; ok {
+		if val, ok := SymbolMap[splitted[2]]; ok {
 			arg1 = val
 		} else {
-			arg1 = insertToSymbolTable(splitted[2])
-			symbolMap[splitted[1]] = arg1
+			arg1 = InsertToSymbolTable(splitted[2])
+			SymbolMap[splitted[2]] = arg1
 		}
 	} else if typ == JMP {
-		if val, ok := symbolMap[splitted[1]]; ok {
+		if val, ok := SymbolMap[splitted[1]]; ok {
 			arg1 = val
 		} else {
-			arg1 = insertToSymbolTable(splitted[1])
-			symbolMap[splitted[1]] = arg1
+			arg1 = InsertToSymbolTable(splitted[1])
+			SymbolMap[splitted[1]] = arg1
 		}
 	} else if typ == KEY {
 		if !(op == RET || op == HALT) {
-			if val, ok := symbolMap[splitted[1]]; ok {
+			if val, ok := SymbolMap[splitted[1]]; ok {
 				arg1 = val
 			} else {
-				arg1 = insertToSymbolTable(splitted[1])
-				symbolMap[splitted[1]] = arg1
+				arg1 = InsertToSymbolTable(splitted[1])
+				SymbolMap[splitted[1]] = arg1
 			}
 		}
 	}

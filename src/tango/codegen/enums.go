@@ -6,6 +6,7 @@ type IRType int
 // Enum IRType
 const (
 	INV IRType = iota
+	LBL
 	BOP
 	UOP
 	CBR

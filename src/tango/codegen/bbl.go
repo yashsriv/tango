@@ -1,9 +1,20 @@
 package codegen
 
+import "fmt"
+
 // BBLEntry is Single entry in BBL List
 type BBLEntry struct {
 	Block []IRIns
 	Info  []map[*SymbolTableRegisterEntry]UseInfo
+}
+
+func (b *BBLEntry) String() string {
+	repr := "\n<BBL Begin>\n"
+	for _, ins := range b.Block {
+		repr += fmt.Sprintf("%s\n", ins.String())
+	}
+	repr += "<BBL End>\n\n"
+	return repr
 }
 
 // UseInfo stores life and next Use Information of a variable
@@ -39,7 +50,7 @@ func GenBBLList(IRCode []IRIns) {
 				symbolInfo[dst] = UseInfo{true, -1}
 			}
 		}
-		if ins.Label != "" && index != prevIndex {
+		if ins.Typ == LBL && index != prevIndex {
 			bbl := BBLEntry{Block: IRCode[prevIndex:index]}
 			bbl = addUseInfo(bbl)
 			BBLList = append(BBLList, bbl)

@@ -29,11 +29,27 @@ func main() {
 	for scanner.Scan() {
 		line := scanner.Text()
 
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
 		// Get Label
-		label := cg.IRLabel("")
 		colonIndex := strings.Index(line, ":")
 		if colonIndex != -1 {
-			label = cg.IRLabel(line[:colonIndex])
+			label := line[:colonIndex]
+			var dst cg.SymbolTableEntry
+			if val, ok := cg.SymbolMap[label]; ok {
+				dst = val
+			} else {
+				dst = cg.InsertToSymbolTable(label)
+				cg.SymbolMap[label] = dst
+			}
+			ins := cg.IRIns{
+				Typ: cg.LBL,
+				Dst: dst,
+			}
+			code = append(code, ins)
+			continue
 		}
 		line = line[colonIndex+1:]
 
@@ -53,12 +69,11 @@ func main() {
 		arg1, arg2, dst := cg.GetRegs(splitted, typ, op)
 
 		ins := cg.IRIns{
-			Typ:   typ,
-			Op:    op,
-			Arg1:  arg1,
-			Arg2:  arg2,
-			Dst:   dst,
-			Label: label,
+			Typ:  typ,
+			Op:   op,
+			Arg1: arg1,
+			Arg2: arg2,
+			Dst:  dst,
 		}
 
 		code = append(code, ins)
@@ -66,7 +81,9 @@ func main() {
 
 	cg.GenBBLList(code)
 
-	fmt.Printf("%v\n", cg.BBLList)
+	for _, b := range cg.BBLList {
+		fmt.Print(b.String())
+	}
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
