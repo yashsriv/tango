@@ -1,7 +1,7 @@
 package codegen
 
 import (
-	"fmt"
+	"log"
 	"math"
 )
 
@@ -12,22 +12,22 @@ type address struct {
 
 type registerResult struct {
 	Register MachineRegister
-	Spill    *SymbolTableRegisterEntry
+	Spill    map[*SymbolTableRegisterEntry]bool
 }
 
 // MachineRegister represents a register in a machine
 type MachineRegister string
 
-// Initialization of registers
-var registers = map[MachineRegister]*SymbolTableRegisterEntry{
-	"eax": nil,
-	"ebx": nil,
-	"ecx": nil,
-	"edx": nil,
+// Initialization of regDesc
+var regDesc = map[MachineRegister]map[*SymbolTableRegisterEntry]bool{
+	"%eax": make(map[*SymbolTableRegisterEntry]bool),
+	"%ebx": make(map[*SymbolTableRegisterEntry]bool),
+	"%ecx": make(map[*SymbolTableRegisterEntry]bool),
+	"%edx": make(map[*SymbolTableRegisterEntry]bool),
 }
 
-//Initialization of variables
-var variables = make(map[*SymbolTableRegisterEntry]address)
+//Initialization of addrDesc
+var addrDesc = make(map[*SymbolTableRegisterEntry]address)
 
 func assignHelper(uinfo map[*SymbolTableRegisterEntry]UseInfo, dst *SymbolTableRegisterEntry, canReplace bool) func(*SymbolTableRegisterEntry) registerResult {
 
@@ -38,13 +38,13 @@ func assignHelper(uinfo map[*SymbolTableRegisterEntry]UseInfo, dst *SymbolTableR
 	return func(i *SymbolTableRegisterEntry) registerResult {
 		// If variable to be assigned is already in a register
 		// return that register
-		if variables[i].regLocation != "" {
-			cannotbeReplaced[variables[i].regLocation] = uinfo[i].NextUse == -1
-			return registerResult{Register: variables[i].regLocation}
+		if addrDesc[i].regLocation != "" {
+			cannotbeReplaced[addrDesc[i].regLocation] = uinfo[i].NextUse == -1
+			return registerResult{Register: addrDesc[i].regLocation}
 		}
 
-		for register, variable := range registers {
-			if variable == nil {
+		for register, variable := range regDesc {
+			if len(variable) == 0 {
 
 				if _, notReplace := cannotbeReplaced[register]; notReplace {
 					continue
@@ -58,25 +58,29 @@ func assignHelper(uinfo map[*SymbolTableRegisterEntry]UseInfo, dst *SymbolTableR
 			}
 		}
 
-		// Calculate scores of registers. We may still have to spill/not spill stuff
+		// Calculate scores of regDesc. We may still have to spill/not spill stuff
 		score := make(map[MachineRegister]int)
-		for key, value := range registers {
+		for key, values := range regDesc {
 			// If the register has been allocated in this step to another variable, it should not be chosen
 			// But, if we are choosing for the destination and the variable has no next user, we can choose this
 			// so score shouldn't be math.MaxInt32 then
 			if val, ok := cannotbeReplaced[key]; ok && !(dst == i && val) {
 				score[key] = math.MaxInt32
-			} else if variables[value].memLocation == "" {
-				// variables which are not in any memLocation
-				// we can overwrite the dst register if it is not going to be used
-				// in the future. So score shouldn't be incremented
-				// NOTE: Issue here. Variable isn't stored in memory and we are replacing it.
-				// If variable is used in another block, we have lost the value
-				if !(canReplace && value == dst) {
-					if uinfo[value].NextUse != -1 {
-						// If the variable we are replacing has to be used in the future,
-						// add 1 to score.
-						score[key]++
+			} else {
+				for value := range values {
+					if addrDesc[value].memLocation == "" {
+						// addrDesc which are not in any memLocation
+						// we can overwrite the dst register if it is not going to be used
+						// in the future. So score shouldn't be incremented
+						// NOTE: Issue here. Variable isn't stored in memory and we are replacing it.
+						// If variable is used in another block, we have lost the value
+						if !(canReplace && value == dst) {
+							if uinfo[value].NextUse != -1 {
+								// If the variable we are replacing has to be used in the future,
+								// add 1 to score.
+								score[key]++
+							}
+						}
 					}
 				}
 			}
@@ -95,7 +99,7 @@ func assignHelper(uinfo map[*SymbolTableRegisterEntry]UseInfo, dst *SymbolTableR
 		cannotbeReplaced[minScoreReg] = uinfo[i].NextUse == -1
 
 		if minScore != 0 {
-			return registerResult{Register: minScoreReg, Spill: registers[minScoreReg]}
+			return registerResult{Register: minScoreReg, Spill: regDesc[minScoreReg]}
 		}
 
 		return registerResult{Register: minScoreReg}
@@ -103,6 +107,7 @@ func assignHelper(uinfo map[*SymbolTableRegisterEntry]UseInfo, dst *SymbolTableR
 
 }
 
+// getReg returns an allocation of regDesc for the operands
 func getReg(ins IRIns, uinfo map[*SymbolTableRegisterEntry]UseInfo) (arg1res, arg2res, dstres registerResult) {
 
 	instructionType := ins.Typ
@@ -122,17 +127,44 @@ func getReg(ins IRIns, uinfo map[*SymbolTableRegisterEntry]UseInfo) (arg1res, ar
 		}
 		dstres = assignRegister(dst)
 	case UOP:
-		fmt.Println("UOP")
+		canReplace := ins.Dst != ins.Arg1
+		dst := ins.Dst.(*SymbolTableRegisterEntry)
+		assignRegister := assignHelper(uinfo, dst, canReplace)
+		if arg1, isRegister := ins.Arg1.(*SymbolTableRegisterEntry); isRegister {
+			//  i is a SymbolTableRegister
+			arg1res = assignRegister(arg1)
+		}
+		dstres = assignRegister(dst)
 	case CBR:
-		fmt.Println("CBR")
+		assignRegister := assignHelper(uinfo, nil, false)
+		if arg1, isRegister := ins.Arg1.(*SymbolTableRegisterEntry); isRegister {
+			//  i is a SymbolTableRegister
+			arg1res = assignRegister(arg1)
+		}
+		if arg2, isRegister := ins.Arg2.(*SymbolTableRegisterEntry); isRegister {
+			//  i is a SymbolTableRegister
+			arg2res = assignRegister(arg2)
+		}
 	case JMP:
-		fmt.Println("JMP")
 	case ASN:
-		fmt.Println("ASN")
+		canReplace := ins.Dst != ins.Arg1 && ins.Dst != ins.Arg2
+		dst := ins.Dst.(*SymbolTableRegisterEntry)
+		assignRegister := assignHelper(uinfo, dst, canReplace)
+		if arg1, isRegister := ins.Arg1.(*SymbolTableRegisterEntry); isRegister {
+			//  i is a SymbolTableRegister
+			arg1res = assignRegister(arg1)
+		}
+		dstres = arg1res
 	case KEY:
-		fmt.Println("KEY")
+		assignRegister := assignHelper(uinfo, nil, false)
+		if !(ins.Op == RET || ins.Op == HALT) {
+			if arg1, isRegister := ins.Arg1.(*SymbolTableRegisterEntry); isRegister {
+				//  i is a SymbolTableRegister
+				arg1res = assignRegister(arg1)
+			}
+		}
 	case INV:
-		fmt.Println("INV")
+		log.Fatalf("Invalid Instruction found. Aborting!!\n")
 	}
 	return
 }
