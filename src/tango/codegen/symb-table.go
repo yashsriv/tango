@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -44,9 +45,14 @@ func (s SymbolTableRegisterEntry) SymbolTableString() string {
 
 // SymbolTable is an array of SymbolTableEntries
 var SymbolTable []SymbolTableEntry
-var SymbolMap = make(map[string]SymbolTableEntry)
 
+var symbolMap = make(map[string]SymbolTableEntry)
+
+// InsertToSymbolTable inserts a single entry into table
 func InsertToSymbolTable(val string) SymbolTableEntry {
+	if val, ok := symbolMap[val]; ok {
+		return val
+	}
 	var entry SymbolTableEntry
 	switch val[0] {
 	case '$':
@@ -73,61 +79,44 @@ func InsertToSymbolTable(val string) SymbolTableEntry {
 		}
 	}
 	SymbolTable = append(SymbolTable, entry)
+	symbolMap[val] = entry
 	return entry
 }
 
 // GetRegs populates symbol table and gets virtual registers
-func GetRegs(splitted []string, typ IRType, op IROp) (SymbolTableEntry, SymbolTableEntry, SymbolTableEntry) {
+func GetRegs(splitted []string, typ IRType, op IROp) (SymbolTableEntry, SymbolTableEntry, SymbolTableEntry, error) {
 
 	var arg1, arg2, dst SymbolTableEntry
+
+	if typ == LBL {
+		return nil, nil, nil, errors.New("We Should never GetRegs for a label")
+	}
+
 	if typ == BOP || typ == CBR {
-		if val, ok := SymbolMap[splitted[1]]; ok {
-			dst = val
-		} else {
-			dst = InsertToSymbolTable(splitted[1])
-			SymbolMap[splitted[1]] = dst
+		if len(splitted) < 4 {
+			return nil, nil, nil, errors.New("Not enough args to a binary operand")
 		}
-		if val, ok := SymbolMap[splitted[2]]; ok {
-			arg1 = val
-		} else {
-			arg1 = InsertToSymbolTable(splitted[2])
-			SymbolMap[splitted[2]] = arg1
-		}
-		if val, ok := SymbolMap[splitted[3]]; ok {
-			arg2 = val
-		} else {
-			arg2 = InsertToSymbolTable(splitted[3])
-			SymbolMap[splitted[3]] = arg2
-		}
+		dst = InsertToSymbolTable(splitted[1])
+		arg1 = InsertToSymbolTable(splitted[2])
+		arg2 = InsertToSymbolTable(splitted[3])
 	} else if typ == UOP || typ == ASN {
-		if val, ok := SymbolMap[splitted[1]]; ok {
-			dst = val
-		} else {
-			dst = InsertToSymbolTable(splitted[1])
-			SymbolMap[splitted[1]] = dst
+		if len(splitted) < 3 {
+			return nil, nil, nil, errors.New("Not enough args to a unary operand")
 		}
-		if val, ok := SymbolMap[splitted[2]]; ok {
-			arg1 = val
-		} else {
-			arg1 = InsertToSymbolTable(splitted[2])
-			SymbolMap[splitted[2]] = arg1
-		}
+		dst = InsertToSymbolTable(splitted[1])
+		arg1 = InsertToSymbolTable(splitted[2])
 	} else if typ == JMP {
-		if val, ok := SymbolMap[splitted[1]]; ok {
-			arg1 = val
-		} else {
-			arg1 = InsertToSymbolTable(splitted[1])
-			SymbolMap[splitted[1]] = arg1
+		if len(splitted) < 2 {
+			return nil, nil, nil, errors.New("Not enough args to a jump operand")
 		}
+		arg1 = InsertToSymbolTable(splitted[1])
 	} else if typ == KEY {
 		if !(op == RET || op == HALT) {
-			if val, ok := SymbolMap[splitted[1]]; ok {
-				arg1 = val
-			} else {
-				arg1 = InsertToSymbolTable(splitted[1])
-				SymbolMap[splitted[1]] = arg1
+			if len(splitted) < 2 {
+				return nil, nil, nil, errors.New("Not enough args to a call/key operand")
 			}
+			arg1 = InsertToSymbolTable(splitted[1])
 		}
 	}
-	return arg1, arg2, dst
+	return arg1, arg2, dst, nil
 }

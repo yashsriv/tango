@@ -38,12 +38,7 @@ func main() {
 		if colonIndex != -1 {
 			label := line[:colonIndex]
 			var dst cg.SymbolTableEntry
-			if val, ok := cg.SymbolMap[label]; ok {
-				dst = val
-			} else {
-				dst = cg.InsertToSymbolTable(label)
-				cg.SymbolMap[label] = dst
-			}
+			dst = cg.InsertToSymbolTable(label)
 			ins := cg.IRIns{
 				Typ: cg.LBL,
 				Dst: dst,
@@ -66,7 +61,10 @@ func main() {
 		}
 
 		// Get args
-		arg1, arg2, dst := cg.GetRegs(splitted, typ, op)
+		arg1, arg2, dst, err := cg.GetRegs(splitted, typ, op)
+		if err != nil {
+			log.Fatalf("Error file parsing args for: %s\nError: %v\n", line, err)
+		}
 
 		ins := cg.IRIns{
 			Typ:  typ,
