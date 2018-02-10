@@ -290,6 +290,7 @@ func genCode() {
 			op(ins, pointerMap, [3]registerResult{arg1res, arg2res, dstres})
 
 		}
+		saveBBL()
 	}
 }
 
@@ -301,6 +302,20 @@ func genData() {
 	for _, symbol := range SymbolTable {
 		if variable, isVar := symbol.(*SymbolTableVariableEntry); isVar {
 			Code += fmt.Sprintf("%s: .long 0\n", variable.MemoryLocation)
+		}
+	}
+}
+
+func saveBBL() {
+	for register, variables := range regDesc {
+		for variable := range variables {
+			if addrDesc[variable].memLocation == "" {
+				Code += fmt.Sprintf("movl %s, (%s)\n", register, variable.MemoryLocation)
+				addrDesc[variable] = address{
+					regLocation: register,
+					memLocation: variable.MemoryLocation,
+				}
+			}
 		}
 	}
 }
