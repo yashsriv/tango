@@ -1,0 +1,13 @@
+main:
+=,ri,$0
+
+_for1:
+brgte,#_endfor1,$3,ri
+neg,rj,ri
+printi,rj
+printc,$10
+inc,ri
+jmp,#_for1
+_endfor1:
+
+halt
