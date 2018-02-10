@@ -38,7 +38,7 @@ func main() {
 		if colonIndex != -1 {
 			label := line[:colonIndex]
 			var dst cg.SymbolTableEntry
-			dst = cg.InsertToSymbolTable(label)
+			dst = cg.InsertToSymbolTable("#" + label)
 			ins := cg.IRIns{
 				Typ: cg.LBL,
 				Dst: dst,
@@ -79,9 +79,9 @@ func main() {
 
 	cg.GenBBLList(code)
 
-	for _, b := range cg.BBLList {
-		fmt.Print(b.String())
-	}
+	cg.GenerateASM()
+
+	fmt.Print(cg.Code)
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)

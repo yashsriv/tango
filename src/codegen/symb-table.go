@@ -33,14 +33,14 @@ func (s SymbolTableTargetEntry) SymbolTableString() string {
 	return fmt.Sprintf("#%s", s.Target)
 }
 
-// SymbolTableRegisterEntry refers to a register in the symbol table
-type SymbolTableRegisterEntry struct {
-	Register string
+// SymbolTableVariableEntry refers to a register in the symbol table
+type SymbolTableVariableEntry struct {
+	MemoryLocation string
 }
 
 // SymbolTableString returns a string representation and also ensures types
-func (s SymbolTableRegisterEntry) SymbolTableString() string {
-	return fmt.Sprintf("%%%s", s.Register)
+func (s SymbolTableVariableEntry) SymbolTableString() string {
+	return fmt.Sprintf("%%%s", s.MemoryLocation)
 }
 
 // SymbolTable is an array of SymbolTableEntries
@@ -70,13 +70,11 @@ func InsertToSymbolTable(val string) SymbolTableEntry {
 			Target: val[1:],
 		}
 	case 'r':
-		entry = &SymbolTableRegisterEntry{
-			Register: val,
+		entry = &SymbolTableVariableEntry{
+			MemoryLocation: val,
 		}
 	default:
-		entry = &SymbolTableTargetEntry{
-			Target: val,
-		}
+		log.Fatalf("Unknown argument: %s", val)
 	}
 	SymbolTable = append(SymbolTable, entry)
 	symbolMap[val] = entry

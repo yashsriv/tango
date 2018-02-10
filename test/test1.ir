@@ -2,13 +2,12 @@ main:
 =,ra,$2
 
 L1:
-=,rb,$07
-+,ra,ra,rb
+inc,ra
 
 _if1:
 param,ra
-call,foo
-brlte,#L1,ra,$0x32
+call,#foo
+brlte,#L1,$0x5,ra
 halt
 
 foo:

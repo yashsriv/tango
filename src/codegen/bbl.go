@@ -5,7 +5,7 @@ import "fmt"
 // BBLEntry is Single entry in BBL List
 type BBLEntry struct {
 	Block []IRIns
-	Info  []map[*SymbolTableRegisterEntry]UseInfo
+	Info  []map[*SymbolTableVariableEntry]UseInfo
 }
 
 func (b *BBLEntry) String() string {
@@ -26,11 +26,11 @@ type UseInfo struct {
 // BBLList is the list of all the Basic Blocks
 var BBLList []BBLEntry
 
-var symbolInfo = make(map[*SymbolTableRegisterEntry]UseInfo)
+var symbolInfo = make(map[*SymbolTableVariableEntry]UseInfo)
 
 func setSymbolInfo(arg SymbolTableEntry) {
 	if arg != nil {
-		if arg, isRegister := arg.(*SymbolTableRegisterEntry); isRegister {
+		if arg, isRegister := arg.(*SymbolTableVariableEntry); isRegister {
 			symbolInfo[arg] = UseInfo{true, -1}
 		}
 	}
@@ -62,9 +62,9 @@ func GenBBLList(IRCode []IRIns) {
 	}
 }
 
-func isRegister(entry SymbolTableEntry) (*SymbolTableRegisterEntry, bool) {
+func isRegister(entry SymbolTableEntry) (*SymbolTableVariableEntry, bool) {
 	if entry != nil {
-		entry, ok := entry.(*SymbolTableRegisterEntry)
+		entry, ok := entry.(*SymbolTableVariableEntry)
 		return entry, ok
 	}
 	return nil, false
@@ -72,8 +72,8 @@ func isRegister(entry SymbolTableEntry) (*SymbolTableRegisterEntry, bool) {
 
 // Adds Operands' UseInfo in the BBL
 func addUseInfo(bbl BBLEntry) BBLEntry {
-	bbl.Info = make([]map[*SymbolTableRegisterEntry]UseInfo, len(bbl.Block))
-	infomap := make(map[*SymbolTableRegisterEntry]UseInfo)
+	bbl.Info = make([]map[*SymbolTableVariableEntry]UseInfo, len(bbl.Block))
+	infomap := make(map[*SymbolTableVariableEntry]UseInfo)
 	for i := len(bbl.Block) - 1; i >= 0; i-- {
 		if dst, isReg := isRegister(bbl.Block[i].Dst); isReg {
 			infomap[dst] = symbolInfo[dst]
@@ -87,7 +87,7 @@ func addUseInfo(bbl BBLEntry) BBLEntry {
 			infomap[arg2] = symbolInfo[arg2]
 			symbolInfo[arg2] = UseInfo{true, i}
 		}
-		ninfomap := make(map[*SymbolTableRegisterEntry]UseInfo)
+		ninfomap := make(map[*SymbolTableVariableEntry]UseInfo)
 		for k, v := range infomap {
 			ninfomap[k] = v
 		}

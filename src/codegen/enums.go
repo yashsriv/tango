@@ -99,16 +99,15 @@ func GetType(op IROp) IRType {
 		return CBR
 	}
 
-	if op == NEG || op == NOT || op == INC ||
-		op == DEC || op == BNOT || op == VAL ||
-		op == ADDR {
+	if op == NEG || op == NOT || op == BNOT ||
+		op == VAL || op == ADDR {
 		return UOP
 	}
 
 	if op == PARAM || op == CALL || op == RET ||
 		op == HALT || op == PRINTINT || op == PRINTCHAR ||
 		op == PRINTSTR || op == SCANINT || op == SCANCHAR ||
-		op == SCANSTR {
+		op == SCANSTR || op == INC || op == DEC {
 		return KEY
 	}
 

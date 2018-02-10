@@ -12,30 +12,30 @@ type address struct {
 
 type registerResult struct {
 	Register MachineRegister
-	Spill    map[*SymbolTableRegisterEntry]bool
+	Spill    map[*SymbolTableVariableEntry]bool
 }
 
 // MachineRegister represents a register in a machine
 type MachineRegister string
 
 // Initialization of regDesc
-var regDesc = map[MachineRegister]map[*SymbolTableRegisterEntry]bool{
-	"%eax": make(map[*SymbolTableRegisterEntry]bool),
-	"%ebx": make(map[*SymbolTableRegisterEntry]bool),
-	"%ecx": make(map[*SymbolTableRegisterEntry]bool),
-	"%edx": make(map[*SymbolTableRegisterEntry]bool),
+var regDesc = map[MachineRegister]map[*SymbolTableVariableEntry]bool{
+	"%eax": map[*SymbolTableVariableEntry]bool{},
+	"%ebx": map[*SymbolTableVariableEntry]bool{},
+	"%ecx": map[*SymbolTableVariableEntry]bool{},
+	"%edx": map[*SymbolTableVariableEntry]bool{},
 }
 
 //Initialization of addrDesc
-var addrDesc = make(map[*SymbolTableRegisterEntry]address)
+var addrDesc = make(map[*SymbolTableVariableEntry]address)
 
-func assignHelper(uinfo map[*SymbolTableRegisterEntry]UseInfo, dst *SymbolTableRegisterEntry, canReplace bool) func(*SymbolTableRegisterEntry) registerResult {
+func assignHelper(uinfo map[*SymbolTableVariableEntry]UseInfo, dst *SymbolTableVariableEntry, canReplace bool) func(*SymbolTableVariableEntry) registerResult {
 
 	// Create a closure storing the value of cannot be replaced
 
 	cannotbeReplaced := make(map[MachineRegister]bool)
 
-	return func(i *SymbolTableRegisterEntry) registerResult {
+	return func(i *SymbolTableVariableEntry) registerResult {
 		// If variable to be assigned is already in a register
 		// return that register
 		if addrDesc[i].regLocation != "" {
@@ -108,57 +108,57 @@ func assignHelper(uinfo map[*SymbolTableRegisterEntry]UseInfo, dst *SymbolTableR
 }
 
 // getReg returns an allocation of regDesc for the operands
-func getReg(ins IRIns, uinfo map[*SymbolTableRegisterEntry]UseInfo) (arg1res, arg2res, dstres registerResult) {
+func getReg(ins IRIns, uinfo map[*SymbolTableVariableEntry]UseInfo) (arg1res, arg2res, dstres registerResult) {
 
 	instructionType := ins.Typ
 
 	switch instructionType {
 	case BOP:
 		canReplace := ins.Dst != ins.Arg1 && ins.Dst != ins.Arg2
-		dst := ins.Dst.(*SymbolTableRegisterEntry)
+		dst := ins.Dst.(*SymbolTableVariableEntry)
 		assignRegister := assignHelper(uinfo, dst, canReplace)
-		if arg1, isRegister := ins.Arg1.(*SymbolTableRegisterEntry); isRegister {
+		if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg1res = assignRegister(arg1)
 		}
-		if arg2, isRegister := ins.Arg2.(*SymbolTableRegisterEntry); isRegister {
+		if arg2, isRegister := ins.Arg2.(*SymbolTableVariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg2res = assignRegister(arg2)
 		}
 		dstres = assignRegister(dst)
 	case UOP:
 		canReplace := ins.Dst != ins.Arg1
-		dst := ins.Dst.(*SymbolTableRegisterEntry)
+		dst := ins.Dst.(*SymbolTableVariableEntry)
 		assignRegister := assignHelper(uinfo, dst, canReplace)
-		if arg1, isRegister := ins.Arg1.(*SymbolTableRegisterEntry); isRegister {
+		if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg1res = assignRegister(arg1)
 		}
 		dstres = assignRegister(dst)
 	case CBR:
 		assignRegister := assignHelper(uinfo, nil, false)
-		if arg1, isRegister := ins.Arg1.(*SymbolTableRegisterEntry); isRegister {
+		if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg1res = assignRegister(arg1)
 		}
-		if arg2, isRegister := ins.Arg2.(*SymbolTableRegisterEntry); isRegister {
+		if arg2, isRegister := ins.Arg2.(*SymbolTableVariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg2res = assignRegister(arg2)
 		}
 	case JMP:
+		// DO Nothing
+	case LBL:
+		// Do Nothing
 	case ASN:
-		canReplace := ins.Dst != ins.Arg1 && ins.Dst != ins.Arg2
-		dst := ins.Dst.(*SymbolTableRegisterEntry)
+		canReplace := ins.Dst != ins.Arg1
+		dst := ins.Dst.(*SymbolTableVariableEntry)
 		assignRegister := assignHelper(uinfo, dst, canReplace)
-		if arg1, isRegister := ins.Arg1.(*SymbolTableRegisterEntry); isRegister {
-			//  i is a SymbolTableRegister
-			arg1res = assignRegister(arg1)
-		}
+		arg1res = assignRegister(dst)
 		dstres = arg1res
 	case KEY:
 		assignRegister := assignHelper(uinfo, nil, false)
 		if !(ins.Op == RET || ins.Op == HALT) {
-			if arg1, isRegister := ins.Arg1.(*SymbolTableRegisterEntry); isRegister {
+			if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
 				//  i is a SymbolTableRegister
 				arg1res = assignRegister(arg1)
 			}
