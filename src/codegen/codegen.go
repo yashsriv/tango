@@ -29,12 +29,19 @@ func load(regres registerResult, memloc SymbolTableEntry) {
 		log.Fatalf("Trying to load into an empty register\n")
 	}
 
+	if _memloc, isRegister := memloc.(*SymbolTableVariableEntry); isRegister {
+		// If we are trying to shift a variable already in the register, ignore
+		if _, isKey := regDesc[reg][_memloc]; isKey {
+			return
+		}
+	}
+
 	spill(regres.Spill)
 
 	// Load the value onto the register
 	// can be a virtual register or a constant
 	if _memloc, isRegister := memloc.(*SymbolTableVariableEntry); isRegister {
-		Code += fmt.Sprintf("movl $%s, %s\n", _memloc.MemoryLocation, reg)
+		Code += fmt.Sprintf("movl (%s), %s\n", _memloc.MemoryLocation, reg)
 		regDesc[reg][_memloc] = true
 		addrDesc[_memloc] = address{
 			regLocation: reg,
