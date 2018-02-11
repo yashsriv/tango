@@ -190,7 +190,19 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 	}
 }
 
+func updateVariable(variable *SymbolTableVariableEntry, register MachineRegister) {
+	if curreg := addrDesc[variable].regLocation; curreg != "" {
+		delete(regDesc[curreg], variable)
+	}
+	regDesc[register][variable] = true
+	addrDesc[variable] = address{
+		regLocation: register,
+		memLocation: "",
+	}
+}
+
 func genUOpCode(ins IRIns, regs [3]registerResult) {
+	spill(regs[2].Spill)
 	switch ins.Op {
 	case NEG:
 		var valueString string
@@ -200,24 +212,12 @@ func genUOpCode(ins IRIns, regs [3]registerResult) {
 			load(regs[0], ins.Arg1)
 			valueString = string(regs[0].Register)
 		}
-		spill(regs[2].Spill)
 		Code += fmt.Sprintf("movl %s, %s\n", valueString, regs[2].Register)
 		Code += fmt.Sprintf("negl %s\n", regs[2].Register)
-		regDesc[regs[2].Register][ins.Dst.(*SymbolTableVariableEntry)] = true
-		addrDesc[ins.Dst.(*SymbolTableVariableEntry)] = address{
-			regLocation: regs[2].Register,
-			memLocation: "",
-		}
 	case BNOT:
 		load(regs[0], ins.Arg1)
-		spill(regs[2].Spill)
 		Code += fmt.Sprintf("movl %s, %s\n", regs[0].Register, regs[2].Register)
 		Code += fmt.Sprintf("notl %s\n", regs[2].Register)
-		regDesc[regs[2].Register][ins.Dst.(*SymbolTableVariableEntry)] = true
-		addrDesc[ins.Dst.(*SymbolTableVariableEntry)] = address{
-			regLocation: regs[2].Register,
-			memLocation: "",
-		}
 	case VAL:
 		log.Fatalf("Unhandled pointer stuff")
 		// TODO: Discuss with Sir
@@ -229,6 +229,9 @@ func genUOpCode(ins IRIns, regs [3]registerResult) {
 		// Maintain a pointer map while dereferencing. Check if what we
 		// want to dereference is in registers
 	}
+
+	dst := ins.Dst.(*SymbolTableVariableEntry)
+	updateVariable(dst, regs[2].Register)
 }
 
 func genCBRCode(ins IRIns, regs [3]registerResult) {
@@ -282,11 +285,8 @@ func genSOpCode(ins IRIns, regs [3]registerResult) {
 		Code += fmt.Sprintf("shr %s, %s\n", valueString, regs[2].Register)
 	}
 
-	regDesc[regs[2].Register][ins.Dst.(*SymbolTableVariableEntry)] = true
-	addrDesc[ins.Dst.(*SymbolTableVariableEntry)] = address{
-		regLocation: regs[2].Register,
-		memLocation: "",
-	}
+	dst := ins.Dst.(*SymbolTableVariableEntry)
+	updateVariable(dst, regs[2].Register)
 }
 
 func genBOpCode(ins IRIns, regs [3]registerResult) {
@@ -321,11 +321,8 @@ func genBOpCode(ins IRIns, regs [3]registerResult) {
 		Code += fmt.Sprintf("xorl %s, %s\n", valueString, regs[2].Register)
 	}
 
-	regDesc[regs[2].Register][ins.Dst.(*SymbolTableVariableEntry)] = true
-	addrDesc[ins.Dst.(*SymbolTableVariableEntry)] = address{
-		regLocation: regs[2].Register,
-		memLocation: "",
-	}
+	dst := ins.Dst.(*SymbolTableVariableEntry)
+	updateVariable(dst, regs[2].Register)
 }
 
 func genLOpCode(ins IRIns, regs [3]registerResult) {
@@ -368,11 +365,9 @@ func genLOpCode(ins IRIns, regs [3]registerResult) {
 	Code += fmt.Sprintf("movl $1, %s\n", regs[2].Register)
 	Code += fmt.Sprintf("_logic_end_%d:", logicCounter)
 	logicCounter++
-	regDesc[regs[2].Register][ins.Dst.(*SymbolTableVariableEntry)] = true
-	addrDesc[ins.Dst.(*SymbolTableVariableEntry)] = address{
-		regLocation: regs[2].Register,
-		memLocation: "",
-	}
+
+	dst := ins.Dst.(*SymbolTableVariableEntry)
+	updateVariable(dst, regs[2].Register)
 }
 
 func genDOpCode(ins IRIns, regs [3]registerResult) {
@@ -384,11 +379,8 @@ func genDOpCode(ins IRIns, regs [3]registerResult) {
 	Code += "movl $0, %edx\n"
 	Code += fmt.Sprintf("idiv %s\n", regs[1].Register)
 
-	regDesc[regs[2].Register][ins.Dst.(*SymbolTableVariableEntry)] = true
-	addrDesc[ins.Dst.(*SymbolTableVariableEntry)] = address{
-		regLocation: regs[2].Register,
-		memLocation: "",
-	}
+	dst := ins.Dst.(*SymbolTableVariableEntry)
+	updateVariable(dst, regs[2].Register)
 }
 
 func genOpCode(ins IRIns, pointerMap map[*SymbolTableVariableEntry]*SymbolTableVariableEntry, regs [3]registerResult) {
