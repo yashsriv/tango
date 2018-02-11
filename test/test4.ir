@@ -1,0 +1,16 @@
+_func_main:
+=,ra,$1
+=,rb,$1
+=,rc,$5
+=,rd,$3
+_for_start_1:
+brgt,#_for_end_1,rc,rd
++,re,ra,rb
+printi,re
+printc,$10
+=,ra,rb
+=,rb,re
+inc,rd
+jmp,#_for_start_1
+_for_end_1:
+ret
