@@ -51,7 +51,7 @@ func GenBBLList(IRCode []IRIns) {
 			bbl = addUseInfo(bbl)
 			BBLList = append(BBLList, bbl)
 			prevIndex = index
-		} else if ins.Typ == CBR || ins.Typ == JMP || ins.Typ == KEY || index == len(IRCode)-1 {
+		} else if isEndBlock(ins.Typ, ins.Op) || index == len(IRCode)-1 {
 			bbl := BBLEntry{Block: IRCode[prevIndex : index+1]}
 			bbl = addUseInfo(bbl)
 			BBLList = append(BBLList, bbl)
@@ -60,6 +60,11 @@ func GenBBLList(IRCode []IRIns) {
 			}
 		}
 	}
+}
+
+func isEndBlock(typ IRType, op IROp) bool {
+	return typ == CBR || typ == JMP ||
+		(typ == KEY && op != PARAM && op != SETRET && op != INC && op != DEC)
 }
 
 func isRegister(entry SymbolTableEntry) (*SymbolTableVariableEntry, bool) {
