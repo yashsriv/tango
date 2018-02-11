@@ -429,13 +429,6 @@ func genCode() {
 	for _, bbl := range BBLList {
 		Code += "# Begin Basic Block\n"
 		for i, ins := range bbl.Block {
-			if ins.Typ == LBL && i == 0 {
-				target := ins.Dst.(*SymbolTableTargetEntry).Target
-				if strings.HasPrefix(target, "_func") {
-					Code += "push %ebp\n"
-					Code += "movl %esp, %ebp\n"
-				}
-			}
 			arg1res, arg2res, dstres := getReg(ins, bbl.Info[i])
 
 			if i == len(bbl.Block)-1 && shouldPreSave(ins) {
@@ -443,6 +436,13 @@ func genCode() {
 			}
 
 			genOpCode(ins, pointerMap, [3]registerResult{arg1res, arg2res, dstres})
+			if ins.Typ == LBL && i == 0 {
+				target := ins.Dst.(*SymbolTableTargetEntry).Target
+				if strings.HasPrefix(target, "_func") {
+					Code += "push %ebp\n"
+					Code += "movl %esp, %ebp\n"
+				}
+			}
 
 			if i == len(bbl.Block)-1 && !shouldPreSave(ins) {
 				saveBBL()

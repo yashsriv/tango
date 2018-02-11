@@ -1,0 +1,12 @@
+main:
+=,ra,$2
+L1:
+=,rb,$7
++,ra,ra,rb
+brgt,#L1,$50,ra
+call,#_func_foo
+halt
+
+_func_foo:
+printi,ra
+ret
