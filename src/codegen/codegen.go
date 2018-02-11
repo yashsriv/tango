@@ -3,6 +3,7 @@ package codegen
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 // Code stores the assembly of our IR.
@@ -285,7 +286,7 @@ func genBOpCode(ins IRIns, regs [3]registerResult) {
 		valueString = ins.Arg2.SymbolTableString()
 	} else {
 		load(regs[1], ins.Arg2)
-		valueString = string(regs[0].Register)
+		valueString = string(regs[1].Register)
 	}
 
 	switch ins.Op {
@@ -415,6 +416,13 @@ func genCode() {
 	for _, bbl := range BBLList {
 		Code += "# Begin Basic Block\n"
 		for i, ins := range bbl.Block {
+			if ins.Typ == LBL && i == 0 {
+				target := ins.Dst.(*SymbolTableTargetEntry).Target
+				if strings.HasPrefix(target, "_func") {
+					Code += "push %ebp\n"
+					Code += "movl %esp, %ebp\n"
+				}
+			}
 			arg1res, arg2res, dstres := getReg(ins, bbl.Info[i])
 
 			if i == len(bbl.Block)-1 && shouldPreSave(ins) {
