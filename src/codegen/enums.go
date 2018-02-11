@@ -92,6 +92,8 @@ const (
 	DEC            = "dec"
 	PARAM          = "param"
 	RET            = "ret"
+	RETI           = "reti"
+	SETRET         = "setret"
 	HALT           = "halt"
 	PRINTINT       = "printi"
 	PRINTCHAR      = "printc"
@@ -122,8 +124,8 @@ func GetType(op IROp) IRType {
 		return UOP
 	}
 
-	if op == PARAM || op == CALL || op == RET ||
-		op == HALT || op == PRINTINT || op == PRINTCHAR ||
+	if op == PARAM || op == CALL || op == RET || op == RETI ||
+		op == SETRET || op == HALT || op == PRINTINT || op == PRINTCHAR ||
 		op == PRINTSTR || op == SCANINT || op == SCANCHAR ||
 		op == SCANSTR || op == INC || op == DEC {
 		return KEY

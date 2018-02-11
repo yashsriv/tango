@@ -10,6 +10,8 @@ import (
 var Code string
 var logicCounter int
 
+const returnRegister = "%eax"
+
 func spill(entries map[*SymbolTableVariableEntry]bool) {
 	for entry := range entries {
 		Code += fmt.Sprintf("movl %s, (%s)\n", addrDesc[entry].regLocation, entry.MemoryLocation)
@@ -74,7 +76,18 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 			load(regs[0], ins.Arg1)
 			Code += fmt.Sprintf("push %s\n", regs[0].Register)
 		}
+	case SETRET:
+		regDesc[returnRegister][ins.Arg1.(*SymbolTableVariableEntry)] = true
+		addrDesc[ins.Arg1.(*SymbolTableVariableEntry)] = address{
+			regLocation: returnRegister,
+			memLocation: "",
+		}
+	case RETI:
+		load(registerResult{Register: returnRegister}, ins.Arg1)
+		fallthrough
 	case RET:
+		Code += "movl %esp, %ebp\n"
+		Code += "pop %ebp\n"
 		Code += "ret\n"
 	case HALT:
 		Code += "call exit\n"
@@ -436,9 +449,7 @@ func genCode() {
 			}
 
 		}
-		for register := range regDesc {
-			regDesc[register] = make(map[*SymbolTableVariableEntry]bool)
-		}
+		clearBBL()
 		Code += "# End Basic Block\n"
 	}
 }
@@ -452,6 +463,20 @@ func genData() {
 		if variable, isVar := symbol.(*SymbolTableVariableEntry); isVar {
 			Code += fmt.Sprintf("%s: .long 0\n", variable.MemoryLocation)
 		}
+	}
+}
+
+func clearBBL() {
+	for _, variables := range regDesc {
+		for variable := range variables {
+			addrDesc[variable] = address{
+				regLocation: "",
+				memLocation: variable.MemoryLocation,
+			}
+		}
+	}
+	for register := range regDesc {
+		regDesc[register] = make(map[*SymbolTableVariableEntry]bool)
 	}
 }
 
