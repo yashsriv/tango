@@ -393,11 +393,8 @@ func genOpCode(ins IRIns, pointerMap map[*SymbolTableVariableEntry]*SymbolTableV
 		genKeyCode(ins, regs)
 	case ASN:
 		load(regs[0], ins.Arg1)
-		regDesc[regs[0].Register][ins.Dst.(*SymbolTableVariableEntry)] = true
-		addrDesc[ins.Dst.(*SymbolTableVariableEntry)] = address{
-			regLocation: regs[0].Register,
-			memLocation: "",
-		}
+		dst := ins.Dst.(*SymbolTableVariableEntry)
+		updateVariable(dst, regs[0].Register)
 	case LOP:
 		genLOpCode(ins, regs)
 	case SOP:

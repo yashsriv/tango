@@ -38,7 +38,13 @@ func assignHelper(uinfo map[*SymbolTableVariableEntry]UseInfo, dst *SymbolTableV
 		// return that register
 		if addrDesc[i].regLocation != "" {
 			cannotbeReplaced[addrDesc[i].regLocation] = uinfo[i].NextUse == -1
-			return registerResult{Register: addrDesc[i].regLocation}
+			currentMap := map[*SymbolTableVariableEntry]bool{}
+			for v := range regDesc[addrDesc[i].regLocation] {
+				if v != i {
+					currentMap[v] = true
+				}
+			}
+			return registerResult{Register: addrDesc[i].regLocation, Spill: currentMap}
 		}
 
 		for register, variable := range regDesc {
@@ -96,11 +102,7 @@ func assignHelper(uinfo map[*SymbolTableVariableEntry]UseInfo, dst *SymbolTableV
 
 		cannotbeReplaced[minScoreReg] = uinfo[i].NextUse == -1
 
-		if minScore != 0 {
-			return registerResult{Register: minScoreReg, Spill: regDesc[minScoreReg]}
-		}
-
-		return registerResult{Register: minScoreReg}
+		return registerResult{Register: minScoreReg, Spill: regDesc[minScoreReg]}
 	}
 
 }
@@ -190,9 +192,8 @@ func getReg(ins IRIns, uinfo map[*SymbolTableVariableEntry]UseInfo) (arg1res, ar
 	case LBL:
 		// Do Nothing
 	case ASN:
-		canReplace := ins.Dst != ins.Arg1
 		dst := ins.Dst.(*SymbolTableVariableEntry)
-		assignRegister := assignHelper(uinfo, dst, canReplace, make(map[MachineRegister]bool))
+		assignRegister := assignHelper(uinfo, dst, false, make(map[MachineRegister]bool))
 		arg1res = assignRegister(dst)
 		dstres = arg1res
 	case KEY:
