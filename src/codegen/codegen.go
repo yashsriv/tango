@@ -383,7 +383,7 @@ func genDOpCode(ins IRIns, regs [3]registerResult) {
 	updateVariable(dst, regs[2].Register)
 }
 
-func genOpCode(ins IRIns, pointerMap map[*SymbolTableVariableEntry]*SymbolTableVariableEntry, regs [3]registerResult) {
+func genOpCode(ins IRIns, regs [3]registerResult) {
 	switch ins.Typ {
 	case LBL:
 		Code += fmt.Sprintf("%s:\n", ins.Dst.(*SymbolTableTargetEntry).Target)
@@ -413,7 +413,13 @@ func genOpCode(ins IRIns, pointerMap map[*SymbolTableVariableEntry]*SymbolTableV
 }
 
 func genCode() {
-	pointerMap := make(map[*SymbolTableVariableEntry]*SymbolTableVariableEntry)
+	for _, symbol := range SymbolTable {
+		if variable, isVar := symbol.(*SymbolTableVariableEntry); isVar {
+			addrDesc[variable] = address{
+				memLocation: variable.MemoryLocation,
+			}
+		}
+	}
 
 	for _, bbl := range BBLList {
 		Code += "# Begin Basic Block\n"
@@ -424,7 +430,7 @@ func genCode() {
 				saveBBL()
 			}
 
-			genOpCode(ins, pointerMap, [3]registerResult{arg1res, arg2res, dstres})
+			genOpCode(ins, [3]registerResult{arg1res, arg2res, dstres})
 			if ins.Typ == LBL && i == 0 {
 				target := ins.Dst.(*SymbolTableTargetEntry).Target
 				if strings.HasPrefix(target, "_func") {

@@ -1,7 +1,7 @@
 _func_main:
 =,ra,$1
 =,rb,$1
-=,rc,$5
+scani,rc
 =,rd,$3
 _for_start_1:
 brgt,#_for_end_1,rc,rd
