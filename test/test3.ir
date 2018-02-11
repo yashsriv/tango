@@ -1,11 +1,11 @@
-main:
+_func_main:
 =,ra,$2
 L1:
 =,rb,$7
 +,ra,ra,rb
 brlte,#L1,$50,ra
 call,#_func_foo
-halt
+ret
 
 _func_foo:
 printi,ra

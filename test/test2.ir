@@ -1,13 +1,13 @@
-main:
+_func_main:
 =,ri,$0x10
 
-_for1:
-brlte,#_endfor1,$3,ri
+_for_start_1:
+brlte,#_for_end_1,$3,ri
 %,rj,ri,$3
 printi,rj
 printc,$10
 dec,ri
-jmp,#_for1
-_endfor1:
+jmp,#_for_start_1
+_for_end_1:
 
-halt
+ret

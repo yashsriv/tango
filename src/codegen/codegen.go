@@ -492,6 +492,10 @@ func genMisc() {
 	Code += `.section .text
 .globl main
 
+main:
+call _func_main
+call exit
+
 `
 }
 
