@@ -29,11 +29,9 @@ var regDesc = map[MachineRegister]map[*SymbolTableVariableEntry]bool{
 //Initialization of addrDesc
 var addrDesc = make(map[*SymbolTableVariableEntry]address)
 
-func assignHelper(uinfo map[*SymbolTableVariableEntry]UseInfo, dst *SymbolTableVariableEntry, canReplace bool) func(*SymbolTableVariableEntry) registerResult {
+func assignHelper(uinfo map[*SymbolTableVariableEntry]UseInfo, dst *SymbolTableVariableEntry, canReplace bool, cannotbeReplaced map[MachineRegister]bool) func(*SymbolTableVariableEntry) registerResult {
 
-	// Create a closure storing the value of cannot be replaced
-
-	cannotbeReplaced := make(map[MachineRegister]bool)
+	// Create a closure
 
 	return func(i *SymbolTableVariableEntry) registerResult {
 		// If variable to be assigned is already in a register
@@ -113,10 +111,52 @@ func getReg(ins IRIns, uinfo map[*SymbolTableVariableEntry]UseInfo) (arg1res, ar
 	instructionType := ins.Typ
 
 	switch instructionType {
+	case SOP:
+		fallthrough
+	case LOP:
+		fallthrough
+	case DOP:
+		arg1res = registerResult{
+			Register: "%eax",
+			Spill:    regDesc["%eax"],
+		}
+		// TODO: This could be optimized to take the lowest score register out of all registers
+		arg2res = registerResult{
+			Register: "%ebx",
+			Spill:    regDesc["%ebx"],
+		}
+		if ins.Op == DIV {
+			dstres = registerResult{
+				Register: "%eax",
+				Spill:    regDesc["%eax"],
+			}
+		} else {
+			dstres = registerResult{
+				Register: "%edx",
+				Spill:    regDesc["%edx"],
+			}
+		}
 	case BOP:
-		canReplace := ins.Dst != ins.Arg1 && ins.Dst != ins.Arg2
 		dst := ins.Dst.(*SymbolTableVariableEntry)
-		assignRegister := assignHelper(uinfo, dst, canReplace)
+		if ins.Op == BSL || ins.Op == BSR {
+			assignRegister := assignHelper(uinfo, nil, false, map[MachineRegister]bool{"%ecx": true})
+			if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
+				//  i is a SymbolTableRegister
+				arg1res = assignRegister(arg1)
+			}
+			dstres = assignRegister(dst)
+			if _, isRegister := ins.Arg2.(*SymbolTableVariableEntry); isRegister {
+				//  i is a SymbolTableRegister
+				arg2res = registerResult{
+					Register: "%ecx",
+					Spill:    regDesc["%ecx"],
+				}
+			}
+			return
+		}
+
+		canReplace := ins.Dst != ins.Arg1 && ins.Dst != ins.Arg2
+		assignRegister := assignHelper(uinfo, dst, canReplace, make(map[MachineRegister]bool))
 		if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg1res = assignRegister(arg1)
@@ -129,14 +169,14 @@ func getReg(ins IRIns, uinfo map[*SymbolTableVariableEntry]UseInfo) (arg1res, ar
 	case UOP:
 		canReplace := ins.Dst != ins.Arg1
 		dst := ins.Dst.(*SymbolTableVariableEntry)
-		assignRegister := assignHelper(uinfo, dst, canReplace)
+		assignRegister := assignHelper(uinfo, dst, canReplace, make(map[MachineRegister]bool))
 		if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg1res = assignRegister(arg1)
 		}
 		dstres = assignRegister(dst)
 	case CBR:
-		assignRegister := assignHelper(uinfo, nil, false)
+		assignRegister := assignHelper(uinfo, nil, false, make(map[MachineRegister]bool))
 		if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg1res = assignRegister(arg1)
@@ -152,11 +192,11 @@ func getReg(ins IRIns, uinfo map[*SymbolTableVariableEntry]UseInfo) (arg1res, ar
 	case ASN:
 		canReplace := ins.Dst != ins.Arg1
 		dst := ins.Dst.(*SymbolTableVariableEntry)
-		assignRegister := assignHelper(uinfo, dst, canReplace)
+		assignRegister := assignHelper(uinfo, dst, canReplace, make(map[MachineRegister]bool))
 		arg1res = assignRegister(dst)
 		dstres = arg1res
 	case KEY:
-		assignRegister := assignHelper(uinfo, nil, false)
+		assignRegister := assignHelper(uinfo, nil, false, make(map[MachineRegister]bool))
 		if !(ins.Op == RET || ins.Op == HALT) {
 			if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
 				//  i is a SymbolTableRegister

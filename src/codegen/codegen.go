@@ -5,7 +5,9 @@ import (
 	"log"
 )
 
+// Code stores the assembly of our IR.
 var Code string
+var logicCounter int
 
 func spill(entries map[*SymbolTableVariableEntry]bool) {
 	for entry := range entries {
@@ -41,34 +43,19 @@ func load(regres registerResult, memloc SymbolTableEntry) {
 	// Load the value onto the register
 	// can be a virtual register or a constant
 	if _memloc, isRegister := memloc.(*SymbolTableVariableEntry); isRegister {
-		Code += fmt.Sprintf("movl (%s), %s\n", _memloc.MemoryLocation, reg)
+		if addrDesc[_memloc].memLocation == "" {
+			Code += fmt.Sprintf("movl %s, %s\n", addrDesc[_memloc].regLocation, reg)
+			delete(regDesc[addrDesc[_memloc].regLocation], _memloc)
+		} else {
+			Code += fmt.Sprintf("movl (%s), %s\n", _memloc.MemoryLocation, reg)
+		}
 		regDesc[reg][_memloc] = true
 		addrDesc[_memloc] = address{
 			regLocation: reg,
-			memLocation: _memloc.MemoryLocation,
+			memLocation: addrDesc[_memloc].memLocation,
 		}
 	} else {
 		Code += fmt.Sprintf("movl %s, %s\n", memloc.(*SymbolTableLiteralEntry).SymbolTableString(), reg)
-	}
-}
-
-func bopCode(ins IRIns, regs [3]MachineRegister) {
-	Code += fmt.Sprintf("movl %s, %s", regs[1], regs[0])
-	switch ins.Op {
-	case ADD:
-		Code += fmt.Sprintf("add %s, %s", regs[2], regs[0])
-	case SUB:
-		Code += fmt.Sprintf("sub %s, %s", regs[2], regs[0])
-	case MUL:
-		Code += fmt.Sprintf("imul %s, %s", regs[2], regs[0])
-	case BSL:
-		Code += fmt.Sprintf("shl %s, %s", regs[2], regs[0])
-	case BSR:
-		Code += fmt.Sprintf("shr %s, %s", regs[2], regs[0])
-	}
-	addrDesc[ins.Dst.(*SymbolTableVariableEntry)] = address{
-		regLocation: regs[0],
-		memLocation: "",
 	}
 }
 
@@ -261,6 +248,135 @@ func genCBRCode(ins IRIns, regs [3]registerResult) {
 	}
 }
 
+func genSOpCode(ins IRIns, regs [3]registerResult) {
+	load(regs[0], ins.Arg1)
+	spill(regs[2].Spill)
+	Code += fmt.Sprintf("movl %s, %s\n", regs[0].Register, regs[2].Register)
+
+	var valueString string
+	if regs[1].Register == "" {
+		valueString = ins.Arg2.SymbolTableString()
+	} else {
+		load(regs[1], ins.Arg2)
+		valueString = "%cl"
+	}
+
+	switch ins.Op {
+	case BSL:
+		Code += fmt.Sprintf("shl %s, %s\n", valueString, regs[2].Register)
+	case BSR:
+		Code += fmt.Sprintf("shr %s, %s\n", valueString, regs[2].Register)
+	}
+
+	regDesc[regs[2].Register][ins.Dst.(*SymbolTableVariableEntry)] = true
+	addrDesc[ins.Dst.(*SymbolTableVariableEntry)] = address{
+		regLocation: regs[2].Register,
+		memLocation: "",
+	}
+}
+
+func genBOpCode(ins IRIns, regs [3]registerResult) {
+	load(regs[0], ins.Arg1)
+	spill(regs[2].Spill)
+	Code += fmt.Sprintf("movl %s, %s\n", regs[0].Register, regs[2].Register)
+
+	var valueString string
+	if regs[1].Register == "" {
+		valueString = ins.Arg2.SymbolTableString()
+	} else {
+		load(regs[1], ins.Arg2)
+		valueString = string(regs[0].Register)
+	}
+
+	switch ins.Op {
+	case ADD:
+		Code += fmt.Sprintf("addl %s, %s\n", valueString, regs[2].Register)
+	case SUB:
+		Code += fmt.Sprintf("subl %s, %s\n", valueString, regs[2].Register)
+	case MUL:
+		Code += fmt.Sprintf("imul %s, %s\n", valueString, regs[2].Register)
+	case AND:
+		fallthrough
+	case BAND:
+		Code += fmt.Sprintf("andl %s, %s\n", valueString, regs[2].Register)
+	case OR:
+		fallthrough
+	case BOR:
+		Code += fmt.Sprintf("orl %s, %s\n", valueString, regs[2].Register)
+	case XOR:
+		Code += fmt.Sprintf("xorl %s, %s\n", valueString, regs[2].Register)
+	}
+
+	regDesc[regs[2].Register][ins.Dst.(*SymbolTableVariableEntry)] = true
+	addrDesc[ins.Dst.(*SymbolTableVariableEntry)] = address{
+		regLocation: regs[2].Register,
+		memLocation: "",
+	}
+}
+
+func genLOpCode(ins IRIns, regs [3]registerResult) {
+	load(regs[0], ins.Arg1)
+	spill(regs[2].Spill)
+
+	var op1, op2 string
+	if regs[0].Register == "" {
+		op1 = ins.Arg1.SymbolTableString()
+	} else {
+		load(regs[0], ins.Arg1)
+		op1 = string(regs[0].Register)
+	}
+	if regs[1].Register == "" {
+		log.Fatalf("2nd Operand of cmp cannot be a constant")
+	} else {
+		load(regs[1], ins.Arg2)
+		op2 = string(regs[1].Register)
+	}
+	Code += fmt.Sprintf("cmpl %s, %s\n", op1, op2)
+
+	switch ins.Op {
+	case EQ:
+		Code += fmt.Sprintf("je _logic_start_%d\n", logicCounter)
+	case NEQ:
+		Code += fmt.Sprintf("jne _logic_start_%d\n", logicCounter)
+	case LT:
+		Code += fmt.Sprintf("jl _logic_start_%d\n", logicCounter)
+	case LTE:
+		Code += fmt.Sprintf("jle _logic_start_%d", logicCounter)
+	case GT:
+		Code += fmt.Sprintf("jg _logic_start_%d", logicCounter)
+	case GTE:
+		Code += fmt.Sprintf("jge _logic_start_%d", logicCounter)
+	}
+
+	Code += fmt.Sprintf("movl $0, %s\n", regs[2].Register)
+	Code += fmt.Sprintf("jmp _logic_end_%d", logicCounter)
+	Code += fmt.Sprintf("_logic_start_%d:", logicCounter)
+	Code += fmt.Sprintf("movl $1, %s\n", regs[2].Register)
+	Code += fmt.Sprintf("_logic_end_%d:", logicCounter)
+	logicCounter++
+	regDesc[regs[2].Register][ins.Dst.(*SymbolTableVariableEntry)] = true
+	addrDesc[ins.Dst.(*SymbolTableVariableEntry)] = address{
+		regLocation: regs[2].Register,
+		memLocation: "",
+	}
+}
+
+func genDOpCode(ins IRIns, regs [3]registerResult) {
+
+	load(regs[0], ins.Arg1)
+	load(regs[1], ins.Arg2)
+	spill(regDesc["%edx"])
+
+	Code += "movl $0, %edx\n"
+	Code += fmt.Sprintf("idiv %s\n", regs[1].Register)
+
+	regDesc[regs[2].Register][ins.Dst.(*SymbolTableVariableEntry)] = true
+	addrDesc[ins.Dst.(*SymbolTableVariableEntry)] = address{
+		regLocation: regs[2].Register,
+		memLocation: "",
+	}
+}
+
 func genOpCode(ins IRIns, pointerMap map[*SymbolTableVariableEntry]*SymbolTableVariableEntry, regs [3]registerResult) {
 	switch ins.Typ {
 	case LBL:
@@ -276,10 +392,18 @@ func genOpCode(ins IRIns, pointerMap map[*SymbolTableVariableEntry]*SymbolTableV
 			regLocation: regs[0].Register,
 			memLocation: "",
 		}
+	case LOP:
+		genLOpCode(ins, regs)
+	case SOP:
+		genSOpCode(ins, regs)
 	case UOP:
 		genUOpCode(ins, regs)
 	case CBR:
 		genCBRCode(ins, regs)
+	case BOP:
+		genBOpCode(ins, regs)
+	case DOP:
+		genDOpCode(ins, regs)
 	default:
 		log.Fatalf("Unhandled instruction: %s\n", ins.String())
 	}

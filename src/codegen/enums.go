@@ -8,6 +8,9 @@ const (
 	INV IRType = iota
 	LBL
 	BOP
+	LOP
+	SOP
+	DOP
 	UOP
 	CBR
 	JMP
@@ -23,23 +26,38 @@ const (
 	ADD  IROp = "+"
 	SUB       = "-"
 	MUL       = "*"
-	DIV       = "/"
-	REM       = "%"
-	BSL       = "<<"
-	BSR       = ">>"
-	AND       = "&&"
-	OR        = "||"
 	BAND      = "&"
 	BOR       = "|"
-	LT        = "<"
-	LTE       = "<="
-	GT        = ">"
-	GTE       = ">="
-	EQ        = "=="
-	NEQ       = "!="
 	XOR       = "^"
-	TAKE      = "take"
-	PUT       = "put"
+
+	// Handled same as BAND and BOR
+	AND = "&&"
+	OR  = "||"
+
+	TAKE = "take"
+	PUT  = "put"
+)
+
+// Division Operations
+const (
+	DIV = "/"
+	REM = "%"
+)
+
+// Shift Ops
+const (
+	BSL = "<<"
+	BSR = ">>"
+)
+
+// Logical Ops
+const (
+	LT  = "<"
+	LTE = "<="
+	GT  = ">"
+	GTE = ">="
+	EQ  = "=="
+	NEQ = "!="
 )
 
 // Unary Ops
@@ -111,13 +129,23 @@ func GetType(op IROp) IRType {
 		return KEY
 	}
 
+	if op == LT || op == LTE || op == GT ||
+		op == GTE || op == EQ || op == NEQ {
+		return LOP
+	}
+
+	if op == BSL || op == BSR {
+		return SOP
+	}
+
+	if op == DIV || op == REM {
+		return DOP
+	}
+
 	if op == ADD || op == SUB || op == MUL ||
-		op == DIV || op == REM || op == BSL ||
-		op == BSR || op == AND || op == OR ||
-		op == BAND || op == BOR || op == LT ||
-		op == LTE || op == GT || op == GTE ||
-		op == EQ || op == NEQ || op == XOR ||
-		op == TAKE || op == PUT {
+		op == AND || op == OR || op == BAND ||
+		op == BOR || op == XOR || op == TAKE ||
+		op == PUT {
 		return BOP
 	}
 

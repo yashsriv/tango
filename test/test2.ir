@@ -1,12 +1,12 @@
 main:
-=,ri,$0
+=,ri,$0x10
 
 _for1:
-brgte,#_endfor1,$3,ri
-neg,rj,ri
+brlte,#_endfor1,$3,ri
+%,rj,ri,$3
 printi,rj
 printc,$10
-inc,ri
+dec,ri
 jmp,#_for1
 _endfor1:
 

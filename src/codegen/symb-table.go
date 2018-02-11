@@ -89,7 +89,7 @@ func GetRegs(splitted []string, typ IRType, op IROp) (arg1, arg2, dst SymbolTabl
 		return
 	}
 
-	if typ == BOP || typ == CBR {
+	if typ == BOP || typ == CBR || typ == LOP || typ == SOP || typ == DOP {
 		if len(splitted) < 4 {
 			err = errors.New("Not enough args to a binary operand")
 			return
@@ -118,6 +118,8 @@ func GetRegs(splitted []string, typ IRType, op IROp) (arg1, arg2, dst SymbolTabl
 			}
 			arg1 = InsertToSymbolTable(splitted[1])
 		}
+	} else {
+		log.Fatalf("Unknown instruction type: %d, %s\n", typ, op)
 	}
 	return
 }
