@@ -3,7 +3,7 @@ main:
 L1:
 =,rb,$7
 +,ra,ra,rb
-brgt,#L1,$50,ra
+brlte,#L1,$50,ra
 call,#_func_foo
 halt
 
