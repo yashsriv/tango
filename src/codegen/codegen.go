@@ -86,7 +86,7 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 		load(registerResult{Register: returnRegister}, ins.Arg1)
 		fallthrough
 	case RET:
-		Code += "movl %esp, %ebp\n"
+		Code += "movl %ebp, %esp\n"
 		Code += "pop %ebp\n"
 		Code += "ret\n"
 	case HALT:
