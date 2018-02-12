@@ -493,6 +493,7 @@ func genMisc() {
 
 main:
 call _func_main
+push $0
 call exit
 
 `

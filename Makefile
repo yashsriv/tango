@@ -6,7 +6,7 @@ export GOBIN=$(current_dir)/bin
 GOCC := gorunpkg github.com/goccmack/gocc
 GOFLAGS :=
 
-.PHONY: all clean test
+.PHONY: all clean test runcode
 
 all: vendor bin/lexer bin/codegen
 
@@ -30,6 +30,12 @@ bin/codegen: src/main/codegen/codegen.go src/codegen/*.go
 src/lexer/lexer.go: src/tango.ebnf
 	@echo -e "\e[1;33mGenerating Lexer \e[0m"
 	cd $(current_dir)/src && $(GOCC) tango.ebnf
+
+runcode: bin/codegen
+	@echo -e "\e[1;33mGenerating Assembly \e[0m"
+	bin/codegen ${ARG} > out.S
+	@echo -e "\e[1;32mRunning Assembly \e[0m"
+	gcc -m32 out.S && ./a.out
 
 test:
 	go test $(GOFLAGS) src/lexer
