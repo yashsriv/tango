@@ -27,9 +27,9 @@ func main() {
 	var code []cg.IRIns
 
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := strings.TrimSpace(scanner.Text())
 
-		if strings.TrimSpace(line) == "" {
+		if line == "" {
 			continue
 		}
 
