@@ -1,13 +1,31 @@
 _func_main:
-=,ri,$0x10
-
-_for_start_1:
-brlte,#_for_end_1,$3,ri
-%,rj,ri,$3
-printi,rj
-printc,$10
-dec,ri
-jmp,#_for_start_1
-_for_end_1:
-
+  scani,rk
+  =,rn,$2
+  _for_start_1:
+    breq,#_for_end_1,rn,rk
+    call,#_func_is_prime
+    setret,rb
+    _if_start_2:
+      brneq,#_if_end_2,$1,rb
+      printi,rn
+      printc,$0x20
+    _if_end_2:
+    inc,rn
+    jmp,#_for_start_1
+  _for_end_1:
+  printc,$10
 ret
+
+_func_is_prime:
+  -,rm,rn,$1
+  _while_start_1:
+    breq,#_while_end_1,$1,rm
+    %,rt,rn,rm
+    _if_start_1:
+      brneq,#_if_end_1,$0,rt
+      reti,$0
+    _if_end_1:
+    dec,rm
+    jmp,#_while_start_1
+  _while_end_1:
+reti,$1
