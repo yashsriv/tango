@@ -1,6 +1,36 @@
 # tango
 The Abominably Naive Go Compiler
 
+## Building and Running
+
+In order to build this code, you need golang to be installed
+on your system.
+
+To install go, see: https://golang.org/doc/install#install
+
+After that, we need your `$GOPATH` to be set appropriately
+and `$GOPATH/bin` should be in your `$PATH`:
+
+```sh
+export GOPATH=/tmp
+export PATH=$PATH:$GOPATH/bin
+```
+
+Now install `dep` and `gorunpkg`:
+```sh
+go get github.com/golang/dep/cmd/dep
+go get github.com/Vektah/gorunpkg
+```
+
+After that, just `cd` into this folder and run:
+
+```
+make
+```
+
+to fetch the necessary libs and tools and to generate the lexer and codegen.
+
+
 ## Features
 
 Apart from the usual golang imperative features
@@ -201,7 +231,7 @@ param arg1   // Push to stack
 ret          // return from a function
 reti         // return a value from a function
 setret arg1  // set arg1 to return value of a function 
-halt         // halts the program
+halt         // halts the program. We can pass a status code by using param
 printi arg1  // Prints a
 printc arg1  // Prints a
 prints arg1  // Prints a
