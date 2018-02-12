@@ -10,8 +10,12 @@ type BBLEntry struct {
 
 func (b *BBLEntry) String() string {
 	repr := "\n<BBL Begin>\n"
-	for _, ins := range b.Block {
-		repr += fmt.Sprintf("%s\n", ins.String())
+	for i, ins := range b.Block {
+		nmap := map[string]UseInfo{}
+		for key, value := range b.Info[i] {
+			nmap[key.MemoryLocation] = value
+		}
+		repr += fmt.Sprintf("%s %v\n", ins.String(), nmap)
 	}
 	repr += "<BBL End>\n\n"
 	return repr
