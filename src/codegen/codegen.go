@@ -426,7 +426,7 @@ func genCode() {
 		for i, ins := range bbl.Block {
 			arg1res, arg2res, dstres := getReg(ins, bbl.Info[i])
 
-			if i == len(bbl.Block)-1 && shouldPreSave(ins) {
+			if i == len(bbl.Block)-1 && isEndBlock(ins.Typ, ins.Op) {
 				saveBBL()
 			}
 
@@ -439,7 +439,7 @@ func genCode() {
 				}
 			}
 
-			if i == len(bbl.Block)-1 && !shouldPreSave(ins) {
+			if i == len(bbl.Block)-1 && !isEndBlock(ins.Typ, ins.Op) {
 				saveBBL()
 			}
 
@@ -482,10 +482,6 @@ func saveBBL() {
 			if addrDesc[variable].memLocation == "" {
 				Code += fmt.Sprintf("movl %s, (%s)\n", register, variable.MemoryLocation)
 			}
-			addrDesc[variable] = address{
-				regLocation: "",
-				memLocation: variable.MemoryLocation,
-			}
 		}
 	}
 	// Code += "# Done Saving Stuff\n\n"
@@ -507,9 +503,4 @@ func GenerateASM() {
 	genMisc()
 	genCode()
 	genData()
-}
-
-func shouldPreSave(ins IRIns) bool {
-	return ins.Typ == CBR || ins.Typ == JMP ||
-		(ins.Typ == KEY && (ins.Op != PARAM && ins.Op != INC && ins.Op != DEC))
 }
