@@ -1,11 +1,8 @@
-_func_foo:
-*,rb,ra,$2
-reti,rb
-
 _func_main:
-scani,ra
-call,#_func_foo
-setret,rc
-printi,rc
-printc,$10
+  scani,rc
+  *,rf,rc,$9
+  /,rf,rf,$5
+  +,rf,rf,$32
+  printi,rf
+  printc,$10
 ret

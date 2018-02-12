@@ -1,24 +1,25 @@
 _func_main:
-scani,rc
+  scani,rc
 
-printi,$1
-printc,$0x20
-printi,$1
-printc,$0x20
+  printi,$1
+  printc,$0x20
+  printi,$1
+  printc,$0x20
 
-=,ra,$1
-=,rb,$1
-=,rd,$3
+  =,ra,$1
+  =,rb,$1
+  =,rd,$3
 
-_for_start_1:
-brgt,#_for_end_1,rc,rd
-+,re,ra,rb
-printi,re
-printc,$0x20
-=,ra,rb
-=,rb,re
-inc,rd
-jmp,#_for_start_1
-_for_end_1:
-printc,$10
+  _for_start_1:
+    brgt,#_for_end_1,rc,rd
+    +,re,ra,rb
+    printi,re
+    printc,$0x20
+    =,ra,rb
+    =,rb,re
+    inc,rd
+    jmp,#_for_start_1
+  _for_end_1:
+  printc,$10
+
 ret

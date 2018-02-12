@@ -9,4 +9,5 @@ ret
 
 _func_foo:
 printi,ra
+printc,$0xa
 ret

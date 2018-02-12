@@ -35,7 +35,7 @@ runcode: bin/codegen
 	@echo -e "\e[1;33mGenerating Assembly \e[0m"
 	bin/codegen ${ARG} > out.S
 	@echo -e "\e[1;32mRunning Assembly \e[0m"
-	gcc -m32 out.S && ./a.out
+	@gcc -m32 out.S && ./a.out
 
 test:
 	go test $(GOFLAGS) src/lexer
