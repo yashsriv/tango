@@ -22,7 +22,17 @@ go get github.com/golang/dep/cmd/dep
 go get github.com/Vektah/gorunpkg
 ```
 
-After that, just `cd` into this folder and run:
+After that ensure that the files are placed in `$GOPATH/src/tango`.
+
+For example, if we have submitted `asgn2.zip`, unzip it and then:
+```
+unzip asgn2.zip
+mv asgn2 $GOPATH/src/
+cd $GOPATH/src
+mv asgn2 tango
+```
+
+After that, just `cd` into the folder and run:
 
 ```
 make

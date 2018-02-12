@@ -40,6 +40,19 @@ runcode: bin/codegen
 test:
 	go test $(GOFLAGS) src/lexer
 
+asgn2: clean
+	mkdir -p asgn2
+	mkdir -p asgn2/src
+	mkdir -p asgn2/test
+	cp README.md asgn2/
+	cp Gopkg.lock asgn2/
+	cp Gopkg.toml asgn2/
+	cp Makefile asgn2/
+	cp -r src asgn2/
+	cp -r test asgn2/
+	zip -r asgn2 asgn2
+	rm -rf asgn2
+
 clean:
 	@echo -e "\e[1;31mCleaning Files \e[0m"
 	@echo -e "\e[1;31m  Clearing pkg and bin \e[0m"
