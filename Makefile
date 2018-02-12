@@ -45,6 +45,9 @@ clean:
 	@echo -e "\e[1;31m  Clearing pkg and bin \e[0m"
 	@rm -rf $(current_dir)/pkg $(current_dir)/bin/**
 	@echo -e "\e[1;31m  Clearing generated files \e[0m"
+	@rm -rf a.out
+	@rm -rf peda-session-*
+	@rm -rf *.S
 	@rm -rf $(current_dir)/src/util
 	@rm -rf $(current_dir)/src/token
 	@rm -rf $(current_dir)/src/lexer/lexer.go
