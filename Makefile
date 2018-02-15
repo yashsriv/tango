@@ -48,6 +48,7 @@ asgn2: clean
 	cp Gopkg.lock asgn2/
 	cp Gopkg.toml asgn2/
 	cp Makefile asgn2/
+	cp EffortSheet.pdf asgn2/
 	cp -r src asgn2/
 	cp -r test asgn2/
 	zip -r asgn2 asgn2

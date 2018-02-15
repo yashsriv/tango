@@ -9,7 +9,6 @@ import (
 // Code stores the assembly of our IR.
 var Code string
 var logicCounter int
-var divCounter int
 
 const returnRegister = "%eax"
 
@@ -378,13 +377,8 @@ func genDOpCode(ins IRIns, regs [3]registerResult) {
 	spill(regDesc["%edx"])
 
 	// We'll need to do sign extension
-	Code += "movl $0, %edx\n"
-	Code += "cmpl $0, %eax\n"
-	Code += fmt.Sprintf("jg _div_end_%d\n", divCounter)
-	Code += "movl $0xffffffff, %edx\n"
-	Code += fmt.Sprintf("_div_end_%d:", divCounter)
+	Code += "cltd\n"
 	Code += fmt.Sprintf("idiv %s\n", regs[1].Register)
-	divCounter++
 
 	dst := ins.Dst.(*SymbolTableVariableEntry)
 	updateVariable(dst, regs[2].Register)
