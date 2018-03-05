@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/olekukonko/tablewriter"
@@ -21,12 +20,11 @@ func main() {
 		fmt.Printf("Usage: %s <file name>\n", os.Args[0])
 		os.Exit(1)
 	}
-	input, err := ioutil.ReadFile(os.Args[1])
+	l, err := lexer.NewWrapperFile(os.Args[1])
 	if err != nil {
 		fmt.Printf("Unable to read file: %s\n", os.Args[1])
 		return
 	}
-	l := lexer.NewWrapper(input)
 	for tok := l.Scan(); tok.Type != token.EOF; tok = l.Scan() {
 		switch {
 		case tok.Type == token.INVALID:

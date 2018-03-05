@@ -1,5 +1,3 @@
-// +build !debug
-
 package lexer
 
 import (
@@ -14,15 +12,21 @@ type Wrapper struct {
 
 // NewWrapper returns a new lexer wrapper.
 func NewWrapper(src []byte) *Wrapper {
-	lexer := &Lexer{
-		src:    src,
-		pos:    0,
-		line:   1,
-		column: 1,
-	}
+	lexer := NewLexer(src)
 	return &Wrapper{
 		lexer: lexer,
 	}
+}
+
+// NewWrapperFile returns a new lexer wrapper on a file.
+func NewWrapperFile(fpath string) (*Wrapper, error) {
+	lexer, err := NewLexerFile(fpath)
+	if err != nil {
+		return nil, err
+	}
+	return &Wrapper{
+		lexer: lexer,
+	}, nil
 }
 
 // Scan returns the next token in the stream
@@ -30,8 +34,7 @@ func (w *Wrapper) Scan() (tok *token.Token) {
 	beforePos := w.lexer.pos
 	beforeLine := w.lexer.line
 	beforeCol := w.lexer.column
-	for tok = w.lexer.Scan(); tok.Type == token.TokMap.Type("comment"); tok = w.lexer.Scan() {
-	}
+	tok = w.lexer.Scan()
 	if w.lexer.line > beforeLine {
 		switch w.prevTokenType {
 		case token.TokMap.Type("identifier"):
