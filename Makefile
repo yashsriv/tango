@@ -8,7 +8,7 @@ GOFLAGS :=
 
 .PHONY: all clean test runcode
 
-all: vendor bin/lexer bin/codegen
+all: vendor bin/lexer bin/codegen bin/parser
 
 debug: GOFLAGS += -tags debug
 debug: all
@@ -27,8 +27,16 @@ bin/codegen: src/main/codegen/codegen.go src/codegen/*.go
 	@echo -e "\e[1;32mCompiling Codegen \e[0m"
 	go install $(GOFLAGS) $(current_dir)/src/main/codegen/codegen.go
 
+bin/parser: src/main/parser/parser.go src/parser/parser.go src/parser/*.go src/ast/*.go
+	@echo -e "\e[1;32mCompiling Parser \e[0m"
+	go install $(GOFLAGS) $(current_dir)/src/main/parser/parser.go
+
 src/lexer/lexer.go: src/tango.ebnf
 	@echo -e "\e[1;33mGenerating Lexer \e[0m"
+	cd $(current_dir)/src && $(GOCC) tango.ebnf
+
+src/parser/parser.go: src/tango.ebnf
+	@echo -e "\e[1;33mGenerating Parser \e[0m"
 	cd $(current_dir)/src && $(GOCC) tango.ebnf
 
 runcode: bin/codegen

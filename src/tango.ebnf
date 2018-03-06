@@ -87,3 +87,14 @@ label_op           : ':' ;
 stmt_end           : ';' ;
 comma              : ',' ;
 dot                : '.' ;
+
+/* Syntax Part */
+
+<< import "tango/src/ast" >>
+
+SourceFile     : PackageClause stmt_end                                    << ast.NewSourceFile($0) >>;
+
+PackageClause  : keyword_package PackageName                               << ast.NewPackageClause($1) >>
+               ;
+PackageName    : identifier                                                << ast.NewPackageName($0) >>
+               ;

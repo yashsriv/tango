@@ -1,10 +1,14 @@
 bin
 pkg
 vendor
+src/errors
 src/lexer/*
+src/parser
 src/token
 src/util
 !src/lexer/lexer_test.go
 !src/lexer/lexer_wrapper.go
 *.S
+*.dot
+*.html
 a.out

@@ -2,9 +2,46 @@
 
 
 [[projects]]
+  name = "github.com/awalterschulze/gographviz"
+  packages = [
+    ".",
+    "ast",
+    "internal/errors",
+    "internal/lexer",
+    "internal/parser",
+    "internal/token"
+  ]
+  revision = "c84395e536e1a1199093a4e6253d1bee99e4cd2a"
+  version = "v2.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/goccmack/gocc"
-  packages = [".","internal/ast","internal/config","internal/frontend/errors","internal/frontend/parser","internal/frontend/scanner","internal/frontend/token","internal/io","internal/lexer/gen/golang","internal/lexer/items","internal/lexer/symbols","internal/parser/first","internal/parser/gen","internal/parser/gen/golang","internal/parser/lr1/action","internal/parser/lr1/items","internal/parser/symbols","internal/token","internal/token/gen","internal/token/gen/golang","internal/util","internal/util/gen","internal/util/gen/golang"]
+  packages = [
+    ".",
+    "internal/ast",
+    "internal/config",
+    "internal/frontend/errors",
+    "internal/frontend/parser",
+    "internal/frontend/scanner",
+    "internal/frontend/token",
+    "internal/io",
+    "internal/lexer/gen/golang",
+    "internal/lexer/items",
+    "internal/lexer/symbols",
+    "internal/parser/first",
+    "internal/parser/gen",
+    "internal/parser/gen/golang",
+    "internal/parser/lr1/action",
+    "internal/parser/lr1/items",
+    "internal/parser/symbols",
+    "internal/token",
+    "internal/token/gen",
+    "internal/token/gen/golang",
+    "internal/util",
+    "internal/util/gen",
+    "internal/util/gen/golang"
+  ]
   revision = "cfc6e1223475ac3cf135f61e5b761bcb55ffe4a0"
 
 [[projects]]
@@ -22,6 +59,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ca33123de3e7a968898027fc17d849f095002588ba1eb6e7c2e929441ee9a252"
+  inputs-digest = "c6b238d1f878eebfd09a2afa96de17e2c644a92008cd4efd7020fc621d38e5f8"
   solver-name = "gps-cdcl"
   solver-version = 1
