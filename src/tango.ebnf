@@ -3,6 +3,8 @@
 _lineComment : '/' '/' {.} '\n' ;
 _blockComment : '/' '*' {. | '*'} '*' '/' ;
 
+/* Production Rules */
+
 _newline      : '\x0A' ;
 _ascii_char   : '\x00'-'\x09' | '\x0B'-'\x21' | '\x23'-'\x26' | '\x28'-'\x59' | '\x61'-'\xFF' ;
 _ascii_letter : 'a'-'z' | 'A'-'Z' ;
@@ -30,6 +32,8 @@ _escaped_char       : '\\' ( 'a' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' | '\\' | '"
 
 _raw_string_lit         : '`' { _ascii_char | '"' | '\'' | _newline } '`' ;
 _interpreted_string_lit : '"' { _ascii_value_string | _byte_value } '"' ;
+
+/* Lexical Part */
 
 keyword_break      : 'b' 'r' 'e' 'a' 'k' ;
 keyword_default    : 'd' 'e' 'f' 'a' 'u' 'l' 't' ;
@@ -92,9 +96,28 @@ dot                : '.' ;
 
 << import "tango/src/ast" >>
 
-SourceFile     : PackageClause stmt_end                                    << ast.NewSourceFile($0) >>;
+SourceFile     : PackageClause stmt_end | ImportList                       << ast.NewSourceFile($0) >>;
 
 PackageClause  : keyword_package PackageName                               << ast.NewPackageClause($1) >>
                ;
 PackageName    : identifier                                                << ast.NewPackageName($0) >>
                ;
+
+ImportList     : empty
+               | ImportList ImportDecl stmt_end
+               ;
+
+ImportDecl     : keyword_import ImportGrp;
+ImportGrp      : ImportSpec
+               | left_paren ImportList right_paren
+               ;
+ImportList     : empty
+               | ImportList ImportSpec stmt_end
+               ;
+
+ImportSpec     : ImportName ImportPath;
+ImportName     : empty
+               | dot
+               | PackageName
+               ;
+ImportPath     : string_literal ;
