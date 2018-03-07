@@ -14,14 +14,14 @@ type PackageName struct {
 	Value string
 }
 
-var _ ourAttrib = (*PackageName)(nil)
+// var _ ourAttrib = (*PackageName)(nil)
 
 // PackageClause represents a package clause
 type PackageClause struct {
 	Name *PackageName
 }
 
-var _ ourAttrib = (*PackageClause)(nil)
+// var _ ourAttrib = (*PackageClause)(nil)
 
 // GenGraph is used to generate a graph
 func (s *PackageName) GenGraph(g gographviz.Interface) string {

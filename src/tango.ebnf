@@ -96,11 +96,12 @@ dot                : '.' ;
 
 << import "tango/src/ast" >>
 
-SourceFile     : PackageClause stmt_end | ImportList                       << ast.NewSourceFile($0) >>;
-
-PackageClause  : keyword_package PackageName                               << ast.NewPackageClause($1) >>
+SourceFile     : PackageClause stmt_end                                    << ast.AddNode("SourceFile", $0, $1) >>
                ;
-PackageName    : identifier                                                << ast.NewPackageName($0) >>
+
+PackageClause  : keyword_package PackageName                               << ast.AddNode("PackageClause", $0, $1) >>
+               ;
+PackageName    : identifier                                                << ast.AddNode("PackageName", $0) >>
                ;
 
 ImportList     : empty

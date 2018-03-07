@@ -70,8 +70,9 @@ clean:
 	@rm -rf a.out
 	@rm -rf peda-session-*
 	@rm -rf *.S
-	@rm -rf $(current_dir)/src/util
-	@rm -rf $(current_dir)/src/token
+	@rm -rf $(current_dir)/src/util/litconv.go
+	@rm -rf $(current_dir)/src/util/rune.go
+	@rm -rf $(current_dir)/src/token/token.go
 	@rm -rf $(current_dir)/src/lexer/lexer.go
 	@rm -rf $(current_dir)/src/lexer/acttab.go
 	@rm -rf $(current_dir)/src/lexer/transitiontable.go

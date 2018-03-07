@@ -1,11 +1,8 @@
 package ast
 
 import (
-	"errors"
 	"fmt"
-
-	"github.com/awalterschulze/gographviz"
-	uuid "github.com/satori/go.uuid"
+	"tango/src/token"
 )
 
 // Attrib represents any generic element of the ast
@@ -13,32 +10,71 @@ type Attrib interface {
 }
 
 type ourAttrib interface {
-	GenGraph(gographviz.Interface) string
+	// GenGraph(gographviz.Interface) string
+	Name() string
+	GenOutput()
 }
 
-// SourceFile represents a source file
-type SourceFile struct {
-	PackageClause *PackageClause
+type Stack []Attrib
+
+func (s Stack) Empty() bool {
+	return len(s) == 0
 }
 
-var _ ourAttrib = (*SourceFile)(nil)
-
-// GenGraph is used to generate a graph
-func (s *SourceFile) GenGraph(g gographviz.Interface) string {
-	u1 := fmt.Sprintf("%q", uuid.NewV4().String())
-	g.AddNode("main", u1, map[string]string{"label": "SourceFile"})
-	child := s.PackageClause.GenGraph(g)
-	g.AddEdge(u1, child, true, nil)
-	return u1
+func (s Stack) Push(v Attrib) Stack {
+	return append(s, v)
 }
 
-// NewSourceFile creates a new source file
-func NewSourceFile(a Attrib) (Attrib, error) {
-	packageClause, ok := a.(*PackageClause)
-	if !ok {
-		return nil, errors.New("Expected a package clause")
+func (s Stack) Pop() (Stack, Attrib) {
+	l := len(s)
+	return s[:l-1], s[l-1]
+}
+
+func (s Stack) String() string {
+	str := ""
+	for _, value := range s {
+		switch v := value.(type) {
+		case *token.Token:
+			str += fmt.Sprintf("%q ", v)
+		default:
+			str += fmt.Sprintf("%s ", v)
+		}
 	}
-	return &SourceFile{
-		PackageClause: packageClause,
-	}, nil
+	return str
+}
+
+// Node represents a node
+type Node struct {
+	name     string
+	Children []ourAttrib
+}
+
+func (n Node) String() string {
+	return n.name
+}
+
+var Derivations map[*Node]Stack
+
+func init() {
+	Derivations = make(map[*Node]Stack)
+}
+
+// AddNode creates a node
+func AddNode(name string, attribs ...Attrib) (Attrib, error) {
+	node := &Node{
+		name: name,
+	}
+	Derivations[node] = attribs
+	return node, nil
+}
+
+func (n *Node) Name() string {
+	return n.name
+}
+
+func (n *Node) GenOutput() {
+	for _, val := range n.Children {
+		fmt.Printf("%s => %s\n", n.Name(), val.Name())
+		val.GenOutput()
+	}
 }
