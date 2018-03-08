@@ -11,13 +11,6 @@ import (
 	"tango/src/token"
 )
 
-func reverseSlice(input ast.Stack) ast.Stack {
-	if len(input) == 0 {
-		return input
-	}
-	return append(reverseSlice(input[1:]), input[0])
-}
-
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Printf("Usage: %s <file name>\n", os.Args[0])
@@ -34,27 +27,20 @@ func main() {
 		panic(err)
 	}
 	sourceFile, ok := st.(*ast.Node)
-	if !ok {
+	if !ok || sourceFile.String() != "SourceFile" {
 		panic("Expected a Source File")
 	}
 
-	outFile, err := os.Create("file1.html")
-	if err != nil {
-		panic(err)
-	}
-	defer outFile.Close()
+	genOutput(sourceFile)
+}
 
-	// sourceFile.GenOutput()
-
-	// fmt.Println(ast.Nodes)
-
+func genOutput(sourceFile *ast.Node) {
 	prefix := make(ast.Stack, 0)
 	suffix := make(ast.Stack, 0)
 
 	prev := sourceFile
 	derivation := ast.Derivations[sourceFile]
 	for {
-		// fmt.Println(prev, prefix, derivation, reverseSlice(suffix))
 		revsuffix := reverseSlice(suffix)
 		fmt.Printf("%s _%s_ %s => %s %s %s\n", prefix, prev, revsuffix, prefix, derivation, revsuffix)
 		found := false
@@ -76,7 +62,7 @@ func main() {
 					prefix = prefix.Push(v)
 				}
 			default:
-				log.Fatalf("%T\n", v)
+				log.Fatalf("Unknown type: %T\n", v)
 			}
 		}
 		if !found {
@@ -92,6 +78,8 @@ func main() {
 					prev = v
 					next = ast.Derivations[v]
 					goto done
+				default:
+					log.Fatalf("Unknown type: %T\n", v)
 				}
 			}
 		}
@@ -102,4 +90,11 @@ func main() {
 		derivation = next
 	}
 	fmt.Println(reverseSlice(suffix))
+}
+
+func reverseSlice(input ast.Stack) ast.Stack {
+	if len(input) == 0 {
+		return input
+	}
+	return append(reverseSlice(input[1:]), input[0])
 }

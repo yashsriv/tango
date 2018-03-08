@@ -2,19 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/awalterschulze/gographviz"
-  packages = [
-    ".",
-    "ast",
-    "internal/errors",
-    "internal/lexer",
-    "internal/parser",
-    "internal/token"
-  ]
-  revision = "c84395e536e1a1199093a4e6253d1bee99e4cd2a"
-  version = "v2.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/goccmack/gocc"
   packages = [
@@ -59,6 +46,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c6b238d1f878eebfd09a2afa96de17e2c644a92008cd4efd7020fc621d38e5f8"
+  inputs-digest = "ca33123de3e7a968898027fc17d849f095002588ba1eb6e7c2e929441ee9a252"
   solver-name = "gps-cdcl"
   solver-version = 1
