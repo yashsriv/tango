@@ -2,7 +2,9 @@ package ast
 
 import (
 	"fmt"
-	"go/token"
+	"log"
+
+	"tango/src/token"
 )
 
 // Stack represents an array of Attribs which can also be used as a stack
@@ -30,8 +32,10 @@ func (s Stack) String() string {
 		switch v := value.(type) {
 		case *token.Token:
 			str += fmt.Sprintf("%q ", v)
+		case *Node:
+			str += fmt.Sprintf("%s", v)
 		default:
-			str += fmt.Sprintf("%s ", v)
+			log.Fatalf("Unknown type: %T", v)
 		}
 	}
 	return str

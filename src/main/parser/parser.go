@@ -39,12 +39,12 @@ func genOutput(sourceFile *ast.Node) {
 	suffix := make(ast.Stack, 0)
 
 	prev := sourceFile
-	derivation := ast.Derivations[sourceFile]
-	for {
+	found := true
+	for found {
+		derivation := ast.Derivations[prev]
 		revsuffix := reverseSlice(suffix)
 		fmt.Printf("%s _%s_ %s => %s %s %s\n", prefix, prev, revsuffix, prefix, derivation, revsuffix)
-		found := false
-		var next []ast.Attrib
+		found = false
 		for i := len(derivation) - 1; i >= 0; i-- {
 			switch v := derivation[i].(type) {
 			case *token.Token:
@@ -57,7 +57,6 @@ func genOutput(sourceFile *ast.Node) {
 				if !found {
 					found = true
 					prev = v
-					next = ast.Derivations[v]
 				} else {
 					prefix = prefix.Push(v)
 				}
@@ -76,18 +75,12 @@ func genOutput(sourceFile *ast.Node) {
 				case *ast.Node:
 					found = true
 					prev = v
-					next = ast.Derivations[v]
-					goto done
+					continue
 				default:
 					log.Fatalf("Unknown type: %T\n", v)
 				}
 			}
 		}
-	done:
-		if !found {
-			break
-		}
-		derivation = next
 	}
 	fmt.Println(reverseSlice(suffix))
 }
