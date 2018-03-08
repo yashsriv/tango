@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"os"
+	"path/filepath"
+	"runtime"
 
 	"tango/src/ast"
 	"tango/src/lexer"
@@ -35,9 +38,9 @@ func main() {
 }
 
 type entry struct {
-	prefix     ast.Stack
-	suffix     ast.Stack
-	node       *ast.Node
+	Prefix     ast.Stack
+	Suffix     ast.Stack
+	Node       *ast.Node
 	derivation ast.Stack
 }
 
@@ -50,19 +53,19 @@ func genOutput(sourceFile *ast.Node) {
 	prev := sourceFile
 	found := true
 	for found {
-		revsuffix := reverseSlice(suffix)
+		// fmt.Println("["+prefix.String()+"]", prev, "["+suffix.String()+"]")
 		entries = append(entries, entry{
-			prefix:     prefix,
-			node:       prev,
-			suffix:     revsuffix,
+			Prefix:     prefix,
+			Node:       prev,
+			Suffix:     reverseSlice(suffix),
 			derivation: ast.Derivations[prev],
 		})
 		found, prev, prefix, suffix = findNext(prefix, prev, suffix)
 	}
 	entries = append(entries, entry{
-		prefix:     prefix,
-		node:       nil,
-		suffix:     reverseSlice(suffix),
+		Prefix:     prefix,
+		Node:       nil,
+		Suffix:     reverseSlice(suffix),
 		derivation: ast.Stack{},
 	})
 
@@ -72,17 +75,29 @@ func genOutput(sourceFile *ast.Node) {
 func outputFormatting(entries []entry) {
 	// TODO: Load a template html file and populate it
 	// See https://astaxie.gitbooks.io/build-web-application-with-golang/en/07.4.html
-	// _, filename, _, _ := runtime.Caller(1)
-	// f, err := os.Open(path.Join(path.Dir(filename), "data.csv"))
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println(filepath.Join(filepath.Dir(filename), "templ.html"))
+	_, filename, _, _ := runtime.Caller(1)
+	templName := filepath.Join(filepath.Dir(filename), "templ.html")
+	t, err := template.ParseFiles(templName)
+	if err != nil {
+		panic(err)
+	}
+
+	f, err := os.Create("./file1.html")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	err = t.Execute(f, entries)
+	if err != nil {
+		panic(err)
+	}
+
+	f.Sync()
 
 	for _, val := range entries {
-		fmt.Printf("%s _%s_ %s\n", val.prefix, val.node, val.suffix)
+		fmt.Printf("%s _%s_ %s\n", val.Prefix, val.Node, val.Suffix)
 	}
-	fmt.Println("$")
 }
 
 func findNext(prefix ast.Stack, prev *ast.Node, suffix ast.Stack) (bool, *ast.Node, ast.Stack, ast.Stack) {

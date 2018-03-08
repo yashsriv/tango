@@ -13,4 +13,5 @@ src/util
 *.S
 *.dot
 *.html
+!src/main/parser/templ.html
 a.out
