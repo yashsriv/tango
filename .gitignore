@@ -7,6 +7,7 @@ src/parser
 src/token
 src/util
 !src/util/stack.go
+!src/token/token_helper.go
 !src/lexer/lexer_test.go
 !src/lexer/lexer_wrapper.go
 *.S
