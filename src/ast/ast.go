@@ -9,7 +9,10 @@ type Node struct {
 	name string
 }
 
-func (n Node) String() string {
+func (n *Node) String() string {
+	if n == nil {
+		return ""
+	}
 	return n.name
 }
 
