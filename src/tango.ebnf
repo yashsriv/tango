@@ -96,7 +96,7 @@ dot                : '.' ;
 
 << import "tango/src/ast" >>
 
-SourceFile     : PackageClause stmt_end                                    << ast.AddNode("SourceFile", $0, $1) >>
+SourceFile     : PackageClause stmt_end ImportDecl                         << ast.AddNode("SourceFile", $0, $1, $2) >>
                ;
 
 PackageClause  : keyword_package PackageName                               << ast.AddNode("PackageClause", $0, $1) >>
@@ -104,21 +104,21 @@ PackageClause  : keyword_package PackageName                               << as
 PackageName    : identifier                                                << ast.AddNode("PackageName", $0) >>
                ;
 
-ImportList     : empty
-               | ImportList ImportDecl stmt_end
-               ;
 
-ImportDecl     : keyword_import ImportGrp;
-ImportGrp      : ImportSpec
-               | left_paren ImportList right_paren
+ImportPath     : string_literal                                            << ast.AddNode("ImportPath", $0) >>
                ;
-ImportList     : empty
-               | ImportList ImportSpec stmt_end
+ImportName     : empty                                                     << ast.AddNode("ImportName") >>
+               | dot                                                       << ast.AddNode("ImportName", $0) >>
+               | PackageName                                               << ast.AddNode("ImportName", $0) >>
                ;
-
-ImportSpec     : ImportName ImportPath;
-ImportName     : empty
-               | dot
-               | PackageName
+ImportSpec     : ImportName ImportPath                                     << ast.AddNode("ImportSpec", $0, $1) >>
                ;
-ImportPath     : string_literal ;
+ImportList     : empty                                                     << ast.AddNode("ImportList") >>
+               | ImportList ImportSpec stmt_end                            << ast.AddNode("ImportList", $0, $1, $2) >>
+               ;
+ImportGrp      : ImportSpec                                                << ast.AddNode("ImportGrp", $0) >>
+               | left_paren ImportList right_paren                         << ast.AddNode("ImportGrp", $0, $1, $2) >>
+               ;
+ImportDecl     : empty                                                     << ast.AddNode("ImportDecl") >>
+               | keyword_import ImportGrp stmt_end                         << ast.AddNode("ImportDecl", $0, $1, $2) >>
+               ;

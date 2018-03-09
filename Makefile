@@ -27,7 +27,7 @@ bin/codegen: src/main/codegen/codegen.go src/codegen/*.go
 	@echo -e "\e[1;32mCompiling Codegen \e[0m"
 	go install $(GOFLAGS) $(current_dir)/src/main/codegen/codegen.go
 
-bin/parser: src/main/parser/parser.go src/parser/parser.go src/parser/*.go src/ast/*.go
+bin/parser: src/main/parser/parser.go src/parser/parser.go src/parser/*.go src/ast/*.go src/html/*.go
 	@echo -e "\e[1;32mCompiling Parser \e[0m"
 	go install $(GOFLAGS) $(current_dir)/src/main/parser/parser.go
 

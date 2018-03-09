@@ -29,18 +29,20 @@ func (s Stack) Pop() (Stack, Attrib) {
 func (s Stack) String() string {
 	str := ""
 	for i, value := range s {
+		newline := false
 		switch v := value.(type) {
 		case *token.Token:
 			str += fmt.Sprintf("%q", v)
 			if token.TokMap.Type("stmt_end") == v.Type {
 				str += "\n"
+				newline = true
 			}
 		case *Node:
 			str += fmt.Sprintf("%s", v)
 		default:
 			log.Fatalf("Unknown type: %T", v)
 		}
-		if i != len(s)-1 {
+		if i != len(s)-1 && !newline {
 			str += " "
 		}
 	}

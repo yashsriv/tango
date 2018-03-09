@@ -2,16 +2,12 @@ package main
 
 import (
 	"fmt"
-	"html/template"
-	"log"
 	"os"
-	"path/filepath"
-	"runtime"
 
 	"tango/src/ast"
+	"tango/src/html"
 	"tango/src/lexer"
 	"tango/src/parser"
-	"tango/src/token"
 )
 
 func main() {
@@ -37,49 +33,41 @@ func main() {
 	genOutput(sourceFile)
 }
 
-type entry struct {
-	Prefix     ast.Stack
-	Suffix     ast.Stack
-	Node       *ast.Node
-	derivation ast.Stack
-}
-
 func genOutput(sourceFile *ast.Node) {
-	prefix := make(ast.Stack, 0)
-	suffix := make(ast.Stack, 0)
 
-	entries := make([]entry, 0)
+	entries := make([]html.Entry, 0)
 
-	prev := sourceFile
+	derivations := ast.Stack{sourceFile}
 	found := true
+	// prev := sourceFile
 	for found {
 		// fmt.Println("["+prefix.String()+"]", prev, "["+suffix.String()+"]")
-		entries = append(entries, entry{
-			Prefix:     prefix,
-			Node:       prev,
-			Suffix:     reverseSlice(suffix),
-			derivation: ast.Derivations[prev],
-		})
-		found, prev, prefix, suffix = findNext(prefix, prev, suffix)
-	}
-	entries = append(entries, entry{
-		Prefix:     prefix,
-		Node:       nil,
-		Suffix:     reverseSlice(suffix),
-		derivation: ast.Stack{},
-	})
-
-	outputFormatting(entries)
-}
-
-func outputFormatting(entries []entry) {
-	// TODO: Load a template html file and populate it
-	// See https://astaxie.gitbooks.io/build-web-application-with-golang/en/07.4.html
-	_, filename, _, _ := runtime.Caller(1)
-	templName := filepath.Join(filepath.Dir(filename), "templ.html")
-	t, err := template.ParseFiles(templName)
-	if err != nil {
-		panic(err)
+		var index int
+		found, index = findNext(derivations)
+		if found {
+			entries = append(entries, html.Entry{
+				Prefix: derivations[:index],
+				Node:   derivations[index].(*ast.Node),
+				Suffix: derivations[index+1:],
+			})
+			newderivations := make(ast.Stack, 0)
+			for _, v := range derivations[:index] {
+				newderivations = append(newderivations, v)
+			}
+			for _, v := range ast.Derivations[derivations[index].(*ast.Node)] {
+				newderivations = append(newderivations, v)
+			}
+			for _, v := range derivations[index+1:] {
+				newderivations = append(newderivations, v)
+			}
+			derivations = newderivations
+		} else {
+			entries = append(entries, html.Entry{
+				Prefix: derivations,
+				Node:   nil,
+				Suffix: ast.Stack{},
+			})
+		}
 	}
 
 	f, err := os.Create("./file1.html")
@@ -88,59 +76,20 @@ func outputFormatting(entries []entry) {
 	}
 	defer f.Close()
 
-	err = t.Execute(f, entries)
-	if err != nil {
-		panic(err)
-	}
+	html.Output(entries, f)
 
 	f.Sync()
 
-	for _, val := range entries {
-		fmt.Printf("%s _%s_ %s\n", val.Prefix, val.Node, val.Suffix)
-	}
 }
 
-func findNext(prefix ast.Stack, prev *ast.Node, suffix ast.Stack) (bool, *ast.Node, ast.Stack, ast.Stack) {
-	derivation := ast.Derivations[prev]
-	found := false
-	for i := len(derivation) - 1; i >= 0; i-- {
-		switch v := derivation[i].(type) {
-		case *token.Token:
-			if !found {
-				suffix = suffix.Push(v)
-			} else {
-				prefix = prefix.Push(v)
-			}
+func findNext(derivations ast.Stack) (bool, int) {
+	for i := len(derivations) - 1; i >= 0; i-- {
+		switch derivations[i].(type) {
 		case *ast.Node:
-			if !found {
-				found = true
-				prev = v
-			} else {
-				prefix = prefix.Push(v)
-			}
-		default:
-			log.Fatalf("Unknown type: %T\n", v)
+			return true, i
 		}
 	}
-	if !found {
-		for !prefix.Empty() {
-			var attrib ast.Attrib
-			prefix, attrib = prefix.Pop()
-
-			switch v := attrib.(type) {
-			case *token.Token:
-				suffix = suffix.Push(v)
-			case *ast.Node:
-				found = true
-				prev = v
-				goto done
-			default:
-				log.Fatalf("Unknown type: %T\n", v)
-			}
-		}
-	}
-done:
-	return found, prev, prefix, suffix
+	return false, -1
 }
 
 func reverseSlice(input ast.Stack) ast.Stack {
