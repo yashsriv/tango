@@ -13,5 +13,6 @@ src/util
 *.S
 *.dot
 *.html
-!src/main/parser/templ.html
+!src/main/parser/main_templ.html
+!src/main/parser/stack_templ.html
 a.out

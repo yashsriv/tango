@@ -1,0 +1,11 @@
+{{ range . }}
+{{ if .|isToken }}
+<span class="token">{{ . }}</span>
+{{ if eq (print .) ";" }}
+<br>
+{{ end }}
+{{ end }}
+{{ if .|isNode }}
+<span class="node">{{ . }}</span>
+{{ end }}
+{{ end }}
