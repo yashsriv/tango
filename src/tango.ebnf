@@ -96,7 +96,7 @@ dot                : '.' ;
 
 << import "tango/src/ast" >>
 
-SourceFile     : PackageClause stmt_end ImportDecl                         << ast.AddNode("SourceFile", $0, $1, $2) >>
+SourceFile     : PackageClause stmt_end ImportDeclList TopLevelDeclList     << ast.AddNode("SourceFile", $0, $1, $2, $3) >>
                ;
 
 PackageClause  : keyword_package PackageName                               << ast.AddNode("PackageClause", $0, $1) >>
@@ -120,5 +120,160 @@ ImportGrp      : ImportSpec                                                << as
                | left_paren ImportList right_paren                         << ast.AddNode("ImportGrp", $0, $1, $2) >>
                ;
 ImportDecl     : empty                                                     << ast.AddNode("ImportDecl") >>
-               | keyword_import ImportGrp stmt_end                         << ast.AddNode("ImportDecl", $0, $1, $2) >>
+               | keyword_import ImportGrp                                  << ast.AddNode("ImportDecl", $0, $1) >>
                ;
+ImportDeclList : empty                                                     << ast.AddNode("ImportDeclList") >>
+               | ImportDeclList ImportDecl stmt_end                        << ast.AddNode("ImportDeclList", $0, $1, $2) >>
+               ;
+
+TopLevelDeclList : empty                                                   << ast.AddNode("TopLevelDeclList") >>
+                 | TopLevelDeclList TopLevelDecl stmt_end                 << ast.AddNode("TopLevelDeclList", $0, $1, $2) >>
+                 ;
+
+TopLevelDecl : Declaration                                                << ast.AddNode("TopLevelDecl", $0) >>
+             ;
+
+Declaration : ConstDecl                                                   << ast.AddNode("Declaration", $0) >>
+            ;
+
+ConstDecl : keyword_const ConstGroup                                      << ast.AddNode("ConstDecl", $0, $1) >>
+          ;
+
+ConstGroup : ConstSpec                                                    << ast.AddNode("ConstGroup", $0) >>
+           | left_paren ConstSpecList right_paren                         << ast.AddNode("ConstGroup", $0, $1, $2) >>
+           ;
+
+ConstSpecList : empty                                                     << ast.AddNode("ConstSpecList") >>
+              | ConstSpecList ConstSpec stmt_end                          << ast.AddNode("ConstSpecList", $0, $1, $2) >>
+              ;
+
+ConstSpec : IdentifierList Type "=" IdentifierList             << ast.AddNode("ConstSpec", $0, $1, $2, $3) >>
+          ;
+
+IdentifierList : identifier                                               << ast.AddNode("IdentifierList", $0) >>
+               | IdentifierList comma identifier                          << ast.AddNode("IdentifierList", $0, $1, $2) >>
+               ;
+
+Type      : TypeName                                                      << ast.AddNode("Type", $0) >>
+          | TypeLit                                                       << ast.AddNode("Type", $0) >>
+          | left_paren Type right_paren                                   << ast.AddNode("Type", $0, $1, $2) >>
+          ;
+
+TypeName  : identifier                                                    << ast.AddNode("TypeName", $0) >>
+          | QualifiedIdent                                                << ast.AddNode("TypeName", $0) >>
+          ;
+
+TypeLit   : ArrayType                                                     << ast.AddNode("TypeLit", $0) >>
+          | StructType                                                    << ast.AddNode("TypeLit", $0) >>  
+          | PointerType                                                   << ast.AddNode("TypeLit", $0) >>
+          | FunctionType                                                  << ast.AddNode("TypeLit", $0) >>
+          | InterfaceType                                                 << ast.AddNode("TypeLit", $0) >>
+          | SliceType                                                     << ast.AddNode("TypeLit", $0) >>
+          | MapType                                                       << ast.AddNode("TypeLit", $0) >>
+          ;
+
+ArrayType   : left_sq_paren ArrayLength right_sq_paren ElementType        << ast.AddNode("ArrayType", $0, $1, $2, $3) >>
+            ;
+
+ArrayLength : int_lit                                                     << ast.AddNode("ArrayLength", $0) >>
+            ;
+
+ElementType : Type                                                        << ast.AddNode("ElementType", $0) >>
+            ;
+
+SliceType : left_sq_paren right_sq_paren ElementType                      << ast.AddNode("SliceType", $0, $1, $2) >>
+          ;
+
+StructType    : keyword_struct left_block_bracket FieldDeclList right_block_bracket << ast.AddNode("StructType", $0, $1, $2, $3) >>
+              ;
+
+FieldDeclList : empty                                                     << ast.AddNode("FieldDeclList") >>
+              | FieldDeclList FieldDecl stmt_end                          << ast.AddNode("FieldDeclList", $0, $1, $2) >>
+              ;
+
+FieldDecl     : IdentifierList Type                                      << ast.AddNode("FieldDecl", $0, $1) >>
+              | EmbeddedField                                            << ast.AddNode("FieldDecl", $0) >>
+              ;
+
+EmbeddedField : OptStar TypeName                                         << ast.AddNode("EmbeddedField", $0, $1) >>
+              ;
+
+OptStar : empty                                                          << ast.AddNode("OptStar") >>
+        | "*"                                                            << ast.AddNode("OptStar", $0) >>
+        ;
+
+PointerType : "*" BaseType                                               << ast.AddNode("PointerType", $0, $1) >>
+            ;
+
+BaseType    : Type                                                       << ast.AddNode("BaseType", $0) >>
+            ;
+
+FunctionType   : keyword_func Signature                                  << ast.AddNode("FunctionType", $0, $1) >>
+               ;
+
+Signature      : Parameters ParametersList OptResult                     << ast.AddNode("Signature", $0, $1, $2) >>
+               ;
+
+ParametersList : empty                                                   << ast.AddNode("ParametersList") >>
+               | ParametersList Parameters                               << ast.AddNode("ParametersList", $0, $1) >>
+               ;
+
+OptResult : empty                                                        << ast.AddNode("OptResult") >>
+          | Result                                                       << ast.AddNode("OptResult", $0) >>
+          ;
+
+Result         : Type                                                    << ast.AddNode("Result", $0) >>
+               ;
+
+Parameters     : left_paren OptParameterList right_paren                 << ast.AddNode("Parameters", $0, $1, $2) >>
+               ;
+
+OptParameterList : empty                                                 << ast.AddNode("OptParameterList") >>
+                 | ParameterList OptComma                                << ast.AddNode("OptParameterList", $0, $1) >>
+                 ;
+
+OptComma : empty                                                         << ast.AddNode("OptComma") >>
+         | comma                                                         << ast.AddNode("OptComma", $0) >>
+         ;
+
+ParameterList  : ParameterDecl                                           << ast.AddNode("ParameterList", $0) >>
+               | ParameterList comma ParameterDecl                       << ast.AddNode("ParameterList", $0, $1, $2) >>
+               ;
+
+ParameterDecl  : OptIdentifierList OptSpread Type                        << ast.AddNode("ParameterDecl", $0, $1, $2) >>
+               ;
+
+OptIdentifierList : empty                                                << ast.AddNode("OptIdentifierList") >>
+                  | IdentifierList                                       << ast.AddNode("OptIdentifierList", $0) >>
+                  ;
+
+OptSpread : empty                                                        << ast.AddNode("OptSpread") >>
+          | spread_op                                                    << ast.AddNode("OptSpread", $0) >>
+          ;
+
+InterfaceType      : keyword_interface left_block_bracket MethodSpecList right_block_bracket << ast.AddNode("InterfaceType", $0, $1, $2, $3) >>
+                   ;
+
+MethodSpecList : empty                                                   << ast.AddNode("MethodSpecList") >>
+               | MethodSpecList MethodSpec stmt_end                      << ast.AddNode("MethodSpecList", $0, $1, $2) >>
+               ;
+
+MethodSpec         : MethodName Signature                                << ast.AddNode("MethodSpec", $0, $1) >>
+                   | InterfaceTypeName                                   << ast.AddNode("MethodSpec", $0) >>
+                   ;
+
+MethodName         : identifier                                          << ast.AddNode("MethodName", $0) >>
+                   ;
+
+InterfaceTypeName  : TypeName                                            << ast.AddNode("InterfaceTypeName", $0) >>
+                   ;
+
+MapType     : keyword_map left_sq_paren KeyType right_sq_paren ElementType << ast.AddNode("MapType", $0, $1, $2, $3, $4) >>
+            ;
+
+KeyType     : Type                                                       << ast.AddNode("KeyType", $0) >>
+            ;
+
+QualifiedIdent : PackageName dot identifier                              << ast.AddNode("QualifiedIdent", $0, $1, $2) >>
+               ;
+
