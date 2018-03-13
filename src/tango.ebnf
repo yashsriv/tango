@@ -294,11 +294,9 @@ KeyType     : Type                                                       << ast.
 QualifiedIdent : PackageName dot identifier                              << ast.AddNode("QualifiedIdent", $0, $1, $2) >>
                ;
 
-VarDecl     : keyword_var VarSpecGroup                                  << ast.AddNode("VarDecl", $0, $1) >>
+VarDecl     : keyword_var VarSpec                                        << ast.AddNode("VarDecl", $0, $1) >>
+            | keyword_var left_paren VarSpecList right_paren             << ast.AddNode("VarDecl", $0, $1, $2, $3) >>
             ;
-
-VarSpecGroup : left_paren VarSpecList right_paren                       << ast.AddNode("VarSpecGroup", $0, $1, $2) >>
-             ;
 
 VarSpecList : empty                                                     << ast.AddNode("VarSpecList") >>
             | VarSpecList VarSpec stmt_end                              << ast.AddNode("VarSpecList", $0, $1, $2) >>
