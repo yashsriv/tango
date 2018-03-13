@@ -307,147 +307,147 @@ VarSpecList : empty                                                     << ast.A
 VarSpec     : IdentifierList ExpressionListGroup                        << ast.AddNode("VarSpec", $0, $1) >>
             ;
 
-ExpressionListGroup : Type
-                    | Type "=" ExpressionList
-                    | "=" ExpressionList
+ExpressionListGroup : Type                                              << ast.AddNode("ExpressionListGroup", $0) >>
+                    | Type "=" ExpressionList                           << ast.AddNode("ExpressionListGroup", $0, $1, $2) >>
+                    | "=" ExpressionList                                << ast.AddNode("ExpressionListGroup", $0, $1) >>
                     ;
 
-Operand     : Literal
-            | OperandName
-            | MethodExpr
-            | left_paren Expression right_paren
+Operand     : Literal                                                   << ast.AddNode("Operand", $0) >>
+            | OperandName                                               << ast.AddNode("Operand", $0) >>
+            | MethodExpr                                                << ast.AddNode("Operand", $0) >>
+            | left_paren Expression right_paren                         << ast.AddNode("Operand", $0, $1, $2) >>
             ;
 
-OperandName : identifier
-            | QualifiedIdent
+OperandName : identifier                                                << ast.AddNode("OperandName", $0) >>
+            | QualifiedIdent                                            << ast.AddNode("OperandName", $0) >>
             ;
 
-Literal     : BasicLit
-            | CompositeLit
-            | FunctionLit
+Literal     : BasicLit                                                  << ast.AddNode("Literal", $0) >>
+            | CompositeLit                                              << ast.AddNode("Literal", $0) >>
+            | FunctionLit                                               << ast.AddNode("Literal", $0) >>
             ;
 
-BasicLit    : int_lit
-            | float_lit
-            | rune_lit
-            | string_literal
+BasicLit    : int_lit                                                   << ast.AddNode("BasicLit", $0) >>
+            | float_lit                                                 << ast.AddNode("BasicLit", $0) >>
+            | rune_lit                                                  << ast.AddNode("BasicLit", $0) >>
+            | string_literal                                            << ast.AddNode("BasicLit", $0) >>
             ;
 
-CompositeLit : LiteralType LiteralValue
+CompositeLit : LiteralType LiteralValue                                 << ast.AddNode("CompositeLit", $0, $1) >>
              ;
 
-LiteralType : StructType
-            | ArrayType
-            | left_sq_paren spread_op right_sq_paren ElementType
-            | SliceType
-            | MapType
-            | TypeName
+LiteralType : StructType                                                << ast.AddNode("LiteralType", $0) >>
+            | ArrayType                                                 << ast.AddNode("LiteralType", $0) >>
+            | left_sq_paren spread_op right_sq_paren ElementType        << ast.AddNode("LiteralType", $0, $1, $2, $3) >>
+            | SliceType                                                 << ast.AddNode("LiteralType", $0) >>
+            | MapType                                                   << ast.AddNode("LiteralType", $0) >>
+            | TypeName                                                  << ast.AddNode("LiteralType", $0) >>
             ;
-LiteralValue : left_block_bracket right_block_bracket
-             | left_block_bracket ElementList right_block_bracket
-             | left_block_bracket ElementList comma right_block_bracket
+LiteralValue : left_block_bracket right_block_bracket                   << ast.AddNode("LiteralValue", $0, $1) >>
+             | left_block_bracket ElementList right_block_bracket       << ast.AddNode("LiteralValue", $0, $1, $2) >>
+             | left_block_bracket ElementList comma right_block_bracket << ast.AddNode("LiteralValue", $0, $1, $2, $3) >>
              ;
 
-ElementList : KeyedElement
-            | ElementList comma KeyedElement
+ElementList : KeyedElement                                              << ast.AddNode("ElementList", $0) >>
+            | ElementList comma KeyedElement                            << ast.AddNode("ElementList", $0, $1, $2) >>
             ;
 
-KeyedElement : Element
-             | Key label_op Element
+KeyedElement : Element                                                  << ast.AddNode("KeyedElement", $0) >>
+             | Key label_op Element                                     << ast.AddNode("KeyedElement", $0, $1, $2) >>
              ;
 
-Key          : FieldName
-             | Expression
-             | LiteralValue
+Key          : FieldName                                                << ast.AddNode("Key", $0) >>
+             | Expression                                               << ast.AddNode("Key", $0) >>
+             | LiteralValue                                             << ast.AddNode("Key", $0) >>
              ;
 
-FieldName    : identifier
+FieldName    : identifier                                               << ast.AddNode("FieldName", $0) >>
              ;
 
-Element      : Expression
-             | LiteralValue
+Element      : Expression                                               << ast.AddNode("Element", $0) >>
+             | LiteralValue                                             << ast.AddNode("Element", $0) >>
              ;
 
-FunctionLit  : keyword_func Function
+FunctionLit  : keyword_func Function                                    << ast.AddNode("FunctionLit", $0, $1) >>
              ;
 
-Function     : Signature FunctionBody
+Function     : Signature FunctionBody                                   << ast.AddNode("Function", $0, $1) >>
              ;
 
-FunctionBody : Block
+FunctionBody : Block                                                    << ast.AddNode("FunctionBody", $0) >>
              ;
 
-Block        : left_block_bracket StatementList right_block_bracket
+Block        : left_block_bracket StatementList right_block_bracket     << ast.AddNode("Block", $0, $1, $2) >>
              ;
 
-StatementList : empty
-              | StatementList Statement stmt_end
+StatementList : empty                                                   << ast.AddNode("StatementList") >>
+              | StatementList Statement stmt_end                        << ast.AddNode("StatementList", $0, $1, $2) >>
               ;
 
-Statement    : Declaration
-             | LabeledStmt
-             | SimpleStmt
-             | ReturnStmt
-             | BreakStmt
-             | ContinueStmt
-             | GotoStmt
-             | FallthroughStmt
-             | Block
-             | IfStmt
-             | SwitchStmt
-             | ForStmt
-             | DeferStmt
+Statement    : Declaration                                              << ast.AddNode("Statement", $0) >>
+             | LabeledStmt                                              << ast.AddNode("Statement", $0) >>
+             | SimpleStmt                                               << ast.AddNode("Statement", $0) >>
+             | ReturnStmt                                               << ast.AddNode("Statement", $0) >>
+             | BreakStmt                                                << ast.AddNode("Statement", $0) >>
+             | ContinueStmt                                             << ast.AddNode("Statement", $0) >>
+             | GotoStmt                                                 << ast.AddNode("Statement", $0) >>
+             | FallthroughStmt                                          << ast.AddNode("Statement", $0) >>
+             | Block                                                    << ast.AddNode("Statement", $0) >>
+             | IfStmt                                                   << ast.AddNode("Statement", $0) >>
+             | SwitchStmt                                               << ast.AddNode("Statement", $0) >>
+             | ForStmt                                                  << ast.AddNode("Statement", $0) >>
+             | DeferStmt                                                << ast.AddNode("Statement", $0) >>
              ;
 
-LabeledStmt : Label label_op Statement
+LabeledStmt : Label label_op Statement                                  << ast.AddNode("LabeledStmt", $0, $1, $2) >>
             ;
-Label       : identifier
+Label       : identifier                                                << ast.AddNode("Label", $0) >>
             ;
 
-SimpleStmt : EmptyStmt
-           | ExpressionStmt
-           | IncDecStmt
-           | Assignment
-           | ShortVarDecl
+SimpleStmt : EmptyStmt                                                  << ast.AddNode("SimpleStmt", $0) >>
+           | ExpressionStmt                                             << ast.AddNode("SimpleStmt", $0) >>
+           | IncDecStmt                                                 << ast.AddNode("SimpleStmt", $0) >>
+           | Assignment                                                 << ast.AddNode("SimpleStmt", $0) >>
+           | ShortVarDecl                                               << ast.AddNode("SimpleStmt", $0) >>
            ;
 
-EmptyStmt : empty
+EmptyStmt : empty                                                       << ast.AddNode("EmptyStmt") >>
           ;
 
-ExpressionStmt : Expression
+ExpressionStmt : Expression                                             << ast.AddNode("ExpressionStmt", $0) >>
                ;
 
-IncDecStmt : Expression inc_dec_op
+IncDecStmt : Expression inc_dec_op                                      << ast.AddNode("IncDecStmt", $0, $1) >>
            ;
 
-Assignment : ExpressionList assign_op ExpressionList
+Assignment : ExpressionList assign_op ExpressionList                    << ast.AddNode("Assignment", $0, $1, $2) >>
            ;
 
-ShortVarDecl : IdentifierList ":=" ExpressionList
+ShortVarDecl : IdentifierList ":=" ExpressionList                       << ast.AddNode("ShortVarDecl", $0, $1, $2) >>
              ;
 
-ReturnStmt : keyword_return
-           | keyword_return ExpressionList
+ReturnStmt : keyword_return                                             << ast.AddNode("ReturnStmt", $0) >>
+           | keyword_return ExpressionList                              << ast.AddNode("ReturnStmt", $0, $1) >>
            ;
 
-BreakStmt  : keyword_break
-           | keyword_break Label
+BreakStmt  : keyword_break                                              << ast.AddNode("BreakStmt", $0) >>
+           | keyword_break Label                                        << ast.AddNode("BreakStmt", $0, $1) >>
            ;
 
-ContinueStmt : keyword_continue
-             | keyword_continue Label
+ContinueStmt : keyword_continue                                         << ast.AddNode("ContinueStmt", $0) >>
+             | keyword_continue Label                                   << ast.AddNode("ContinueStmt", $0, $1) >>
              ;
 
-GotoStmt : keyword_goto Label
+GotoStmt : keyword_goto Label                                           << ast.AddNode("GotoStmt", $0, $1) >>
          ;
 
-FallthroughStmt : keyword_fallthrough
+FallthroughStmt : keyword_fallthrough                                   << ast.AddNode("FallthroughStmt", $0) >>
                 ;
 
-IfStmt : keyword_if Expression Block
-       | keyword_if SimpleStmt stmt_end Expression Block
-       | keyword_if Expression Block keyword_else IfStmtGrp
-       | keyword_if SimpleStmt stmt_end Expression Block keyword_else IfStmtGrp
+IfStmt : keyword_if Expression Block                                    << ast.AddNode("IfStmt", $0, $1, $2) >>
+       | keyword_if SimpleStmt stmt_end Expression Block                << ast.AddNode("IfStmt", $0, $1, $2, $3, $4) >>
+       | keyword_if Expression Block keyword_else IfStmtGrp             << ast.AddNode("IfStmt", $0, $1, $2, $3, $4) >>
+       | keyword_if SimpleStmt stmt_end Expression Block keyword_else IfStmtGrp << ast.AddNode("IfStmt", $0, $1, $2, $3, $4, $5, $6) >>
        ;
 
 IfStmtGrp : IfStmt
