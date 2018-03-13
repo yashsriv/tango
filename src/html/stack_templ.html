@@ -4,6 +4,9 @@
 {{ if eq (print .) ";" }}
 <br>
 {{ end }}
+{{ if eq (print .) "{" }}
+<br>
+{{ end }}
 {{ end }}
 {{ if .|isNode }}
 <span class="node">{{ . }}</span>
