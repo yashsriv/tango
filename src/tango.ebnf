@@ -450,134 +450,134 @@ IfStmt : keyword_if Expression Block                                    << ast.A
        | keyword_if SimpleStmt stmt_end Expression Block keyword_else IfStmtGrp << ast.AddNode("IfStmt", $0, $1, $2, $3, $4, $5, $6) >>
        ;
 
-IfStmtGrp : IfStmt
-          | Block
+IfStmtGrp : IfStmt                                                                         << ast.AddNode("IfStmtGrp", $0) >>
+          | Block                                                                          << ast.AddNode("IfStmtGrp", $0) >>
           ;
 
-SwitchStmt : ExprSwitchStmt
+SwitchStmt : ExprSwitchStmt                                                                << ast.AddNode("SwitchStmt", $0) >>
            ;
 
-ExprSwitchStmt : keyword_switch left_block_bracket ExprCaseClauseList right_block_bracket
-               | keyword_switch SimpleStmt stmt_end left_block_bracket ExprCaseClauseList right_block_bracket
-               | keyword_switch Expression left_block_bracket ExprCaseClauseList right_block_bracket
-               | keyword_switch SimpleStmt stmt_end Expression left_block_bracket ExprCaseClauseList right_block_bracket
+ExprSwitchStmt : keyword_switch left_block_bracket ExprCaseClauseList right_block_bracket  << ast.AddNode("ExprSwitchStmt", $0, $1, $2, $3) >>     
+               | keyword_switch SimpleStmt stmt_end left_block_bracket ExprCaseClauseList right_block_bracket << ast.AddNode("ExprSwitchStmt", $0, $1, $2, $3, $4, $5) >>
+               | keyword_switch Expression left_block_bracket ExprCaseClauseList right_block_bracket << ast.AddNode("ExprSwitchStmt", $0, $1, $2, $3, $4) >>
+               | keyword_switch SimpleStmt stmt_end Expression left_block_bracket ExprCaseClauseList right_block_bracket << ast.AddNode("ExprSwitchStmt", $0, $1, $2, $3, $4, $5, $6) >>
                ;
 
-ExprCaseClauseList : empty
-                   | ExprCaseClauseList ExprCaseClause
+ExprCaseClauseList : empty                                                                 << ast.AddNode("ExprCaseClauseList") >>
+                   | ExprCaseClauseList ExprCaseClause                                     << ast.AddNode("ExprCaseClauseList", $0, $1) >>
                    ;
 
-ExprCaseClause : ExprSwitchCase label_op StatementList
+ExprCaseClause : ExprSwitchCase label_op StatementList                                     << ast.AddNode("ExprCaseClause", $0, $1, $2) >>
                ;
 
-ExprSwitchCase : keyword_case ExpressionList
-               | keyword_default
+ExprSwitchCase : keyword_case ExpressionList                                               << ast.AddNode("ExprSwitchCase", $0, $1) >>
+               | keyword_default                                                           << ast.AddNode("ExprSwitchCase", $0) >>
                ;
 
-ForStmt : keyword_for Block
-        | keyword_for ConditionGrp Block
+ForStmt : keyword_for Block                                                                << ast.AddNode("ForStmt", $0, $1) >>
+        | keyword_for ConditionGrp Block                                                   << ast.AddNode("ForStmt", $0, $1, $2) >>
         ;
 
-ConditionGrp : Condition
-             | ForClause
-             | RangeClause
+ConditionGrp : Condition                                                                   << ast.AddNode("ConditionGrp", $0) >>
+             | ForClause                                                                   << ast.AddNode("ConditionGrp", $0) >>
+             | RangeClause                                                                 << ast.AddNode("ConditionGrp", $0) >>
              ;
 
-Condition : Expression
+Condition : Expression                                                                     << ast.AddNode("Condition", $0) >>
           ;
 
-ForClause : stmt_end stmt_end
-          | InitStmt stmt_end stmt_end
-          | stmt_end Condition stmt_end
-          | stmt_end stmt_end PostStmt
-          | InitStmt stmt_end Condition stmt_end
-          | stmt_end Condition stmt_end PostStmt
-          | InitStmt stmt_end stmt_end PostStmt
-          | InitStmt stmt_end Condition stmt_end PostStmt
+ForClause : stmt_end stmt_end                                                              << ast.AddNode("ForClause", $0, $1) >>
+          | InitStmt stmt_end stmt_end                                                     << ast.AddNode("ForClause", $0, $1, $2) >>
+          | stmt_end Condition stmt_end                                                    << ast.AddNode("ForClause", $0, $1, $2) >>
+          | stmt_end stmt_end PostStmt                                                     << ast.AddNode("ForClause", $0, $1, $2) >>
+          | InitStmt stmt_end Condition stmt_end                                           << ast.AddNode("ForClause", $0, $1, $2, $3) >>
+          | stmt_end Condition stmt_end PostStmt                                           << ast.AddNode("ForClause", $0, $1, $2, $3) >>
+          | InitStmt stmt_end stmt_end PostStmt                                            << ast.AddNode("ForClause", $0, $1, $2, $3) >>
+          | InitStmt stmt_end Condition stmt_end PostStmt                                  << ast.AddNode("ForClause", $0, $1, $2, $3, $4) >>
           ;
 
-InitStmt : SimpleStmt
+InitStmt : SimpleStmt                                                                      << ast.AddNode("InitStmt", $0) >>
          ;
 
-PostStmt : SimpleStmt
+PostStmt : SimpleStmt                                                                      << ast.AddNode("PostStmt", $0) >>
          ;
 
-RangeClause : keyword_range Expression
-            | ExpressionList "=" keyword_range Expression
-            | IdentifierList ":=" keyword_range Expression
+RangeClause : keyword_range Expression                                                     << ast.AddNode("RangeClause", $0, $1) >>
+            | ExpressionList "=" keyword_range Expression                                  << ast.AddNode("RangeClause", $0, $1, $2, $3) >>
+            | IdentifierList ":=" keyword_range Expression                                 << ast.AddNode("RangeClause", $0, $1, $2, $3) >>
             ;
 
-DeferStmt : keyword_defer Expression
+DeferStmt : keyword_defer Expression                                                       << ast.AddNode("DeferStmt", $0, $1) >>
           ;
 
-ExpressionList : Expression
-               | ExpressionList comma Expression
+ExpressionList : Expression                                                                << ast.AddNode("ExpressionList", $0) >>
+               | ExpressionList comma Expression                                           << ast.AddNode("ExpressionList", $0, $1, $2) >>
                ;
 
-Expression : UnaryExpr
-           | Expression binary_op Expression
+Expression : UnaryExpr                                                                     << ast.AddNode("Expression", $0) >>
+           | Expression binary_op Expression                                               << ast.AddNode("Expression", $0, $1, $2) >>
            ;
 
-UnaryExpr : PrimaryExpr
-          | unary_op UnaryExpr
+UnaryExpr : PrimaryExpr                                                                    << ast.AddNode("UnaryExpr", $0) >>
+          | unary_op UnaryExpr                                                             << ast.AddNode("UnaryExpr", $0, $1) >>
           ;
 
-PrimaryExpr : Operand
-            | Conversion
-            | ForCompExpr
-            | PrimaryExpr Selector
-            | PrimaryExpr Index
-            | PrimaryExpr Slice
-            | PrimaryExpr TypeAssertion
-            | PrimaryExpr Arguments
+PrimaryExpr : Operand                                                                      << ast.AddNode("PrimaryExpr", $0) >>
+            | Conversion                                                                   << ast.AddNode("PrimaryExpr", $0) >>
+            | ForCompExpr                                                                  << ast.AddNode("PrimaryExpr", $0) >>
+            | PrimaryExpr Selector                                                         << ast.AddNode("PrimaryExpr", $0, $1) >>
+            | PrimaryExpr Index                                                            << ast.AddNode("PrimaryExpr", $0, $1) >>
+            | PrimaryExpr Slice                                                            << ast.AddNode("PrimaryExpr", $0, $1) >>
+            | PrimaryExpr TypeAssertion                                                    << ast.AddNode("PrimaryExpr", $0, $1) >>
+            | PrimaryExpr Arguments                                                        << ast.AddNode("PrimaryExpr", $0, $1) >>
             ;
 
-Conversion : Type left_paren Expression right_paren
-           | Type left_paren Expression comma right_paren
+Conversion : Type left_paren Expression right_paren                                        << ast.AddNode("Conversion", $0, $1, $2, $3) >>
+           | Type left_paren Expression comma right_paren                                  << ast.AddNode("Conversion", $0, $1, $2, $3, $4) >>
            ;
 
-MethodExpr : ReceiverType dot MethodName
+MethodExpr : ReceiverType dot MethodName                                                   << ast.AddNode("MethodExpr", $0, $1, $2) >>
            ;
 
-ReceiverType : TypeName
-             | left_paren "*" TypeName right_paren
-             | left_paren ReceiverType right_paren
+ReceiverType : TypeName                                                                    << ast.AddNode("ReceiverType", $0) >>
+             | left_paren "*" TypeName right_paren                                         << ast.AddNode("ReceiverType", $0, $1, $2, $3) >>
+             | left_paren ReceiverType right_paren                                         << ast.AddNode("ReceiverType", $0, $1, $2) >>
              ;
 
-ForCompExpr : left_sq_paren Expression "|" RangeClause right_sq_paren
+ForCompExpr : left_sq_paren Expression "|" RangeClause right_sq_paren                      << ast.AddNode("ForCompExpr", $0, $1, $2, $3, $4) >>
             ;
 
-Selector : dot identifier
+Selector : dot identifier                                                                  << ast.AddNode("Selector", $0, $1) >>
          ;
 
-Index : left_sq_paren Expression right_sq_paren
+Index : left_sq_paren Expression right_sq_paren                                            << ast.AddNode("Index", $0, $1, $2) >>
       ;
 
-Slice : left_sq_paren label_op right_sq_paren
-      | left_sq_paren Expression label_op right_sq_paren
-      | left_sq_paren label_op Expression right_sq_paren
-      | left_sq_paren Expression label_op Expression right_sq_paren
-      | left_sq_paren label_op Expression label_op Expression right_sq_paren
-      | left_sq_paren Expression label_op Expression label_op Expression right_sq_paren
+Slice : left_sq_paren label_op right_sq_paren                                              << ast.AddNode("Slice", $0, $1, $2) >>
+      | left_sq_paren Expression label_op right_sq_paren                                   << ast.AddNode("Slice", $0, $1, $2, $3) >>
+      | left_sq_paren label_op Expression right_sq_paren                                   << ast.AddNode("Slice", $0, $1, $2, $3) >>
+      | left_sq_paren Expression label_op Expression right_sq_paren                        << ast.AddNode("Slice", $0, $1, $2, $3, $4) >>
+      | left_sq_paren label_op Expression label_op Expression right_sq_paren               << ast.AddNode("Slice", $0, $1, $2, $3, $4, $5) >>
+      | left_sq_paren Expression label_op Expression label_op Expression right_sq_paren    << ast.AddNode("Slice", $0, $1, $2, $3, $4, $5, $6) >>
       ;
 
-TypeAssertion : dot left_paren Type right_paren
+TypeAssertion : dot left_paren Type right_paren                                            << ast.AddNode("TypeAssertion", $0, $1, $2, $3) >>
               ;
 
-Arguments : left_paren right_paren
-          | left_paren ArgInnerGroup right_paren
+Arguments : left_paren right_paren                                                         << ast.AddNode("Arguments", $0, $1) >>
+          | left_paren ArgInnerGroup right_paren                                           << ast.AddNode("Arguments", $0, $1, $2) >>
           ;
 
-ArgInnerGroup : ExpressionList
-              | ExpressionList spread_op
-              | ExpressionList comma
-              | ExpressionList spread_op comma
-              | Type
-              | Type spread_op
-              | Type comma
-              | Type spread_op comma
-              | Type comma ExpressionList
-              | Type comma ExpressionList spread_op
-              | Type comma ExpressionList comma
-              | Type comma ExpressionList spread_op comma
+ArgInnerGroup : ExpressionList                                                             << ast.AddNode("ArgInnerGroup", $0) >>
+              | ExpressionList spread_op                                                   << ast.AddNode("ArgInnerGroup", $0, $1) >>
+              | ExpressionList comma                                                       << ast.AddNode("ArgInnerGroup", $0, $1) >>
+              | ExpressionList spread_op comma                                             << ast.AddNode("ArgInnerGroup", $0, $1, $2) >>
+              | Type                                                                       << ast.AddNode("ArgInnerGroup", $0) >>
+              | Type spread_op                                                             << ast.AddNode("ArgInnerGroup", $0, $1) >>
+              | Type comma                                                                 << ast.AddNode("ArgInnerGroup", $0, $1) >>
+              | Type spread_op comma                                                       << ast.AddNode("ArgInnerGroup", $0, $1, $2) >>
+              | Type comma ExpressionList                                                  << ast.AddNode("ArgInnerGroup", $0, $1, $2) >>
+              | Type comma ExpressionList spread_op                                        << ast.AddNode("ArgInnerGroup", $0, $1, $2, $3) >>
+              | Type comma ExpressionList comma                                            << ast.AddNode("ArgInnerGroup", $0, $1, $2, $3) >>
+              | Type comma ExpressionList spread_op comma                                  << ast.AddNode("ArgInnerGroup", $0, $1, $2, $3, $4) >>
               ;
