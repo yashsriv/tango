@@ -127,28 +127,28 @@ TopLevelDeclList : empty                                                   << as
                  ;
 
 TopLevelDecl : Declaration                                                 << ast.AddNode("TopLevelDecl", $0) >>
-             | FunctionDecl
-             | MethodDecl
+             | FunctionDecl                                                << ast.AddNode("TopLevelDecl", $0) >>
+             | MethodDecl                                                  << ast.AddNode("TopLevelDecl", $0) >>
              ;
 
-FunctionDecl : keyword_func FunctionName Function
-             | keyword_func FunctionName Signature
+FunctionDecl : keyword_func FunctionName Function                          << ast.AddNode("FunctionDecl", $0, $1, $2) >>
+             | keyword_func FunctionName Signature                         << ast.AddNode("TopLevelDecl", $0, $1, $2) >>
              ;
 
-FunctionName : identifier
+FunctionName : identifier                                                  << ast.AddNode("FunctionName", $0) >>
              ;
 
-MethodDecl : keyword_func Receiver MethodName Function
-           | keyword_func Receiver MethodName Signature
+MethodDecl : keyword_func Receiver MethodName Function                     << ast.AddNode("MethodDecl", $0, $1, $2, $3) >>
+           | keyword_func Receiver MethodName Signature                    << ast.AddNode("MethodDecl", $0, $1, $2, $3) >>
            ;
 
-Receiver : Parameters
+Receiver : Parameters                                                      << ast.AddNode("Receiver", $0) >>
          ;
 
 
 Declaration : ConstDecl                                                   << ast.AddNode("Declaration", $0) >>
-            | TypeDecl
-            | VarDecl
+            | TypeDecl                                                    << ast.AddNode("Declaration", $0) >>
+            | VarDecl                                                     << ast.AddNode("Declaration", $0) >>
             ;
 
 ConstDecl : keyword_const ConstGroup                                      << ast.AddNode("ConstDecl", $0, $1) >>
@@ -169,23 +169,23 @@ IdentifierList : identifier                                               << ast
                | IdentifierList comma identifier                          << ast.AddNode("IdentifierList", $0, $1, $2) >>
                ;
 
-TypeDecl  : keyword_type TypeSpecGroup
+TypeDecl  : keyword_type TypeSpecGroup                                    << ast.AddNode("TypeDecl", $0, $1) >>
           ;
 
-TypeSpecGroup : TypeSpec
-              | left_paren TypeSpecList right_paren
+TypeSpecGroup : TypeSpec                                                  << ast.AddNode("TypeSpecGroup", $0) >>
+              | left_paren TypeSpecList right_paren                       << ast.AddNode("TypeSpecGroup", $0, $1, $2) >>
               ;
 
-TypeSpecList : empty
-             | TypeSpecList TypeSpec stmt_end
+TypeSpecList : empty                                                      << ast.AddNode("TypeSpecList") >>
+             | TypeSpecList TypeSpec stmt_end                             << ast.AddNode("TypeSpecList", $0, $1, $2) >>
              ;
-TypeSpec     : AliasDecl
-             | TypeDef
+TypeSpec     : AliasDecl                                                  << ast.AddNode("TypeSpec", $0) >>
+             | TypeDef                                                    << ast.AddNode("TypeSpec", $0) >>
              ;
 
-AliasDecl    : identifier "=" Type
+AliasDecl    : identifier "=" Type                                        << ast.AddNode("AliasDecl", $0, $1, $2) >>
              ;
-TypeDef      : identifier Type
+TypeDef      : identifier Type                                            << ast.AddNode("TypeDef", $0, $1) >>
              ;
 
 Type      : TypeName                                                      << ast.AddNode("Type", $0) >>
@@ -294,17 +294,17 @@ KeyType     : Type                                                       << ast.
 QualifiedIdent : PackageName dot identifier                              << ast.AddNode("QualifiedIdent", $0, $1, $2) >>
                ;
 
-VarDecl     : keyword_var VarSpecGroup
+VarDecl     : keyword_var VarSpecGroup                                  << ast.AddNode("VarDecl", $0, $1) >>
             ;
 
-VarSpecGroup : left_paren VarSpecList right_paren
+VarSpecGroup : left_paren VarSpecList right_paren                       << ast.AddNode("VarSpecGroup", $0, $1, $2) >>
              ;
 
-VarSpecList : empty
-            | VarSpecList VarSpec stmt_end
+VarSpecList : empty                                                     << ast.AddNode("VarSpecList") >>
+            | VarSpecList VarSpec stmt_end                              << ast.AddNode("VarSpecList", $0, $1, $2) >>
             ;
 
-VarSpec     : IdentifierList ExpressionListGroup
+VarSpec     : IdentifierList ExpressionListGroup                        << ast.AddNode("VarSpec", $0, $1) >>
             ;
 
 ExpressionListGroup : Type
