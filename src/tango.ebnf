@@ -65,14 +65,13 @@ float_lit          : _decimals '.' [ _decimals ] [ _exponent ] | _decimals _expo
 rune_lit           : '\'' ( _ascii_value_rune | _byte_value ) '\'' ;
 string_literal     : _raw_string_lit | _interpreted_string_lit ;
 
-_binary_op  : '|' '|' | '&' '&' | _rel_op | _add_op | _mul_op ;
+binary_op  : '|' '|' | '&' '&' | _rel_op | _add_op | _mul_op ;
 _rel_op     : '=' '=' | '!' '=' | '<' | '<' '=' | '>' | '>' '=' ;
 _add_op     : '+' | '-' | '|' | '^' ;
 _mul_op     : '*' | '/' | '%' | '<' '<' | '>' '>' | '&' | '&' '^' ;
-_unary_op   : '+' | '-' | '!' | '^' | '*' | '&' ;
+unary_op   : '+' | '-' | '!' | '^' | '*' | '&' ;
 
 inc_dec_op  : '+' '+' | '-' '-' ;
-ops         : _binary_op | _unary_op ;
 
 _norm_assign_op : [ _add_op | _mul_op ] '=' ;
 _auto_assign_op : ':' '=' ;
@@ -96,7 +95,7 @@ dot                : '.' ;
 
 << import "tango/src/ast" >>
 
-SourceFile     : PackageClause stmt_end ImportDeclList TopLevelDeclList     << ast.AddNode("SourceFile", $0, $1, $2, $3) >>
+SourceFile     : PackageClause stmt_end ImportDeclList TopLevelDeclList    << ast.AddNode("SourceFile", $0, $1, $2, $3) >>
                ;
 
 PackageClause  : keyword_package PackageName                               << ast.AddNode("PackageClause", $0, $1) >>
@@ -107,33 +106,49 @@ PackageName    : identifier                                                << as
 
 ImportPath     : string_literal                                            << ast.AddNode("ImportPath", $0) >>
                ;
-ImportName     : empty                                                     << ast.AddNode("ImportName") >>
-               | dot                                                       << ast.AddNode("ImportName", $0) >>
-               | PackageName                                               << ast.AddNode("ImportName", $0) >>
-               ;
-ImportSpec     : ImportName ImportPath                                     << ast.AddNode("ImportSpec", $0, $1) >>
+ImportSpec     : ImportPath                                                << ast.AddNode("ImportSpec", $0) >>
+               | dot ImportPath                                            << ast.AddNode("ImportSpec", $0, $1) >>
+               | PackageName ImportPath                                    << ast.AddNode("ImportSpec", $0, $1) >>
                ;
 ImportList     : empty                                                     << ast.AddNode("ImportList") >>
                | ImportList ImportSpec stmt_end                            << ast.AddNode("ImportList", $0, $1, $2) >>
                ;
-ImportGrp      : ImportSpec                                                << ast.AddNode("ImportGrp", $0) >>
-               | left_paren ImportList right_paren                         << ast.AddNode("ImportGrp", $0, $1, $2) >>
+
+ImportDecl     : keyword_import ImportSpec                                 << ast.AddNode("ImportDecl", $0, $1) >>
+               | keyword_import left_paren ImportList right_paren          << ast.AddNode("ImportDecl", $0, $1, $2, $3) >>
                ;
-ImportDecl     : empty                                                     << ast.AddNode("ImportDecl") >>
-               | keyword_import ImportGrp                                  << ast.AddNode("ImportDecl", $0, $1) >>
-               ;
+
 ImportDeclList : empty                                                     << ast.AddNode("ImportDeclList") >>
                | ImportDeclList ImportDecl stmt_end                        << ast.AddNode("ImportDeclList", $0, $1, $2) >>
                ;
 
 TopLevelDeclList : empty                                                   << ast.AddNode("TopLevelDeclList") >>
-                 | TopLevelDeclList TopLevelDecl stmt_end                 << ast.AddNode("TopLevelDeclList", $0, $1, $2) >>
+                 | TopLevelDeclList TopLevelDecl stmt_end                  << ast.AddNode("TopLevelDeclList", $0, $1, $2) >>
                  ;
 
-TopLevelDecl : Declaration                                                << ast.AddNode("TopLevelDecl", $0) >>
+TopLevelDecl : Declaration                                                 << ast.AddNode("TopLevelDecl", $0) >>
+             | FunctionDecl
+             | MethodDecl
              ;
 
+FunctionDecl : keyword_func FunctionName Function
+             | keyword_func FunctionName Signature
+             ;
+
+FunctionName : identifier
+             ;
+
+MethodDecl : keyword_func Receiver MethodName Function
+           | keyword_func Receiver MethodName Signature
+           ;
+
+Receiver : Parameters
+         ;
+
+
 Declaration : ConstDecl                                                   << ast.AddNode("Declaration", $0) >>
+            | TypeDecl
+            | VarDecl
             ;
 
 ConstDecl : keyword_const ConstGroup                                      << ast.AddNode("ConstDecl", $0, $1) >>
@@ -153,6 +168,25 @@ ConstSpec : IdentifierList Type "=" IdentifierList             << ast.AddNode("C
 IdentifierList : identifier                                               << ast.AddNode("IdentifierList", $0) >>
                | IdentifierList comma identifier                          << ast.AddNode("IdentifierList", $0, $1, $2) >>
                ;
+
+TypeDecl  : keyword_type TypeSpecGroup
+          ;
+
+TypeSpecGroup : TypeSpec
+              | left_paren TypeSpecList right_paren
+              ;
+
+TypeSpecList : empty
+             | TypeSpecList TypeSpec stmt_end
+             ;
+TypeSpec     : AliasDecl
+             | TypeDef
+             ;
+
+AliasDecl    : identifier "=" Type
+             ;
+TypeDef      : identifier Type
+             ;
 
 Type      : TypeName                                                      << ast.AddNode("Type", $0) >>
           | TypeLit                                                       << ast.AddNode("Type", $0) >>
@@ -175,7 +209,7 @@ TypeLit   : ArrayType                                                     << ast
 ArrayType   : left_sq_paren ArrayLength right_sq_paren ElementType        << ast.AddNode("ArrayType", $0, $1, $2, $3) >>
             ;
 
-ArrayLength : int_lit                                                     << ast.AddNode("ArrayLength", $0) >>
+ArrayLength : Expression                                                  << ast.AddNode("ArrayLength", $0) >>
             ;
 
 ElementType : Type                                                        << ast.AddNode("ElementType", $0) >>
@@ -195,12 +229,9 @@ FieldDecl     : IdentifierList Type                                      << ast.
               | EmbeddedField                                            << ast.AddNode("FieldDecl", $0) >>
               ;
 
-EmbeddedField : OptStar TypeName                                         << ast.AddNode("EmbeddedField", $0, $1) >>
+EmbeddedField : "*" TypeName                                             << ast.AddNode("EmbeddedField", $0, $1) >>
+              | TypeName                                                 << ast.AddNode("EmbeddedField", $0) >>
               ;
-
-OptStar : empty                                                          << ast.AddNode("OptStar") >>
-        | "*"                                                            << ast.AddNode("OptStar", $0) >>
-        ;
 
 PointerType : "*" BaseType                                               << ast.AddNode("PointerType", $0, $1) >>
             ;
@@ -211,45 +242,31 @@ BaseType    : Type                                                       << ast.
 FunctionType   : keyword_func Signature                                  << ast.AddNode("FunctionType", $0, $1) >>
                ;
 
-Signature      : Parameters ParametersList OptResult                     << ast.AddNode("Signature", $0, $1, $2) >>
+Signature      : Parameters ParametersList Result                        << ast.AddNode("Signature", $0, $1, $2) >>
+               | Parameters ParametersList                               << ast.AddNode("Signature", $0, $1) >>
                ;
 
 ParametersList : empty                                                   << ast.AddNode("ParametersList") >>
                | ParametersList Parameters                               << ast.AddNode("ParametersList", $0, $1) >>
                ;
 
-OptResult : empty                                                        << ast.AddNode("OptResult") >>
-          | Result                                                       << ast.AddNode("OptResult", $0) >>
-          ;
-
 Result         : Type                                                    << ast.AddNode("Result", $0) >>
                ;
 
-Parameters     : left_paren OptParameterList right_paren                 << ast.AddNode("Parameters", $0, $1, $2) >>
+Parameters     : left_paren ParameterList comma right_paren              << ast.AddNode("Parameters", $0, $1, $2, $3) >>
+               | left_paren ParameterList right_paren                    << ast.AddNode("Parameters", $0, $1, $2) >>
+               | left_paren right_paren                                  << ast.AddNode("Parameters", $0, $1) >>
                ;
-
-OptParameterList : empty                                                 << ast.AddNode("OptParameterList") >>
-                 | ParameterList OptComma                                << ast.AddNode("OptParameterList", $0, $1) >>
-                 ;
-
-OptComma : empty                                                         << ast.AddNode("OptComma") >>
-         | comma                                                         << ast.AddNode("OptComma", $0) >>
-         ;
 
 ParameterList  : ParameterDecl                                           << ast.AddNode("ParameterList", $0) >>
                | ParameterList comma ParameterDecl                       << ast.AddNode("ParameterList", $0, $1, $2) >>
                ;
 
-ParameterDecl  : OptIdentifierList OptSpread Type                        << ast.AddNode("ParameterDecl", $0, $1, $2) >>
+ParameterDecl  : Type                                                    << ast.AddNode("ParameterDecl", $0) >>
+               | spread_op Type                                          << ast.AddNode("ParameterDecl", $0, $1) >>
+               | IdentifierList Type                                     << ast.AddNode("ParameterDecl", $0, $1) >>
+               | IdentifierList spread_op Type                           << ast.AddNode("ParameterDecl", $0, $1, $2) >>
                ;
-
-OptIdentifierList : empty                                                << ast.AddNode("OptIdentifierList") >>
-                  | IdentifierList                                       << ast.AddNode("OptIdentifierList", $0) >>
-                  ;
-
-OptSpread : empty                                                        << ast.AddNode("OptSpread") >>
-          | spread_op                                                    << ast.AddNode("OptSpread", $0) >>
-          ;
 
 InterfaceType      : keyword_interface left_block_bracket MethodSpecList right_block_bracket << ast.AddNode("InterfaceType", $0, $1, $2, $3) >>
                    ;
@@ -277,3 +294,290 @@ KeyType     : Type                                                       << ast.
 QualifiedIdent : PackageName dot identifier                              << ast.AddNode("QualifiedIdent", $0, $1, $2) >>
                ;
 
+VarDecl     : keyword_var VarSpecGroup
+            ;
+
+VarSpecGroup : left_paren VarSpecList right_paren
+             ;
+
+VarSpecList : empty
+            | VarSpecList VarSpec stmt_end
+            ;
+
+VarSpec     : IdentifierList ExpressionListGroup
+            ;
+
+ExpressionListGroup : Type
+                    | Type "=" ExpressionList
+                    | "=" ExpressionList
+                    ;
+
+Operand     : Literal
+            | OperandName
+            | MethodExpr
+            | left_paren Expression right_paren
+            ;
+
+OperandName : identifier
+            | QualifiedIdent
+            ;
+
+Literal     : BasicLit
+            | CompositeLit
+            | FunctionLit
+            ;
+
+BasicLit    : int_lit
+            | float_lit
+            | rune_lit
+            | string_literal
+            ;
+
+CompositeLit : LiteralType LiteralValue
+             ;
+
+LiteralType : StructType
+            | ArrayType
+            | left_sq_paren spread_op right_sq_paren ElementType
+            | SliceType
+            | MapType
+            | TypeName
+            ;
+LiteralValue : left_block_bracket right_block_bracket
+             | left_block_bracket ElementList right_block_bracket
+             | left_block_bracket ElementList comma right_block_bracket
+             ;
+
+ElementList : KeyedElement
+            | ElementList comma KeyedElement
+            ;
+
+KeyedElement : Element
+             | Key label_op Element
+             ;
+
+Key          : FieldName
+             | Expression
+             | LiteralValue
+             ;
+
+FieldName    : identifier
+             ;
+
+Element      : Expression
+             | LiteralValue
+             ;
+
+FunctionLit  : keyword_func Function
+             ;
+
+Function     : Signature FunctionBody
+             ;
+
+FunctionBody : Block
+             ;
+
+Block        : left_block_bracket StatementList right_block_bracket
+             ;
+
+StatementList : empty
+              | StatementList Statement stmt_end
+              ;
+
+Statement    : Declaration
+             | LabeledStmt
+             | SimpleStmt
+             | ReturnStmt
+             | BreakStmt
+             | ContinueStmt
+             | GotoStmt
+             | FallthroughStmt
+             | Block
+             | IfStmt
+             | SwitchStmt
+             | ForStmt
+             | DeferStmt
+             ;
+
+LabeledStmt : Label label_op Statement
+            ;
+Label       : identifier
+            ;
+
+SimpleStmt : EmptyStmt
+           | ExpressionStmt
+           | IncDecStmt
+           | Assignment
+           | ShortVarDecl
+           ;
+
+EmptyStmt : empty
+          ;
+
+ExpressionStmt : Expression
+               ;
+
+IncDecStmt : Expression inc_dec_op
+           ;
+
+Assignment : ExpressionList assign_op ExpressionList
+           ;
+
+ShortVarDecl : IdentifierList ":=" ExpressionList
+             ;
+
+ReturnStmt : keyword_return
+           | keyword_return ExpressionList
+           ;
+
+BreakStmt  : keyword_break
+           | keyword_break Label
+           ;
+
+ContinueStmt : keyword_continue
+             | keyword_continue Label
+             ;
+
+GotoStmt : keyword_goto Label
+         ;
+
+FallthroughStmt : keyword_fallthrough
+                ;
+
+IfStmt : keyword_if Expression Block
+       | keyword_if SimpleStmt stmt_end Expression Block
+       | keyword_if Expression Block keyword_else IfStmtGrp
+       | keyword_if SimpleStmt stmt_end Expression Block keyword_else IfStmtGrp
+       ;
+
+IfStmtGrp : IfStmt
+          | Block
+          ;
+
+SwitchStmt : ExprSwitchStmt
+           ;
+
+ExprSwitchStmt : keyword_switch left_block_bracket ExprCaseClauseList right_block_bracket
+               | keyword_switch SimpleStmt stmt_end left_block_bracket ExprCaseClauseList right_block_bracket
+               | keyword_switch Expression left_block_bracket ExprCaseClauseList right_block_bracket
+               | keyword_switch SimpleStmt stmt_end Expression left_block_bracket ExprCaseClauseList right_block_bracket
+               ;
+
+ExprCaseClauseList : empty
+                   | ExprCaseClauseList ExprCaseClause
+                   ;
+
+ExprCaseClause : ExprSwitchCase label_op StatementList
+               ;
+
+ExprSwitchCase : keyword_case ExpressionList
+               | keyword_default
+               ;
+
+ForStmt : keyword_for Block
+        | keyword_for ConditionGrp Block
+        ;
+
+ConditionGrp : Condition
+             | ForClause
+             | RangeClause
+             ;
+
+Condition : Expression
+          ;
+
+ForClause : stmt_end stmt_end
+          | InitStmt stmt_end stmt_end
+          | stmt_end Condition stmt_end
+          | stmt_end stmt_end PostStmt
+          | InitStmt stmt_end Condition stmt_end
+          | stmt_end Condition stmt_end PostStmt
+          | InitStmt stmt_end stmt_end PostStmt
+          | InitStmt stmt_end Condition stmt_end PostStmt
+          ;
+
+InitStmt : SimpleStmt
+         ;
+
+PostStmt : SimpleStmt
+         ;
+
+RangeClause : keyword_range Expression
+            | ExpressionList "=" keyword_range Expression
+            | IdentifierList ":=" keyword_range Expression
+            ;
+
+DeferStmt : keyword_defer Expression
+          ;
+
+ExpressionList : Expression
+               | ExpressionList comma Expression
+               ;
+
+Expression : UnaryExpr
+           | Expression binary_op Expression
+           ;
+
+UnaryExpr : PrimaryExpr
+          | unary_op UnaryExpr
+          ;
+
+PrimaryExpr : Operand
+            | Conversion
+            | ForCompExpr
+            | PrimaryExpr Selector
+            | PrimaryExpr Index
+            | PrimaryExpr Slice
+            | PrimaryExpr TypeAssertion
+            | PrimaryExpr Arguments
+            ;
+
+Conversion : Type left_paren Expression right_paren
+           | Type left_paren Expression comma right_paren
+           ;
+
+MethodExpr : ReceiverType dot MethodName
+           ;
+
+ReceiverType : TypeName
+             | left_paren "*" TypeName right_paren
+             | left_paren ReceiverType right_paren
+             ;
+
+ForCompExpr : left_sq_paren Expression "|" RangeClause right_sq_paren
+            ;
+
+Selector : dot identifier
+         ;
+
+Index : left_sq_paren Expression right_sq_paren
+      ;
+
+Slice : left_sq_paren label_op right_sq_paren
+      | left_sq_paren Expression label_op right_sq_paren
+      | left_sq_paren label_op Expression right_sq_paren
+      | left_sq_paren Expression label_op Expression right_sq_paren
+      | left_sq_paren label_op Expression label_op Expression right_sq_paren
+      | left_sq_paren Expression label_op Expression label_op Expression right_sq_paren
+      ;
+
+TypeAssertion : dot left_paren Type right_paren
+              ;
+
+Arguments : left_paren right_paren
+          | left_paren ArgInnerGroup right_paren
+          ;
+
+ArgInnerGroup : ExpressionList
+              | ExpressionList spread_op
+              | ExpressionList comma
+              | ExpressionList spread_op comma
+              | Type
+              | Type spread_op
+              | Type comma
+              | Type spread_op comma
+              | Type comma ExpressionList
+              | Type comma ExpressionList spread_op
+              | Type comma ExpressionList comma
+              | Type comma ExpressionList spread_op comma
+              ;
