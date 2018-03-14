@@ -61,6 +61,10 @@ func (w *Wrapper) Scan() (tok *token.Token) {
 			fallthrough
 		case token.TokMap.Type("right_paren"):
 			fallthrough
+		case token.TokMap.Type("right_angle"):
+			fallthrough
+		case token.TokMap.Type("right_banana"):
+			fallthrough
 		case token.TokMap.Type("right_sq_paren"):
 			tok.Type = token.TokMap.Type("stmt_end")
 			tok.Lit = []byte{';'}

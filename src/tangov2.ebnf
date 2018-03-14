@@ -95,6 +95,8 @@ minus              : '-' ;
 xor                : '^' ;
 left_angle         : '<' '<' '<' ;
 right_angle        : '>' '>' '>' ;
+left_banana        : '[' '(' ;
+right_banana       : ')' ']' ;
 
 /* Syntax Part */
 
@@ -464,9 +466,8 @@ PExprNoParen : Literal
              | PExpr left_sq_paren OExpr label_op OExpr label_op OExpr right_sq_paren
              | PseudoCall
              | ConvType left_angle Expr OComma right_angle
-             | CompType left_block_bracket StartCompLit BracedKeyvalList right_block_bracket
-//             | PExprNoParen left_block_bracket StartCompLit BracedKeyvalList right_block_bracket
-             | left_paren ExprOrType right_paren left_block_bracket StartCompLit BracedKeyvalList right_block_bracket
+             | CompType left_banana BracedKeyvalList right_banana
+             | PExpr left_banana BracedKeyvalList right_banana
              | FuncLiteral
              ;
 
@@ -485,11 +486,11 @@ Keyval : Expr label_op CompLitExpr
        ;
 
 BareCompLitExpr : Expr
-                | left_block_bracket StartCompLit BracedKeyvalList right_block_bracket
+                | left_banana BracedKeyvalList right_banana
                 ;
 
 CompLitExpr : Expr
-            | left_block_bracket StartCompLit BracedKeyvalList right_block_bracket
+            | left_banana BracedKeyvalList right_banana
             ;
 
 ExprOrType : Expr
