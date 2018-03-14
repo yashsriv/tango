@@ -65,16 +65,15 @@ float_lit          : _decimals '.' [ _decimals ] [ _exponent ] | _decimals _expo
 rune_lit           : '\'' ( _ascii_value_rune | _byte_value ) '\'' ;
 string_literal     : _raw_string_lit | _interpreted_string_lit ;
 
-binary_op  : '|' '|' | '&' '&' | _rel_op | _add_op | _mul_op ;
+binary_op  : '|' '|' | '&' '&' | _rel_op | '|' | _mul_op ;
 _rel_op     : '=' '=' | '!' '=' | '<' '=' | '>' '=' | '>' | '<' ;
-_add_op     : '|' ;
 _mul_op     : '/' | '%' | '<' '<' | '>' '>' | '&' | '&' '^' ;
 unary_op   : '!' | '&' ;
 
 inc_dec_op  : '+' '+' | '-' '-' ;
 
 norm_assign_op  : '=' ;
-mod_assign_op   : _add_op '=' | _mul_op '=' | '+' '=' | '-' '=' | '*' '=' | '^' '=' ;
+mod_assign_op   : '|' '=' | _mul_op '=' | '+' '=' | '-' '=' | '*' '=' | '^' '=' ;
 auto_assign_op  : ':' '=' ;
 
 spread_op : '.' '.' '.' ;
@@ -97,6 +96,7 @@ left_angle         : '<' '<' '<' ;
 right_angle        : '>' '>' '>' ;
 left_banana        : '[' '(' ;
 right_banana       : ')' ']' ;
+pipe               : '|' '|' '|';
 
 /* Syntax Part */
 
@@ -469,6 +469,7 @@ PExprNoParen : Literal
              | CompType left_banana BracedKeyvalList right_banana
              | PExpr left_banana BracedKeyvalList right_banana
              | FuncLiteral
+             | ForCompExpr
              ;
 
 ConvType : FuncType
@@ -505,6 +506,7 @@ SwitchStmt : keyword_switch IfHeader left_block_bracket CaseBlockList right_bloc
 
 /* Expressions */
 // My fix for binary_op SR Conflict might be wrong. Double Check Please!!!
+
 Expr : UExpr
      | Expr binary_op UExpr
      | Expr star UExpr
@@ -520,6 +522,9 @@ UExpr : PExpr
       | minus UExpr
       | xor UExpr
       ;
+
+ForCompExpr : left_sq_paren Expr pipe RangeStmt right_sq_paren
+            ;
 
 /* Call-Like Statements that can be preceded by 'defer' */
 PseudoCall : PExpr left_paren right_paren
