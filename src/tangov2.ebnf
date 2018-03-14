@@ -66,15 +66,15 @@ rune_lit           : '\'' ( _ascii_value_rune | _byte_value ) '\'' ;
 string_literal     : _raw_string_lit | _interpreted_string_lit ;
 
 binary_op  : '|' '|' | '&' '&' | _rel_op | _add_op | _mul_op ;
-_rel_op     : '=' '=' | '!' '=' | '<' | '<' '=' | '>' | '>' '=' ;
-_add_op     : '+' | '-' | '|' | '^' ;
+_rel_op     : '=' '=' | '!' '=' | '<' '=' | '>' '=' | '>' | '<' ;
+_add_op     : '|' ;
 _mul_op     : '/' | '%' | '<' '<' | '>' '>' | '&' | '&' '^' ;
-unary_op   : '+' | '-' | '!' | '^' | '&' ;
+unary_op   : '!' | '&' ;
 
 inc_dec_op  : '+' '+' | '-' '-' ;
 
 norm_assign_op  : '=' ;
-mod_assign_op   : _add_op '=' | _mul_op '=' ;
+mod_assign_op   : _add_op '=' | _mul_op '=' | '+' '=' | '-' '=' | '*' '=' | '^' '=' ;
 auto_assign_op  : ':' '=' ;
 
 spread_op : '.' '.' '.' ;
@@ -90,6 +90,11 @@ stmt_end           : ';' ;
 comma              : ',' ;
 dot                : '.' ;
 star               : '*' ;
+plus               : '+' ;
+minus              : '-' ;
+xor                : '^' ;
+left_angle         : '<' '<' '<' ;
+right_angle        : '>' '>' '>' ;
 
 /* Syntax Part */
 
@@ -390,7 +395,7 @@ NewNameList : NewName
             | NewNameList comma NewName
             ;
 
-KeyvalList : KeyvalList
+KeyvalList : Keyval
            | BareCompLitExpr
            | KeyvalList comma Keyval
            | KeyvalList comma BareCompLitExpr
@@ -458,10 +463,10 @@ PExprNoParen : Literal
              | PExpr left_sq_paren OExpr label_op OExpr right_sq_paren
              | PExpr left_sq_paren OExpr label_op OExpr label_op OExpr right_sq_paren
              | PseudoCall
-//             | ConvType left_paren Expr OComma right_paren
-//             | CompType left_block_bracket StartCompLit BracedKeyvalList right_block_bracket
-//             | PExprNoParen "{" StartCompLit BracedKeyvalList right_block_bracket
-//             | left_paren ExprOrType right_paren "{" StartCompLit BracedKeyvalList right_block_bracket
+             | ConvType left_angle Expr OComma right_angle
+             | CompType left_block_bracket StartCompLit BracedKeyvalList right_block_bracket
+//             | PExprNoParen left_block_bracket StartCompLit BracedKeyvalList right_block_bracket
+             | left_paren ExprOrType right_paren left_block_bracket StartCompLit BracedKeyvalList right_block_bracket
              | FuncLiteral
              ;
 
@@ -502,11 +507,17 @@ SwitchStmt : keyword_switch IfHeader left_block_bracket CaseBlockList right_bloc
 Expr : UExpr
      | Expr binary_op UExpr
      | Expr star UExpr
+     | Expr plus UExpr
+     | Expr minus UExpr
+     | Expr xor UExpr
      ;
 
 UExpr : PExpr
       | unary_op UExpr
       | star UExpr
+      | plus UExpr
+      | minus UExpr
+      | xor UExpr
       ;
 
 /* Call-Like Statements that can be preceded by 'defer' */
@@ -514,8 +525,4 @@ PseudoCall : PExpr left_paren right_paren
            | PExpr left_paren ExprOrTypeList OComma right_paren
            | PExpr left_paren ExprOrTypeList spread_op OComma right_paren
            ;
-
-// left_block_bracket : left_block_bracket
-//       | "{"
-//       ;
 

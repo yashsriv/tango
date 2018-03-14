@@ -3,7 +3,7 @@ current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
 export GOBIN=$(current_dir)/bin
 
-GOCC := gorunpkg github.com/goccmack/gocc -a
+GOCC := gorunpkg github.com/goccmack/gocc -v -a
 GOFLAGS :=
 
 .PHONY: all clean test runcode
@@ -31,13 +31,16 @@ bin/parser: src/main/parser/parser.go src/parser/parser.go src/parser/*.go src/a
 	@echo -e "\e[1;32mCompiling Parser \e[0m"
 	go install $(GOFLAGS) $(current_dir)/src/main/parser/parser.go
 
-src/lexer/lexer.go: src/tango.ebnf
+src/lexer/lexer.go: src/tango-main.ebnf
 	@echo -e "\e[1;33mGenerating Lexer \e[0m"
-	cd $(current_dir)/src && $(GOCC) tango.ebnf
+	cd $(current_dir)/src && $(GOCC) tango-main.ebnf
 
-src/parser/parser.go: src/tango.ebnf
+src/parser/parser.go: src/tango-main.ebnf
 	@echo -e "\e[1;33mGenerating Parser \e[0m"
-	cd $(current_dir)/src && $(GOCC) tango.ebnf
+	cd $(current_dir)/src && $(GOCC) tango-main.ebnf
+
+src/tango-main.ebnf: src/tangov2.ebnf
+	cd $(current_dir)/src && ./script.py
 
 runcode: bin/codegen
 	@echo -e "\e[1;33mGenerating Assembly \e[0m"
