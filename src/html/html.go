@@ -76,14 +76,13 @@ func Output(entries []Entry, wr io.Writer) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(t.DefinedTemplates())
 
 	err = t.ExecuteTemplate(wr, "main_templ.html", entries)
 	if err != nil {
 		panic(err)
 	}
 
-	for _, val := range entries {
-		fmt.Printf("%s _%s_ %s\n", val.Prefix, val.Node, val.Suffix)
-	}
+	// for _, val := range entries {
+	// 	fmt.Printf("%s _%s_ %s\n", val.Prefix, val.Node, val.Suffix)
+	// }
 }

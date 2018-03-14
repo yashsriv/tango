@@ -3,7 +3,7 @@ current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
 export GOBIN=$(current_dir)/bin
 
-GOCC := gorunpkg github.com/goccmack/gocc -v -a
+GOCC := gorunpkg github.com/goccmack/gocc -v
 GOFLAGS :=
 
 .PHONY: all clean test runcode
