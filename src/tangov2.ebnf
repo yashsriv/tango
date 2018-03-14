@@ -1,0 +1,521 @@
+!whitespace : ' ' | '\t' | '\n' | '\r' ;
+!comment : _lineComment | _blockComment ;
+_lineComment : '/' '/' {.} '\n' ;
+_blockComment : '/' '*' {. | '*'} '*' '/' ;
+
+/* Production Rules */
+
+_newline      : '\x0A' ;
+_ascii_char   : '\x00'-'\x09' | '\x0B'-'\x21' | '\x23'-'\x26' | '\x28'-'\x59' | '\x61'-'\xFF' ;
+_ascii_letter : 'a'-'z' | 'A'-'Z' ;
+_ascii_digit  : '0'-'9' ;
+
+_letter                : _ascii_letter | '_' ;
+_decimal_digit_wo_zero : '1'-'9' ;
+_decimal_digit         : '0' | _decimal_digit_wo_zero ;
+_octal_digit           : '0' - '7' ;
+_hex_digit             : '0' - '9' | 'A' - 'F' | 'a' - 'f' ;
+
+_decimal_lit : _decimal_digit_wo_zero { _decimal_digit } ;
+_octal_lit   : '0' { _octal_digit } ;
+_hex_lit     : '0' ( 'x' | 'X' ) _hex_digit { _hex_digit } ;
+
+_decimals  : _decimal_digit { _decimal_digit } ;
+_exponent  : ( 'e' | 'E' ) [ '+' | '-' ] _decimals ;
+
+_ascii_value_rune   : _ascii_char | '"'  | '`'  | _escaped_char ;
+_ascii_value_string : _ascii_char | '\'' | '`'  | _escaped_char ;
+_byte_value         : _octal_byte_value | _hex_byte_value ;
+_octal_byte_value   : '\\' _octal_digit _octal_digit _octal_digit ;
+_hex_byte_value     : '\\' 'x' _hex_digit _hex_digit ;
+_escaped_char       : '\\' ( 'a' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' | '\\' | '"' | '\'' ) ;
+
+_raw_string_lit         : '`' { _ascii_char | '"' | '\'' | _newline } '`' ;
+_interpreted_string_lit : '"' { _ascii_value_string | _byte_value } '"' ;
+
+/* Lexical Part */
+
+keyword_break      : 'b' 'r' 'e' 'a' 'k' ;
+keyword_default    : 'd' 'e' 'f' 'a' 'u' 'l' 't' ;
+keyword_func       : 'f' 'u' 'n' 'c' ;
+keyword_interface  : 'i' 'n' 't' 'e' 'r' 'f' 'a' 'c' 'e' ;
+keyword_case       : 'c' 'a' 's' 'e' ;
+keyword_defer      : 'd' 'e' 'f' 'e' 'r' ;
+keyword_map        : 'm' 'a' 'p' ;
+keyword_struct     : 's' 't' 'r' 'u' 'c' 't' ;
+keyword_else       : 'e' 'l' 's' 'e' ;
+keyword_goto       : 'g' 'o' 't' 'o' ;
+keyword_package    : 'p' 'a' 'c' 'k' 'a' 'g' 'e' ;
+keyword_switch     : 's' 'w' 'i' 't' 'c' 'h' ;
+keyword_const      : 'c' 'o' 'n' 's' 't' ;
+keyword_fallthrough: 'f' 'a' 'l' 'l' 't' 'h' 'r' 'o' 'u' 'g' 'h' ;
+keyword_if         : 'i' 'f' ;
+keyword_range      : 'r' 'a' 'n' 'g' 'e' ;
+keyword_type       : 't' 'y' 'p' 'e' ;
+keyword_continue   : 'c' 'o' 'n' 't' 'i' 'n' 'u' 'e' ;
+keyword_for        : 'f' 'o' 'r' ;
+keyword_import     : 'i' 'm' 'p' 'o' 'r' 't' ;
+keyword_return     : 'r' 'e' 't' 'u' 'r' 'n' ;
+keyword_var        : 'v' 'a' 'r' ;
+
+identifier         : _letter { _letter | _ascii_digit } ;
+
+int_lit            : _decimal_lit | _octal_lit | _hex_lit ;
+float_lit          : _decimals '.' [ _decimals ] [ _exponent ] | _decimals _exponent | '.' _decimals [ _exponent ] ;
+rune_lit           : '\'' ( _ascii_value_rune | _byte_value ) '\'' ;
+string_literal     : _raw_string_lit | _interpreted_string_lit ;
+
+binary_op  : '|' '|' | '&' '&' | _rel_op | _add_op | _mul_op ;
+_rel_op     : '=' '=' | '!' '=' | '<' | '<' '=' | '>' | '>' '=' ;
+_add_op     : '+' | '-' | '|' | '^' ;
+_mul_op     : '/' | '%' | '<' '<' | '>' '>' | '&' | '&' '^' ;
+unary_op   : '+' | '-' | '!' | '^' | '&' ;
+
+inc_dec_op  : '+' '+' | '-' '-' ;
+
+norm_assign_op  : '=' ;
+mod_assign_op   : _add_op '=' | _mul_op '=' ;
+auto_assign_op  : ':' '=' ;
+
+spread_op : '.' '.' '.' ;
+
+left_block_bracket : '{' ;
+right_block_bracket: '}' ;
+left_paren         : '(' ;
+right_paren        : ')' ;
+left_sq_paren      : '[' ;
+right_sq_paren     : ']' ;
+label_op           : ':' ;
+stmt_end           : ';' ;
+comma              : ',' ;
+dot                : '.' ;
+star               : '*' ;
+
+/* Syntax Part */
+
+<< import "tango/src/ast" >>
+
+SourceFile : Package Imports DeclList
+           ;
+
+Package    : keyword_package identifier stmt_end
+           ;
+
+Imports    : empty
+           | Imports Import stmt_end
+           ;
+
+Import     : keyword_import ImportStmt
+           | keyword_import left_paren ImportStmtList OSemi right_paren
+           | keyword_import left_paren right_paren
+           ;
+
+ImportStmt : ImportHere string_literal
+           ;
+
+ImportStmtList : ImportStmt
+               | ImportStmtList stmt_end ImportStmt
+               ;
+
+ImportHere : empty
+           | identifier
+           | dot
+           ;
+
+/* Declarations */
+Declaration : CommonDecl
+            | FuncDecl
+            | NonDeclStmt
+//            | error
+            ;
+
+CommonDecl : keyword_const ConstDecl
+           | keyword_const left_paren ConstDecl OSemi right_paren
+           | keyword_const left_paren ConstDecl stmt_end ConstDeclList OSemi right_paren
+           | keyword_const left_paren right_paren
+           | keyword_var VarDecl
+           | keyword_var left_paren VarDeclList OSemi right_paren
+           | keyword_var left_paren right_paren
+           | keyword_type TypeDecl
+           | keyword_type left_paren TypeDeclList OSemi right_paren
+           | keyword_type left_paren right_paren
+           ; 
+
+VarDecl   : DeclNameList NType
+          | DeclNameList NType norm_assign_op ExprList
+          | DeclNameList norm_assign_op ExprList
+          ;
+
+ConstDecl : DeclNameList NType norm_assign_op ExprList
+          | DeclNameList norm_assign_op ExprList
+          ;
+
+ConstDecl1 : ConstDecl
+           | DeclNameList NType
+           | DeclNameList
+           ;
+
+TypeDeclName : identifier
+             ;
+
+TypeDecl : TypeDeclName NType
+         ;
+
+SimpleStmt : Expr
+           | Expr mod_assign_op Expr
+           | ExprList norm_assign_op ExprList
+           | ExprList auto_assign_op ExprList
+           | Expr inc_dec_op
+           ;
+
+Case : keyword_case ExprOrTypeList label_op
+     | keyword_case ExprOrTypeList norm_assign_op Expr label_op
+     | keyword_case ExprOrTypeList auto_assign_op Expr label_op
+     | keyword_default label_op
+     ;
+
+CompoundStmt : left_block_bracket StmtList right_block_bracket
+             ;
+
+CaseBlock : Case StmtList
+          ;
+
+CaseBlockList : empty
+              | CaseBlockList CaseBlock
+              ;
+
+LoopBody : left_block_bracket StmtList right_block_bracket
+         ;
+
+RangeStmt : ExprList norm_assign_op keyword_range Expr
+          | ExprList auto_assign_op keyword_range Expr
+          | keyword_range Expr
+          ;
+
+ForHeader : OSimpleStmt stmt_end OSimpleStmt stmt_end OSimpleStmt
+          | OSimpleStmt
+          | RangeStmt
+          ;
+
+ForBody : ForHeader LoopBody
+        ;
+
+ForStmt : keyword_for ForBody
+        ;
+
+IfHeader : OSimpleStmt
+         | OSimpleStmt stmt_end OSimpleStmt
+         ;
+
+IfStmt : keyword_if IfHeader LoopBody ElseIfList Else
+       ;
+
+ElseIf : keyword_else keyword_if IfHeader LoopBody
+       ;
+
+ElseIfList : empty
+           | ElseIfList ElseIf
+           ;
+
+Else : empty
+     | keyword_else CompoundStmt
+     ;
+
+NType : FuncType
+      |	OtherType
+      |	PtrType
+      |	DotName
+      |	left_paren NType right_paren
+      ;
+
+NonExprType : FuncType
+            | OtherType
+            | star NonExprType
+            ;
+
+OtherType : left_sq_paren OExpr right_sq_paren NType
+          | keyword_map left_sq_paren NType right_sq_paren NType
+          | StructType
+          | InterfaceType
+          ;
+
+StructType : keyword_struct left_block_bracket StructDeclList OSemi right_block_bracket
+           | keyword_struct left_block_bracket right_block_bracket
+           ;
+
+InterfaceType : keyword_interface left_block_bracket InterfaceDeclList OSemi right_block_bracket
+              | keyword_interface left_block_bracket right_block_bracket
+              ;
+
+/* Function Stuff - All together to show how crappy it is */
+FuncDecl : keyword_func FuncDcl_ FuncBody
+         ;
+
+FuncDcl_ : identifier left_paren OArgTypeListOComma right_paren FuncRes
+         | left_paren OArgTypeListOComma right_paren identifier left_paren OArgTypeListOComma right_paren FuncRes
+         ;
+
+FuncType : keyword_func left_paren OArgTypeListOComma right_paren FuncRes
+         ;
+
+FuncBody : empty
+         | left_block_bracket StmtList right_block_bracket
+         ;
+
+FuncRes : empty
+        | FuncRetType
+        | left_paren OArgTypeListOComma right_paren
+        ;
+
+StructDeclList : StructDecl
+               | StructDeclList stmt_end StructDecl
+               ;
+
+InterfaceDeclList : InterfaceDecl
+                  | InterfaceDeclList stmt_end InterfaceDecl
+                  ;
+
+StructDecl : NewNameList NType OLiteral
+           | Embed OLiteral
+           | left_paren Embed right_paren OLiteral
+           | star Embed OLiteral
+           | left_paren star Embed right_paren OLiteral
+           | star left_paren Embed right_paren OLiteral
+           ;
+
+InterfaceDecl : NewName InDecl
+              | identifier
+              | left_paren identifier right_paren
+              ;
+
+InDecl : left_paren OArgTypeListOComma right_paren FuncRes
+       ;
+
+LabelName : NewName
+          ;
+NewName : identifier
+        ;
+
+PtrType : star NType
+        ;
+
+FuncRetType : FuncType
+            | OtherType
+            | PtrType
+            | DotName
+            ;
+
+DotName : Name
+        | Name dot identifier
+        ;
+
+OComma : empty
+       | comma
+       ;
+
+OSemi : empty
+      | stmt_end
+      ;
+
+OSimpleStmt : empty
+            | SimpleStmt
+            ;
+
+ONewName : empty
+         | NewName
+         ;
+
+OExpr : empty
+      | Expr
+      ;
+
+OExprList : empty
+          | ExprList
+          ;
+
+FuncLiteralDecl : FuncType
+                ;
+
+FuncLiteral : FuncLiteralDecl left_block_bracket StmtList right_block_bracket
+//            | FuncLiteralDecl error
+            ;
+
+ExprList : Expr
+         | ExprList comma Expr
+         ;
+
+ExprOrTypeList : ExprOrType
+               | ExprOrTypeList comma ExprOrType
+               ;
+
+
+OLiteral : empty
+         | Literal
+         ;
+
+Literal : int_lit
+        | float_lit
+        | rune_lit
+        | string_literal
+        ;
+
+Embed : identifier
+      ;
+
+DeclList : empty
+         | DeclList Declaration stmt_end
+         ;
+
+VarDeclList : VarDecl
+            | VarDeclList stmt_end VarDecl
+            ;
+
+ConstDeclList : ConstDecl1
+              | ConstDeclList stmt_end ConstDecl1
+              ;
+
+TypeDeclList : TypeDecl
+             | TypeDeclList stmt_end TypeDecl
+             ;
+
+DeclNameList : DeclName
+             | DeclNameList comma DeclName
+             ;
+
+StmtList : Stmt
+         | StmtList stmt_end Stmt
+         ;
+
+NewNameList : NewName
+            | NewNameList comma NewName
+            ;
+
+KeyvalList : KeyvalList
+           | BareCompLitExpr
+           | KeyvalList comma Keyval
+           | KeyvalList comma BareCompLitExpr
+           ;
+
+BracedKeyvalList : empty
+                 | KeyvalList OComma
+                 ;
+
+DeclName : identifier
+         ;
+
+Name : identifier
+     ;
+
+ArgType : NameOrType
+        | identifier NameOrType
+        | identifier DotDotDot
+        | DotDotDot
+        ;
+
+ArgTypeList : ArgType
+            | ArgTypeList comma ArgType
+            ;
+
+OArgTypeListOComma : empty
+                   | ArgTypeList OComma
+                   ;
+
+/* Statement */
+Stmt : empty
+     | CompoundStmt
+     | CommonDecl
+     | NonDeclStmt
+//     | error
+     ;
+
+NonDeclStmt : SimpleStmt
+            | ForStmt
+            | SwitchStmt
+            | IfStmt
+            | LabelName label_op Stmt
+            | keyword_fallthrough
+            | keyword_break ONewName
+            | keyword_continue ONewName
+            | keyword_defer PseudoCall
+            | keyword_goto NewName
+            | keyword_return OExprList
+            ;
+
+DotDotDot : spread_op
+          | spread_op NType
+          ;
+
+PExpr : PExprNoParen
+      | left_paren ExprOrType right_paren
+      ;
+
+PExprNoParen : Literal
+             | Name
+             | PExpr dot identifier
+             | PExpr dot left_paren ExprOrType right_paren
+             | PExpr dot left_paren keyword_type right_paren
+             | PExpr left_sq_paren Expr right_sq_paren
+             | PExpr left_sq_paren OExpr label_op OExpr right_sq_paren
+             | PExpr left_sq_paren OExpr label_op OExpr label_op OExpr right_sq_paren
+             | PseudoCall
+//             | ConvType left_paren Expr OComma right_paren
+//             | CompType left_block_bracket StartCompLit BracedKeyvalList right_block_bracket
+//             | PExprNoParen "{" StartCompLit BracedKeyvalList right_block_bracket
+//             | left_paren ExprOrType right_paren "{" StartCompLit BracedKeyvalList right_block_bracket
+             | FuncLiteral
+             ;
+
+ConvType : FuncType
+         | OtherType
+         ;
+
+CompType : OtherType
+         ;
+
+// Signifies beginning of a composite expression
+StartCompLit : empty
+             ;
+
+Keyval : Expr label_op CompLitExpr
+       ;
+
+BareCompLitExpr : Expr
+                | left_block_bracket StartCompLit BracedKeyvalList right_block_bracket
+                ;
+
+CompLitExpr : Expr
+            | left_block_bracket StartCompLit BracedKeyvalList right_block_bracket
+            ;
+
+ExprOrType : Expr
+           | NonExprType
+           ;
+
+NameOrType : NType
+           ;
+
+SwitchStmt : keyword_switch IfHeader left_block_bracket CaseBlockList right_block_bracket
+           ;
+
+/* Expressions */
+// My fix for binary_op SR Conflict might be wrong. Double Check Please!!!
+Expr : UExpr
+     | Expr binary_op UExpr
+     | Expr star UExpr
+     ;
+
+UExpr : PExpr
+      | unary_op UExpr
+      | star UExpr
+      ;
+
+/* Call-Like Statements that can be preceded by 'defer' */
+PseudoCall : PExpr left_paren right_paren
+           | PExpr left_paren ExprOrTypeList OComma right_paren
+           | PExpr left_paren ExprOrTypeList spread_op OComma right_paren
+           ;
+
+// left_block_bracket : left_block_bracket
+//       | "{"
+//       ;
+
