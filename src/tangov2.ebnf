@@ -96,6 +96,8 @@ left_angle         : '<' '<' '<' ;
 right_angle        : '>' '>' '>' ;
 left_banana        : '[' '(' ;
 right_banana       : ')' ']' ;
+left_tuple         : '(' '|' ;
+right_tuple        : '|' ')' ;
 pipe               : '|' '|' '|';
 
 /* Syntax Part */
@@ -262,8 +264,12 @@ FuncDcl_ : identifier left_paren OArgTypeListOComma right_paren FuncRes
          | left_paren OArgTypeListOComma right_paren identifier left_paren OArgTypeListOComma right_paren FuncRes
          ;
 
-FuncType : keyword_func left_paren OArgTypeListOComma right_paren FuncRes
+FuncType : keyword_func ArgList FuncRes
          ;
+
+ArgList : left_paren OArgTypeListOComma right_paren
+        | ArgList left_paren OArgTypeListOComma right_paren
+        ;
 
 FuncBody : empty
          | left_block_bracket StmtList right_block_bracket
@@ -271,7 +277,7 @@ FuncBody : empty
 
 FuncRes : empty
         | FuncRetType
-        | left_paren OArgTypeListOComma right_paren
+        | left_tuple OArgTypeListOComma right_tuple
         ;
 
 StructDeclList : StructDecl
