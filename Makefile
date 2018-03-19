@@ -3,7 +3,7 @@ current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
 export GOBIN=$(current_dir)/bin
 
-GOCC := gorunpkg github.com/goccmack/gocc -v
+GOCC := gorunpkg github.com/goccmack/gocc
 GOFLAGS :=
 
 .PHONY: all clean test runcode
@@ -27,7 +27,7 @@ bin/codegen: src/main/codegen/codegen.go src/codegen/*.go
 	@echo -e "\e[1;32mCompiling Codegen \e[0m"
 	go install $(GOFLAGS) $(current_dir)/src/main/codegen/codegen.go
 
-bin/parser: src/main/parser/parser.go src/parser/parser.go src/parser/*.go src/ast/*.go src/html/*.go
+bin/parser: src/main/parser/parser.go src/parser/parser.go src/ast/*.go src/html/*.go
 	@echo -e "\e[1;32mCompiling Parser \e[0m"
 	go install $(GOFLAGS) $(current_dir)/src/main/parser/parser.go
 
