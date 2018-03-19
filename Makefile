@@ -65,6 +65,20 @@ asgn2: clean
 	zip -r asgn2 asgn2
 	rm -rf asgn2
 
+asgn3: clean
+	mkdir -p asgn3
+	mkdir -p asgn3/src
+	mkdir -p asgn3/test
+	cp README.md asgn3/
+	cp Gopkg.lock asgn3/
+	cp Gopkg.toml asgn3/
+	cp Makefile asgn3/
+	cp EffortSheet.pdf asgn3/
+	cp -r src asgn3/
+	cp -r test asgn3/
+	zip -r asgn3 asgn3
+	rm -rf asgn3
+
 clean:
 	@echo -e "\e[1;31mCleaning Files \e[0m"
 	@echo -e "\e[1;31m  Clearing pkg and bin \e[0m"
@@ -78,6 +92,7 @@ clean:
 	@rm -rf $(current_dir)/src/token/token.go
 	@rm -rf $(current_dir)/src/lexer/lexer.go
 	@rm -rf $(current_dir)/src/lexer/acttab.go
+	@rm -rf $(current_dir)/src/parser
 	@rm -rf $(current_dir)/src/lexer/transitiontable.go
 
 # Prepare for submitting. Warning don't run this lightly.

@@ -65,15 +65,15 @@ float_lit          : _decimals '.' [ _decimals ] [ _exponent ] | _decimals _expo
 rune_lit           : '\'' ( _ascii_value_rune | _byte_value ) '\'' ;
 string_literal     : _raw_string_lit | _interpreted_string_lit ;
 
-binary_op  : '|' '|' | '&' '&' | _rel_op | '|' | _mul_op ;
-_rel_op     : '=' '=' | '!' '=' | '<' '=' | '>' '=' | '>' | '<' ;
-_mul_op     : '/' | '%' | '<' '<' | '>' '>' | '&' | '&' '^' ;
+rel_op     : '=' '=' | '!' '=' | '<' '=' | '>' '=' | '>' | '<' ;
+mul_op     : '/' | '%' | '<' '<' | '>' '>' | '&' | '&' '^' ;
 unary_op   : '!' | '&' ;
 
 inc_dec_op  : '+' '+' | '-' '-' ;
 
 norm_assign_op  : '=' ;
-mod_assign_op   : '|' '=' | _mul_op '=' | '+' '=' | '-' '=' | '*' '=' | '^' '=' ;
+mod_assign_op   : '|' '=' | '+' '=' | '-' '=' | '^' '='
+                | '*' '=' | '/' '=' | '%' '=' | '<' '<' '=' | '>' '>' '=' | '&' '=' | '&' '^' '=';
 auto_assign_op  : ':' '=' ;
 
 spread_op : '.' '.' '.' ;
@@ -92,6 +92,9 @@ star               : '*' ;
 plus               : '+' ;
 minus              : '-' ;
 xor                : '^' ;
+simple_pipe        : '|' ;
+andand             : '&' '&' ;
+oror               : '|' '|' ;
 left_angle         : '<' '<' '<' ;
 right_angle        : '>' '>' '>' ;
 left_banana        : '[' '(' ;
@@ -104,11 +107,11 @@ pipe               : '|' '|' '|';
 
 << import "tango/src/ast" >>
 
-SourceFile : Package Imports DeclList
-           ;
+SourceFile    : PackageClause Imports DeclList
+              ;
 
-Package    : keyword_package identifier stmt_end
-           ;
+PackageClause : keyword_package identifier stmt_end
+              ;
 
 Imports    : empty
            | Imports Import stmt_end
@@ -513,13 +516,29 @@ SwitchStmt : keyword_switch IfHeader left_block_bracket CaseBlockList right_bloc
 /* Expressions */
 // My fix for binary_op SR Conflict might be wrong. Double Check Please!!!
 
-Expr : UExpr
-     | Expr binary_op UExpr
-     | Expr star UExpr
-     | Expr plus UExpr
-     | Expr minus UExpr
-     | Expr xor UExpr
-     ;
+Prec5Expr_ : UExpr
+           | Prec5Expr_ mul_op UExpr
+           | Prec5Expr_ star UExpr
+           ;
+
+Prec4Expr_ : Prec5Expr_
+           | Prec4Expr_ plus Prec5Expr_
+           | Prec4Expr_ minus Prec5Expr_
+           | Prec4Expr_ xor Prec5Expr_
+           | Prec4Expr_ simple_pipe Prec5Expr_
+           ;
+
+Prec3Expr_ : Prec4Expr_
+           | Prec3Expr_ rel_op Prec4Expr_
+           ;
+
+Prec2Expr_ : Prec3Expr_
+           | Prec2Expr_ andand Prec3Expr_
+           ;
+
+Expr       : Prec2Expr_
+           | Expr oror Prec2Expr_
+           ;
 
 UExpr : PExpr
       | unary_op UExpr
