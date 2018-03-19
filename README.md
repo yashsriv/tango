@@ -40,6 +40,54 @@ make
 
 to fetch the necessary libs and tools and to generate the lexer and codegen.
 
+## Changes from Asgn1 in Asgn3
+
+### Lexer Changes
+
+Some lexical tokens were made independent if they were used in more than one place:
+* `*` - Unary, Binary Operator as well as used in types
+* `+` - Both  unary and binary operator
+* `-` - Both unary and binary operator
+* `^` - Both unary and binary operator
+* `|` - Last remaining addition-type Binary Operator 
+* `mul_op` - Multiply-type binary operators
+* `rel_op` - Relational binary operators
+* `unary_op` - Remaining unary operators
+
+Different types of assignment statements were made independent lexical tokens
+
+Few new lexical tokens were added:
+* `<<<` and `>>>`
+* `(|` and `|)`
+* `[(` and `)]`
+* `|||`
+
+### Syntactical Changes
+
+#### Type Casting
+
+Earlier syntax: `int64(0)`
+New syntax: `int64<<<0>>>`
+
+#### Initializing Complex Types
+
+Earlier Syntax: `rect{width: 10, height: 5}`
+New Syntax: `rect[(width: 10, height: 5)]`
+
+#### Function Multiple Return Syntax
+
+Earlier Syntax: `func test() (int, int) { //blah }`
+New Syntax: `func test() (|int, int|) { //blah }`
+
+#### Method Declaration Syntax
+
+Earlier Syntax: `func (g geometry) test() (int, int) { //blah }`
+New Syntax: `func (|g geometry|) test() (int, int) { //blah }`
+
+#### For Comprehension Syntax
+
+Earlier Syntax: `[i * i | i, _ := range arr]`
+New Syntax: `[i * i ||| i, _ := range arr]`
 
 ## Features
 
