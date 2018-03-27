@@ -1,0 +1,559 @@
+!whitespace : ' ' | '\t' | '\n' | '\r' ;
+!comment : _lineComment | _blockComment ;
+_lineComment : '/' '/' {.} '\n' ;
+_blockComment : '/' '*' {. | '*'} '*' '/' ;
+
+/* Production Rules */
+
+_newline      : '\x0A' ;
+_ascii_char   : '\x00'-'\x09' | '\x0B'-'\x21' | '\x23'-'\x26' | '\x28'-'\x59' | '\x61'-'\xFF' ;
+_ascii_letter : 'a'-'z' | 'A'-'Z' ;
+_ascii_digit  : '0'-'9' ;
+
+_letter                : _ascii_letter | '_' ;
+_decimal_digit_wo_zero : '1'-'9' ;
+_decimal_digit         : '0' | _decimal_digit_wo_zero ;
+_octal_digit           : '0' - '7' ;
+_hex_digit             : '0' - '9' | 'A' - 'F' | 'a' - 'f' ;
+
+_decimal_lit : _decimal_digit_wo_zero { _decimal_digit } ;
+_octal_lit   : '0' { _octal_digit } ;
+_hex_lit     : '0' ( 'x' | 'X' ) _hex_digit { _hex_digit } ;
+
+_decimals  : _decimal_digit { _decimal_digit } ;
+_exponent  : ( 'e' | 'E' ) [ '+' | '-' ] _decimals ;
+
+_ascii_value_rune   : _ascii_char | '"'  | '`'  | _escaped_char ;
+_ascii_value_string : _ascii_char | '\'' | '`'  | _escaped_char ;
+_byte_value         : _octal_byte_value | _hex_byte_value ;
+_octal_byte_value   : '\\' _octal_digit _octal_digit _octal_digit ;
+_hex_byte_value     : '\\' 'x' _hex_digit _hex_digit ;
+_escaped_char       : '\\' ( 'a' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' | '\\' | '"' | '\'' ) ;
+
+_raw_string_lit         : '`' { _ascii_char | '"' | '\'' | _newline } '`' ;
+_interpreted_string_lit : '"' { _ascii_value_string | _byte_value } '"' ;
+
+/* Lexical Part */
+
+keyword_break      : 'b' 'r' 'e' 'a' 'k' ;
+keyword_default    : 'd' 'e' 'f' 'a' 'u' 'l' 't' ;
+keyword_func       : 'f' 'u' 'n' 'c' ;
+keyword_interface  : 'i' 'n' 't' 'e' 'r' 'f' 'a' 'c' 'e' ;
+keyword_case       : 'c' 'a' 's' 'e' ;
+keyword_defer      : 'd' 'e' 'f' 'e' 'r' ;
+keyword_map        : 'm' 'a' 'p' ;
+keyword_struct     : 's' 't' 'r' 'u' 'c' 't' ;
+keyword_else       : 'e' 'l' 's' 'e' ;
+keyword_goto       : 'g' 'o' 't' 'o' ;
+keyword_package    : 'p' 'a' 'c' 'k' 'a' 'g' 'e' ;
+keyword_switch     : 's' 'w' 'i' 't' 'c' 'h' ;
+keyword_const      : 'c' 'o' 'n' 's' 't' ;
+keyword_fallthrough: 'f' 'a' 'l' 'l' 't' 'h' 'r' 'o' 'u' 'g' 'h' ;
+keyword_if         : 'i' 'f' ;
+keyword_range      : 'r' 'a' 'n' 'g' 'e' ;
+keyword_type       : 't' 'y' 'p' 'e' ;
+keyword_continue   : 'c' 'o' 'n' 't' 'i' 'n' 'u' 'e' ;
+keyword_for        : 'f' 'o' 'r' ;
+keyword_import     : 'i' 'm' 'p' 'o' 'r' 't' ;
+keyword_return     : 'r' 'e' 't' 'u' 'r' 'n' ;
+keyword_var        : 'v' 'a' 'r' ;
+
+identifier         : _letter { _letter | _ascii_digit } ;
+
+int_lit            : _decimal_lit | _octal_lit | _hex_lit ;
+float_lit          : _decimals '.' [ _decimals ] [ _exponent ] | _decimals _exponent | '.' _decimals [ _exponent ] ;
+rune_lit           : '\'' ( _ascii_value_rune | _byte_value ) '\'' ;
+string_literal     : _raw_string_lit | _interpreted_string_lit ;
+
+rel_op     : '=' '=' | '!' '=' | '<' '=' | '>' '=' | '>' | '<' ;
+mul_op     : '/' | '%' | '<' '<' | '>' '>' | '&' | '&' '^' ;
+unary_op   : '!' | '&' ;
+
+inc_dec_op  : '+' '+' | '-' '-' ;
+
+norm_assign_op  : '=' ;
+mod_assign_op   : '|' '=' | '+' '=' | '-' '=' | '^' '='
+                | '*' '=' | '/' '=' | '%' '=' | '<' '<' '=' | '>' '>' '=' | '&' '=' | '&' '^' '=';
+auto_assign_op  : ':' '=' ;
+
+spread_op : '.' '.' '.' ;
+
+left_block_bracket : '{' ;
+right_block_bracket: '}' ;
+left_paren         : '(' ;
+right_paren        : ')' ;
+left_sq_paren      : '[' ;
+right_sq_paren     : ']' ;
+label_op           : ':' ;
+stmt_end           : ';' ;
+comma              : ',' ;
+dot                : '.' ;
+star               : '*' ;
+plus               : '+' ;
+minus              : '-' ;
+xor                : '^' ;
+simple_pipe        : '|' ;
+andand             : '&' '&' ;
+oror               : '|' '|' ;
+left_angle         : '<' '<' '<' ;
+right_angle        : '>' '>' '>' ;
+left_banana        : '[' '(' ;
+right_banana       : ')' ']' ;
+left_tuple         : '(' '|' ;
+right_tuple        : '|' ')' ;
+pipe               : '|' '|' '|';
+
+/* Syntax Part */
+
+<< import "tango/src/ast" >>
+
+SourceFile    : PackageClause Imports DeclList  << $2, nil >>
+              ;
+
+PackageClause : keyword_package identifier stmt_end
+              ;
+
+Imports    : empty
+           | Imports Import stmt_end
+           ;
+
+Import     : keyword_import ImportStmt
+           | keyword_import left_paren ImportStmtList OSemi right_paren
+           | keyword_import left_paren right_paren
+           ;
+
+ImportStmt : ImportHere string_literal
+           ;
+
+ImportStmtList : ImportStmt
+               | ImportStmtList stmt_end ImportStmt
+               ;
+
+ImportHere : empty
+           | identifier
+           | dot
+           ;
+
+/* Declarations */
+Declaration : CommonDecl << $0, nil >>
+            | FuncDecl	<< ast.AddNode("Declaration", $0) >>
+            | NonDeclStmt	<< ast.AddNode("Declaration", $0) >>
+//            | error
+            ;
+
+CommonDecl : keyword_const ConstDecl	<< $1, nil >>
+           | keyword_const left_paren ConstDecl OSemi right_paren	<< ast.AddNode("CommonDecl", $0, $1, $2, $3, $4) >>
+           | keyword_const left_paren ConstDecl stmt_end ConstDeclList OSemi right_paren	<< ast.AddNode("CommonDecl", $0, $1, $2, $3, $4, $5, $6) >>
+           | keyword_const left_paren right_paren	<< ast.AddNode("CommonDecl", $0, $1, $2) >>
+           | keyword_var VarDecl	<< ast.AddNode("CommonDecl", $0, $1) >>
+           | keyword_var left_paren VarDeclList OSemi right_paren	<< ast.AddNode("CommonDecl", $0, $1, $2, $3, $4) >>
+           | keyword_var left_paren right_paren	<< ast.AddNode("CommonDecl", $0, $1, $2) >>
+           | keyword_type TypeDecl	<< ast.AddNode("CommonDecl", $0, $1) >>
+           | keyword_type left_paren TypeDeclList OSemi right_paren	<< ast.AddNode("CommonDecl", $0, $1, $2, $3, $4) >>
+           | keyword_type left_paren right_paren	<< ast.AddNode("CommonDecl", $0, $1, $2) >>
+           ; 
+
+VarDecl   : DeclNameList NType	<< ast.AddNode("VarDecl", $0, $1) >>
+          | DeclNameList NType norm_assign_op ExprList	<< ast.AddNode("VarDecl", $0, $1, $2, $3) >>
+          | DeclNameList norm_assign_op ExprList	<< ast.AddNode("VarDecl", $0, $1, $2) >>
+          ;
+
+ConstDecl : DeclNameList NType norm_assign_op ExprList	<< ast.ConstDecl($0, $1, $3) >>
+          | DeclNameList norm_assign_op ExprList	<< ast.ConstDecl($0, nil, $2) >>
+          ;
+
+ConstDecl1 : ConstDecl	<< ast.AddNode("ConstDecl1", $0) >>
+           | DeclNameList NType	<< ast.AddNode("ConstDecl1", $0, $1) >>
+           | DeclNameList	<< ast.AddNode("ConstDecl1", $0) >>
+           ;
+
+TypeDeclName : identifier	<< ast.AddNode("TypeDeclName", $0) >>
+             ;
+
+TypeDecl : TypeDeclName NType	<< ast.AddNode("TypeDecl", $0, $1) >>
+         ;
+
+SimpleStmt : Expr	<< ast.AddNode("SimpleStmt", $0) >>
+           | Expr mod_assign_op Expr	<< ast.AddNode("SimpleStmt", $0, $1, $2) >>
+           | ExprList norm_assign_op ExprList	<< ast.AddNode("SimpleStmt", $0, $1, $2) >>
+           | ExprList auto_assign_op ExprList	<< ast.AddNode("SimpleStmt", $0, $1, $2) >>
+           | Expr inc_dec_op	<< ast.AddNode("SimpleStmt", $0, $1) >>
+           ;
+
+Case : keyword_case ExprOrTypeList label_op	<< ast.AddNode("Case", $0, $1, $2) >>
+     | keyword_case ExprOrTypeList norm_assign_op Expr label_op	<< ast.AddNode("Case", $0, $1, $2, $3, $4) >>
+     | keyword_case ExprOrTypeList auto_assign_op Expr label_op	<< ast.AddNode("Case", $0, $1, $2, $3, $4) >>
+     | keyword_default label_op	<< ast.AddNode("Case", $0, $1) >>
+     ;
+
+CompoundStmt : left_block_bracket StmtList right_block_bracket	<< ast.AddNode("CompoundStmt", $0, $1, $2) >>
+             ;
+
+CaseBlock : Case StmtList	<< ast.AddNode("CaseBlock", $0, $1) >>
+          ;
+
+CaseBlockList : empty	<< ast.AddNode("CaseBlockList") >>
+              | CaseBlockList CaseBlock	<< ast.AddNode("CaseBlockList", $0, $1) >>
+              ;
+
+LoopBody : left_block_bracket StmtList right_block_bracket	<< ast.AddNode("LoopBody", $0, $1, $2) >>
+         ;
+
+RangeStmt : ExprList norm_assign_op keyword_range Expr	<< ast.AddNode("RangeStmt", $0, $1, $2, $3) >>
+          | ExprList auto_assign_op keyword_range Expr	<< ast.AddNode("RangeStmt", $0, $1, $2, $3) >>
+          | keyword_range Expr	<< ast.AddNode("RangeStmt", $0, $1) >>
+          ;
+
+ForHeader : OSimpleStmt stmt_end OSimpleStmt stmt_end OSimpleStmt	<< ast.AddNode("ForHeader", $0, $1, $2, $3, $4) >>
+          | OSimpleStmt	<< ast.AddNode("ForHeader", $0) >>
+          | RangeStmt	<< ast.AddNode("ForHeader", $0) >>
+          ;
+
+ForBody : ForHeader LoopBody	<< ast.AddNode("ForBody", $0, $1) >>
+        ;
+
+ForStmt : keyword_for ForBody	<< ast.AddNode("ForStmt", $0, $1) >>
+        ;
+
+IfHeader : OSimpleStmt	<< ast.AddNode("IfHeader", $0) >>
+         | OSimpleStmt stmt_end OSimpleStmt	<< ast.AddNode("IfHeader", $0, $1, $2) >>
+         ;
+
+IfStmt : keyword_if IfHeader LoopBody ElseIfList Else	<< ast.AddNode("IfStmt", $0, $1, $2, $3, $4) >>
+       ;
+
+ElseIf : keyword_else keyword_if IfHeader LoopBody	<< ast.AddNode("ElseIf", $0, $1, $2, $3) >>
+       ;
+
+ElseIfList : empty	<< ast.AddNode("ElseIfList") >>
+           | ElseIfList ElseIf	<< ast.AddNode("ElseIfList", $0, $1) >>
+           ;
+
+Else : empty	<< ast.AddNode("Else") >>
+     | keyword_else CompoundStmt	<< ast.AddNode("Else", $0, $1) >>
+     ;
+
+NType : FuncType	<< ast.AddNode("NType", $0) >>
+      |	OtherType	<< ast.AddNode("NType", $0) >>
+      |	PtrType	<< ast.AddNode("NType", $0) >>
+      |	DotName	<< ast.AddNode("NType", $0) >>
+      |	left_paren NType right_paren	<< ast.AddNode("NType", $0, $1, $2) >>
+      ;
+
+NonExprType : FuncType	<< ast.AddNode("NonExprType", $0) >>
+            | OtherType	<< ast.AddNode("NonExprType", $0) >>
+            | star NonExprType	<< ast.AddNode("NonExprType", $0, $1) >>
+            ;
+
+OtherType : left_sq_paren OExpr right_sq_paren NType	<< ast.AddNode("OtherType", $0, $1, $2, $3) >>
+          | keyword_map left_sq_paren NType right_sq_paren NType	<< ast.AddNode("OtherType", $0, $1, $2, $3, $4) >>
+          | StructType	<< ast.AddNode("OtherType", $0) >>
+          | InterfaceType	<< ast.AddNode("OtherType", $0) >>
+          ;
+
+StructType : keyword_struct left_block_bracket StructDeclList OSemi right_block_bracket	<< ast.AddNode("StructType", $0, $1, $2, $3, $4) >>
+           | keyword_struct left_block_bracket right_block_bracket	<< ast.AddNode("StructType", $0, $1, $2) >>
+           ;
+
+InterfaceType : keyword_interface left_block_bracket InterfaceDeclList OSemi right_block_bracket	<< ast.AddNode("InterfaceType", $0, $1, $2, $3, $4) >>
+              | keyword_interface left_block_bracket right_block_bracket	<< ast.AddNode("InterfaceType", $0, $1, $2) >>
+              ;
+
+/* Function Stuff - All together to show how crappy it is */
+FuncDecl : keyword_func FuncDecl_ FuncBody	<< ast.AddNode("FuncDecl", $0, $1, $2) >>
+         ;
+
+FuncDecl_ : identifier ArgList FuncRes	<< ast.AddNode("FuncDecl_", $0, $1, $2) >>
+          | left_tuple OArgTypeListOComma right_tuple identifier ArgList FuncRes	<< ast.AddNode("FuncDecl_", $0, $1, $2, $3, $4, $5) >>
+          ;
+
+FuncType : keyword_func ArgList FuncRes	<< ast.AddNode("FuncType", $0, $1, $2) >>
+         ;
+
+ArgList : left_paren OArgTypeListOComma right_paren	<< ast.AddNode("ArgList", $0, $1, $2) >>
+        | ArgList left_paren OArgTypeListOComma right_paren	<< ast.AddNode("ArgList", $0, $1, $2, $3) >>
+        ;
+
+FuncBody : empty	<< ast.AddNode("FuncBody") >>
+         | left_block_bracket StmtList right_block_bracket	<< ast.AddNode("FuncBody", $0, $1, $2) >>
+         ;
+
+FuncRes : empty	<< ast.AddNode("FuncRes") >>
+        | FuncRetType	<< ast.AddNode("FuncRes", $0) >>
+        | left_tuple OArgTypeListOComma right_tuple	<< ast.AddNode("FuncRes", $0, $1, $2) >>
+        ;
+
+StructDeclList : StructDecl	<< ast.AddNode("StructDeclList", $0) >>
+               | StructDeclList stmt_end StructDecl	<< ast.AddNode("StructDeclList", $0, $1, $2) >>
+               ;
+
+InterfaceDeclList : InterfaceDecl	<< ast.AddNode("InterfaceDeclList", $0) >>
+                  | InterfaceDeclList stmt_end InterfaceDecl	<< ast.AddNode("InterfaceDeclList", $0, $1, $2) >>
+                  ;
+
+StructDecl : NewNameList NType OLiteral	<< ast.AddNode("StructDecl", $0, $1, $2) >>
+           | Embed OLiteral	<< ast.AddNode("StructDecl", $0, $1) >>
+           | left_paren Embed right_paren OLiteral	<< ast.AddNode("StructDecl", $0, $1, $2, $3) >>
+           | star Embed OLiteral	<< ast.AddNode("StructDecl", $0, $1, $2) >>
+           | left_paren star Embed right_paren OLiteral	<< ast.AddNode("StructDecl", $0, $1, $2, $3, $4) >>
+           | star left_paren Embed right_paren OLiteral	<< ast.AddNode("StructDecl", $0, $1, $2, $3, $4) >>
+           ;
+
+InterfaceDecl : NewName InDecl	<< ast.AddNode("InterfaceDecl", $0, $1) >>
+              | identifier	<< ast.AddNode("InterfaceDecl", $0) >>
+              | left_paren identifier right_paren	<< ast.AddNode("InterfaceDecl", $0, $1, $2) >>
+              ;
+
+InDecl : left_paren OArgTypeListOComma right_paren FuncRes	<< ast.AddNode("InDecl", $0, $1, $2, $3) >>
+       ;
+
+LabelName : NewName	<< ast.AddNode("LabelName", $0) >>
+          ;
+NewName : identifier	<< ast.AddNode("NewName", $0) >>
+        ;
+
+PtrType : star NType	<< ast.AddNode("PtrType", $0, $1) >>
+        ;
+
+FuncRetType : FuncType	<< ast.AddNode("FuncRetType", $0) >>
+            | OtherType	<< ast.AddNode("FuncRetType", $0) >>
+            | PtrType	<< ast.AddNode("FuncRetType", $0) >>
+            | DotName	<< ast.AddNode("FuncRetType", $0) >>
+            ;
+
+DotName : Name	<< ast.AddNode("DotName", $0) >>
+        | Name dot identifier	<< ast.AddNode("DotName", $0, $1, $2) >>
+        ;
+
+OComma : empty	<< ast.AddNode("OComma") >>
+       | comma	<< ast.AddNode("OComma", $0) >>
+       ;
+
+OSemi : empty	<< ast.AddNode("OSemi") >>
+      | stmt_end	<< ast.AddNode("OSemi", $0) >>
+      ;
+
+OSimpleStmt : empty	<< ast.AddNode("OSimpleStmt") >>
+            | SimpleStmt	<< ast.AddNode("OSimpleStmt", $0) >>
+            ;
+
+ONewName : empty	<< ast.AddNode("ONewName") >>
+         | NewName	<< ast.AddNode("ONewName", $0) >>
+         ;
+
+OExpr : empty	<< ast.AddNode("OExpr") >>
+      | Expr	<< ast.AddNode("OExpr", $0) >>
+      ;
+
+OExprList : empty	<< ast.AddNode("OExprList") >>
+          | ExprList	<< ast.AddNode("OExprList", $0) >>
+          ;
+
+FuncLiteralDecl : FuncType	<< ast.AddNode("FuncLiteralDecl", $0) >>
+                ;
+
+FuncLiteral : FuncLiteralDecl left_block_bracket StmtList right_block_bracket	<< ast.AddNode("FuncLiteral", $0, $1, $2, $3) >>
+//            | FuncLiteralDecl error
+            ;
+
+ExprList : Expr	<< ast.NewList($0) >>
+         | ExprList comma Expr	<< ast.AddToList($0, $2) >>
+         ;
+
+ExprOrTypeList : ExprOrType	<< ast.AddNode("ExprOrTypeList", $0) >>
+               | ExprOrTypeList comma ExprOrType	<< ast.AddNode("ExprOrTypeList", $0, $1, $2) >>
+               ;
+
+
+OLiteral : empty	<< ast.AddNode("OLiteral") >>
+         | Literal	<< ast.AddNode("OLiteral", $0) >>
+         ;
+
+Literal : int_lit	<< ast.IntLit($0) >>
+        | float_lit	<< ast.AddNode("Literal", $0) >>
+        | rune_lit	<< ast.AddNode("Literal", $0) >>
+        | string_literal	<< ast.AddNode("Literal", $0) >>
+        ;
+
+Embed : identifier	<< ast.AddNode("Embed", $0) >>
+      ;
+
+DeclList : empty	<< nil, nil >>
+         | DeclList Declaration stmt_end	<< $1, nil >>
+         ;
+
+VarDeclList : VarDecl	<< ast.AddNode("VarDeclList", $0) >>
+            | VarDeclList stmt_end VarDecl	<< ast.AddNode("VarDeclList", $0, $1, $2) >>
+            ;
+
+ConstDeclList : ConstDecl1	<< ast.AddNode("ConstDeclList", $0) >>
+              | ConstDeclList stmt_end ConstDecl1	<< ast.AddNode("ConstDeclList", $0, $1, $2) >>
+              ;
+
+TypeDeclList : TypeDecl	<< ast.AddNode("TypeDeclList", $0) >>
+             | TypeDeclList stmt_end TypeDecl	<< ast.AddNode("TypeDeclList", $0, $1, $2) >>
+             ;
+
+DeclNameList : DeclName	<< ast.NewList($0) >>
+             | DeclNameList comma DeclName	<< ast.AddToList($0, $2) >>
+             ;
+
+StmtList : Stmt	<< ast.AddNode("StmtList", $0) >>
+         | StmtList stmt_end Stmt	<< ast.AddNode("StmtList", $0, $1, $2) >>
+         ;
+
+NewNameList : NewName	<< ast.AddNode("NewNameList", $0) >>
+            | NewNameList comma NewName	<< ast.AddNode("NewNameList", $0, $1, $2) >>
+            ;
+
+KeyvalList : Keyval	<< ast.AddNode("KeyvalList", $0) >>
+           | BareCompLitExpr	<< ast.AddNode("KeyvalList", $0) >>
+           | KeyvalList comma Keyval	<< ast.AddNode("KeyvalList", $0, $1, $2) >>
+           | KeyvalList comma BareCompLitExpr	<< ast.AddNode("KeyvalList", $0, $1, $2) >>
+           ;
+
+BracedKeyvalList : empty	<< ast.AddNode("BracedKeyvalList") >>
+                 | KeyvalList OComma	<< ast.AddNode("BracedKeyvalList", $0, $1) >>
+                 ;
+
+DeclName : identifier	<< ast.Identifier($0) >>
+         ;
+
+Name : identifier	<< ast.Identifier($0) >>
+     ;
+
+ArgType : NameOrType	<< ast.AddNode("ArgType", $0) >>
+        | identifier NameOrType	<< ast.AddNode("ArgType", $0, $1) >>
+        | identifier DotDotDot	<< ast.AddNode("ArgType", $0, $1) >>
+        | DotDotDot	<< ast.AddNode("ArgType", $0) >>
+        ;
+
+ArgTypeList : ArgType	<< ast.AddNode("ArgTypeList", $0) >>
+            | ArgTypeList comma ArgType	<< ast.AddNode("ArgTypeList", $0, $1, $2) >>
+            ;
+
+OArgTypeListOComma : empty	<< ast.AddNode("OArgTypeListOComma") >>
+                   | ArgTypeList OComma	<< ast.AddNode("OArgTypeListOComma", $0, $1) >>
+                   ;
+
+/* Statement */
+Stmt : empty	<< ast.AddNode("Stmt") >>
+     | CompoundStmt	<< ast.AddNode("Stmt", $0) >>
+     | CommonDecl	<< ast.AddNode("Stmt", $0) >>
+     | NonDeclStmt	<< ast.AddNode("Stmt", $0) >>
+//     | error
+     ;
+
+NonDeclStmt : SimpleStmt	<< ast.AddNode("NonDeclStmt", $0) >>
+            | ForStmt	<< ast.AddNode("NonDeclStmt", $0) >>
+            | SwitchStmt	<< ast.AddNode("NonDeclStmt", $0) >>
+            | IfStmt	<< ast.AddNode("NonDeclStmt", $0) >>
+            | LabelName label_op Stmt	<< ast.AddNode("NonDeclStmt", $0, $1, $2) >>
+            | keyword_fallthrough	<< ast.AddNode("NonDeclStmt", $0) >>
+            | keyword_break ONewName	<< ast.AddNode("NonDeclStmt", $0, $1) >>
+            | keyword_continue ONewName	<< ast.AddNode("NonDeclStmt", $0, $1) >>
+            | keyword_defer PseudoCall	<< ast.AddNode("NonDeclStmt", $0, $1) >>
+            | keyword_goto NewName	<< ast.AddNode("NonDeclStmt", $0, $1) >>
+            | keyword_return OExprList	<< ast.AddNode("NonDeclStmt", $0, $1) >>
+            ;
+
+DotDotDot : spread_op	<< ast.AddNode("DotDotDot", $0) >>
+          | spread_op NType	<< ast.AddNode("DotDotDot", $0, $1) >>
+          ;
+
+PExpr : PExprNoParen	<< $0, nil >>
+      | left_paren ExprOrType right_paren	<< ast.AddNode("PExpr", $0, $1, $2) >>
+      ;
+
+PExprNoParen : Literal  << $0, nil >>
+             | Name     << $0, nil >>
+             | PExpr dot identifier	<< ast.AddNode("PExprNoParen", $0, $1, $2) >>
+             | PExpr dot left_paren ExprOrType right_paren	<< ast.AddNode("PExprNoParen", $0, $1, $2, $3, $4) >>
+             | PExpr dot left_paren keyword_type right_paren	<< ast.AddNode("PExprNoParen", $0, $1, $2, $3, $4) >>
+             | PExpr left_sq_paren Expr right_sq_paren	<< ast.AddNode("PExprNoParen", $0, $1, $2, $3) >>
+             | PExpr left_sq_paren OExpr label_op OExpr right_sq_paren	<< ast.AddNode("PExprNoParen", $0, $1, $2, $3, $4, $5) >>
+             | PExpr left_sq_paren OExpr label_op OExpr label_op OExpr right_sq_paren	<< ast.AddNode("PExprNoParen", $0, $1, $2, $3, $4, $5, $6, $7) >>
+             | PseudoCall	<< ast.AddNode("PExprNoParen", $0) >>
+             | ConvType left_angle Expr OComma right_angle	<< ast.AddNode("PExprNoParen", $0, $1, $2, $3, $4) >>
+             | CompType left_banana BracedKeyvalList right_banana	<< ast.AddNode("PExprNoParen", $0, $1, $2, $3) >>
+             | PExpr left_banana BracedKeyvalList right_banana	<< ast.AddNode("PExprNoParen", $0, $1, $2, $3) >>
+             | FuncLiteral	<< ast.AddNode("PExprNoParen", $0) >>
+             | ForCompExpr	<< ast.AddNode("PExprNoParen", $0) >>
+             ;
+
+ConvType : FuncType	<< ast.AddNode("ConvType", $0) >>
+         | OtherType	<< ast.AddNode("ConvType", $0) >>
+         ;
+
+CompType : OtherType	<< ast.AddNode("CompType", $0) >>
+         ;
+
+// Signifies beginning of a composite expression
+StartCompLit : empty	<< ast.AddNode("StartCompLit") >>
+             ;
+
+Keyval : Expr label_op CompLitExpr	<< ast.AddNode("Keyval", $0, $1, $2) >>
+       ;
+
+BareCompLitExpr : Expr	<< ast.AddNode("BareCompLitExpr", $0) >>
+                | left_banana BracedKeyvalList right_banana	<< ast.AddNode("BareCompLitExpr", $0, $1, $2) >>
+                ;
+
+CompLitExpr : Expr	<< ast.AddNode("CompLitExpr", $0) >>
+            | left_banana BracedKeyvalList right_banana	<< ast.AddNode("CompLitExpr", $0, $1, $2) >>
+            ;
+
+ExprOrType : Expr	<< ast.AddNode("ExprOrType", $0) >>
+           | NonExprType	<< ast.AddNode("ExprOrType", $0) >>
+           ;
+
+NameOrType : NType	<< ast.AddNode("NameOrType", $0) >>
+           ;
+
+SwitchStmt : keyword_switch IfHeader left_block_bracket CaseBlockList right_block_bracket	<< ast.AddNode("SwitchStmt", $0, $1, $2, $3, $4) >>
+           ;
+
+/* Expressions */
+// My fix for binary_op SR Conflict might be wrong. Double Check Please!!!
+
+Prec5Expr_ : UExpr	<< $0, nil >>
+           | Prec5Expr_ mul_op UExpr	<< ast.AddNode("Prec5Expr_", $0, $1, $2) >>
+           | Prec5Expr_ star UExpr	<< ast.AddNode("Prec5Expr_", $0, $1, $2) >>
+           ;
+
+Prec4Expr_ : Prec5Expr_	<< $0, nil >>
+           | Prec4Expr_ plus Prec5Expr_	<< ast.AddNode("Prec4Expr_", $0, $1, $2) >>
+           | Prec4Expr_ minus Prec5Expr_	<< ast.AddNode("Prec4Expr_", $0, $1, $2) >>
+           | Prec4Expr_ xor Prec5Expr_	<< ast.AddNode("Prec4Expr_", $0, $1, $2) >>
+           | Prec4Expr_ simple_pipe Prec5Expr_	<< ast.AddNode("Prec4Expr_", $0, $1, $2) >>
+           ;
+
+Prec3Expr_ : Prec4Expr_	<< $0, nil >>
+           | Prec3Expr_ rel_op Prec4Expr_	<< ast.AddNode("Prec3Expr_", $0, $1, $2) >>
+           ;
+
+Prec2Expr_ : Prec3Expr_	<< $0, nil >>
+           | Prec2Expr_ andand Prec3Expr_	<< ast.AddNode("Prec2Expr_", $0, $1, $2) >>
+           ;
+
+Expr       : Prec2Expr_	<< $0, nil >>
+           | Expr oror Prec2Expr_	<< ast.AddNode("Expr", $0, $1, $2) >>
+           ;
+
+UExpr : PExpr	<< $0, nil >>
+      | unary_op UExpr	<< ast.AddNode("UExpr", $0, $1) >>
+      | star UExpr	<< ast.AddNode("UExpr", $0, $1) >>
+      | plus UExpr	<< ast.AddNode("UExpr", $0, $1) >>
+      | minus UExpr	<< ast.AddNode("UExpr", $0, $1) >>
+      | xor UExpr	<< ast.AddNode("UExpr", $0, $1) >>
+      ;
+
+ForCompExpr : left_sq_paren Expr pipe RangeStmt right_sq_paren	<< ast.AddNode("ForCompExpr", $0, $1, $2, $3, $4) >>
+            ;
+
+/* Call-Like Statements that can be preceded by 'defer' */
+PseudoCall : PExpr left_paren right_paren	<< ast.AddNode("PseudoCall", $0, $1, $2) >>
+           | PExpr left_paren ExprOrTypeList OComma right_paren	<< ast.AddNode("PseudoCall", $0, $1, $2, $3, $4) >>
+           | PExpr left_paren ExprOrTypeList spread_op OComma right_paren	<< ast.AddNode("PseudoCall", $0, $1, $2, $3, $4, $5) >>
+           ;
+

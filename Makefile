@@ -8,7 +8,7 @@ GOFLAGS :=
 
 .PHONY: all clean test runcode
 
-all: vendor bin/lexer bin/codegen bin/parser
+all: vendor bin/lexer bin/codegen bin/parser bin/irgen
 
 debug: GOFLAGS += -tags debug
 debug: all
@@ -31,13 +31,17 @@ bin/parser: src/main/parser/parser.go src/parser/parser.go src/ast/*.go src/html
 	@echo -e "\e[1;32mCompiling Parser \e[0m"
 	go install $(GOFLAGS) $(current_dir)/src/main/parser/parser.go
 
-src/lexer/lexer.go: src/tango-main.ebnf
-	@echo -e "\e[1;33mGenerating Lexer \e[0m"
-	cd $(current_dir)/src && $(GOCC) tango-main.ebnf
+bin/irgen: src/main/irgen/irgen.go src/parser/parser.go src/ast/*.go src/html/*.go
+	@echo -e "\e[1;32mCompiling IR Gen \e[0m"
+	go install $(GOFLAGS) $(current_dir)/src/main/irgen/irgen.go
 
-src/parser/parser.go: src/tango-main.ebnf
+src/lexer/lexer.go: src/tango-main-ir.ebnf
+	@echo -e "\e[1;33mGenerating Lexer \e[0m"
+	cd $(current_dir)/src && $(GOCC) tango-main-ir.ebnf
+
+src/parser/parser.go: src/tango-main-ir.ebnf
 	@echo -e "\e[1;33mGenerating Parser \e[0m"
-	cd $(current_dir)/src && $(GOCC) tango-main.ebnf
+	cd $(current_dir)/src && $(GOCC) tango-main-ir.ebnf
 
 src/tango-main.ebnf: src/tangov2.ebnf
 	cd $(current_dir)/src && ./script.py

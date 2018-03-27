@@ -38,7 +38,10 @@ func main() {
 		if colonIndex != -1 {
 			label := line[:colonIndex]
 			var dst cg.SymbolTableEntry
-			dst = cg.InsertToSymbolTable("#" + label)
+			dst, err = cg.InsertToSymbolTable("#" + label)
+			if err != nil {
+				log.Fatalf("An error occurred: %v\n", err)
+			}
 			ins := cg.IRIns{
 				Typ: cg.LBL,
 				Dst: dst,

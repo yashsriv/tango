@@ -1,5 +1,7 @@
 package ast
 
+import "tango/src/codegen"
+
 // Attrib represents any generic element of the ast
 type Attrib interface {
 }
@@ -30,4 +32,10 @@ func AddNode(name string, attribs ...Attrib) (Attrib, error) {
 	}
 	Derivations[node] = attribs
 	return node, nil
+}
+
+// AddrCode is a struct representing the SymbolTableEntry and Code
+type AddrCode struct {
+	Symbol codegen.SymbolTableEntry
+	Code   []codegen.IRIns
 }
