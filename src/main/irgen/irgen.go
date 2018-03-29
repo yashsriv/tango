@@ -26,7 +26,7 @@ func main() {
 	}
 	sourceFile, ok := st.(*ast.AddrCode)
 	if !ok {
-		panic("Expected a AddrCode")
+		panic("Expected an AddrCode")
 	}
 
 	for _, val := range sourceFile.Code {

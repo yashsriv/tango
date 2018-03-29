@@ -36,6 +36,8 @@ func (s SymbolTableTargetEntry) SymbolTableString() string {
 // SymbolTableVariableEntry refers to a register in the symbol table
 type SymbolTableVariableEntry struct {
 	MemoryLocation string
+	Declared       bool
+	Assignments    int
 }
 
 // SymbolTableString returns a string representation and also ensures types

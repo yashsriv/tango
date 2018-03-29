@@ -107,7 +107,7 @@ pipe               : '|' '|' '|';
 
 << import "tango/src/ast" >>
 
-SourceFile    : PackageClause Imports DeclList  << $2, nil >>
+SourceFile    : PackageClause Imports DeclList  << ast.NewSourceFile($2) >>
               ;
 
 PackageClause : keyword_package identifier stmt_end
@@ -142,9 +142,9 @@ Declaration : CommonDecl << $0, nil >>
             ;
 
 CommonDecl : keyword_const ConstDecl	<< $1, nil >>
-           | keyword_const left_paren ConstDecl OSemi right_paren	<< ast.AddNode("CommonDecl", $0, $1, $2, $3, $4) >>
-           | keyword_const left_paren ConstDecl stmt_end ConstDeclList OSemi right_paren	<< ast.AddNode("CommonDecl", $0, $1, $2, $3, $4, $5, $6) >>
-           | keyword_const left_paren right_paren	<< ast.AddNode("CommonDecl", $0, $1, $2) >>
+           | keyword_const left_paren ConstDecl OSemi right_paren	<< $2, nil >>
+           | keyword_const left_paren ConstDecl stmt_end ConstDeclList OSemi right_paren	<< ast.MultConstDecl($2, $4) >>
+           | keyword_const left_paren right_paren	<< &ast.AddrCode{}, nil >>
            | keyword_var VarDecl	<< ast.AddNode("CommonDecl", $0, $1) >>
            | keyword_var left_paren VarDeclList OSemi right_paren	<< ast.AddNode("CommonDecl", $0, $1, $2, $3, $4) >>
            | keyword_var left_paren right_paren	<< ast.AddNode("CommonDecl", $0, $1, $2) >>
@@ -162,9 +162,9 @@ ConstDecl : DeclNameList NType norm_assign_op ExprList	<< ast.ConstDecl($0, $1, 
           | DeclNameList norm_assign_op ExprList	<< ast.ConstDecl($0, nil, $2) >>
           ;
 
-ConstDecl1 : ConstDecl	<< ast.AddNode("ConstDecl1", $0) >>
-           | DeclNameList NType	<< ast.AddNode("ConstDecl1", $0, $1) >>
-           | DeclNameList	<< ast.AddNode("ConstDecl1", $0) >>
+ConstDecl1 : ConstDecl	<< $0, nil >>
+           | DeclNameList NType	<< nil, ast.ErrUnsupported >>
+           | DeclNameList	<< nil, ast.ErrUnsupported >>
            ;
 
 TypeDeclName : identifier	<< ast.AddNode("TypeDeclName", $0) >>
@@ -378,16 +378,16 @@ Literal : int_lit	<< ast.IntLit($0) >>
 Embed : identifier	<< ast.AddNode("Embed", $0) >>
       ;
 
-DeclList : empty	<< nil, nil >>
-         | DeclList Declaration stmt_end	<< $1, nil >>
+DeclList : empty	<< ast.NewList(nil) >>
+         | DeclList Declaration stmt_end	<< ast.AddToList($0, $1) >>
          ;
 
 VarDeclList : VarDecl	<< ast.AddNode("VarDeclList", $0) >>
             | VarDeclList stmt_end VarDecl	<< ast.AddNode("VarDeclList", $0, $1, $2) >>
             ;
 
-ConstDeclList : ConstDecl1	<< ast.AddNode("ConstDeclList", $0) >>
-              | ConstDeclList stmt_end ConstDecl1	<< ast.AddNode("ConstDeclList", $0, $1, $2) >>
+ConstDeclList : ConstDecl1	<< ast.NewList($0) >>
+              | ConstDeclList stmt_end ConstDecl1	<< ast.AddToList($0, $2) >>
               ;
 
 TypeDeclList : TypeDecl	<< ast.AddNode("TypeDeclList", $0) >>

@@ -1,6 +1,9 @@
 package ast
 
-import "tango/src/codegen"
+import (
+	"errors"
+	"tango/src/codegen"
+)
 
 // Attrib represents any generic element of the ast
 type Attrib interface {
@@ -38,4 +41,12 @@ func AddNode(name string, attribs ...Attrib) (Attrib, error) {
 type AddrCode struct {
 	Symbol codegen.SymbolTableEntry
 	Code   []codegen.IRIns
+}
+
+// ErrUnsupported is used to report unsupported errors in the code
+var ErrUnsupported = errors.New("unsupported operation")
+
+// NewSourceFile creates a source file from the decl list
+func NewSourceFile(declList Attrib) (*AddrCode, error) {
+	return MergeCodeList(declList)
 }

@@ -1,3 +1,8 @@
 package main
 
-const a, b = 5, 6
+const (
+	a = 5
+	b = 6
+	c = 7
+	d = 8
+)
