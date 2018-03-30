@@ -50,3 +50,5 @@ var ErrUnsupported = errors.New("unsupported operation")
 func NewSourceFile(declList Attrib) (*AddrCode, error) {
 	return MergeCodeList(declList)
 }
+
+var tempCount int

@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"errors"
 	"fmt"
 	"tango/src/codegen"
 )
@@ -12,7 +11,7 @@ func NewList(el Attrib) ([]*AddrCode, error) {
 	if el != nil {
 		elAsAddrCode, ok := el.(*AddrCode)
 		if !ok {
-			return nil, errors.New("Unable to type cast to AddrCode")
+			return nil, fmt.Errorf("unable to type cast %v to *AddrCode", el)
 		}
 		list = append(list, elAsAddrCode)
 	}
@@ -23,11 +22,11 @@ func NewList(el Attrib) ([]*AddrCode, error) {
 func AddToList(list Attrib, el Attrib) ([]*AddrCode, error) {
 	asList, ok := list.([]*AddrCode)
 	if !ok {
-		return nil, errors.New("Unable to type cast to list")
+		return nil, fmt.Errorf("unable to type cast %v to []*AddrCode", list)
 	}
 	elAsAddrCode, ok := el.(*AddrCode)
 	if !ok {
-		return nil, errors.New("Unable to type cast to AddrCode")
+		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", el)
 	}
 	return append(asList, elAsAddrCode), nil
 }

@@ -1,8 +1,12 @@
 package main
 
 const (
-	a = 5
-	b = 6
-	c = 7
-	d = 8
+	a int = 5
+	b int = 6
+	c int = 7
+	d int = 8
+)
+
+var (
+	x, y int = a + c, 6
 )
