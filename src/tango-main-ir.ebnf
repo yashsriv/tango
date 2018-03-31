@@ -153,12 +153,12 @@ CommonDecl : keyword_const ConstDecl	<< $1, nil >>
            | keyword_type left_paren right_paren	<< nil, ast.ErrUnsupported >>
            ; 
 
-VarDecl   : DeclNameList NType	<< ast.VarDecl($0, $1, nil) >>
-          | DeclNameList NType norm_assign_op ExprList	<< ast.VarDecl($0, $1, $3) >>
+VarDecl   : DeclNameList NType	<< ast.Decl($0, $1, nil, false) >>
+          | DeclNameList NType norm_assign_op ExprList	<< ast.Decl($0, $1, $3, false) >>
           | DeclNameList norm_assign_op ExprList	<< nil, ast.ErrUnsupported >>
           ;
 
-ConstDecl : DeclNameList NType norm_assign_op ExprList	<< ast.ConstDecl($0, $1, $3) >>
+ConstDecl : DeclNameList NType norm_assign_op ExprList	<< ast.Decl($0, $1, $3, true) >>
           | DeclNameList norm_assign_op ExprList	<< nil, ast.ErrUnsupported >>
           ;
 
