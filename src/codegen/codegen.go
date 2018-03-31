@@ -266,6 +266,13 @@ func genCBRCode(ins IRIns, regs [3]registerResult) {
 }
 
 func genSOpCode(ins IRIns, regs [3]registerResult) {
+
+	// TODO: Codegen Issue is here
+	// Load Arg1 to regs0
+	// Move Arg1 to regs2
+	// regs1 is same as regs2
+	// Move Arg2 to reg2 and overwrite assumed previous value
+
 	load(regs[0], ins.Arg1)
 	spill(regs[2].Spill)
 	Code += fmt.Sprintf("movl %s, %s\n", regs[0].Register, regs[2].Register)
@@ -290,6 +297,13 @@ func genSOpCode(ins IRIns, regs [3]registerResult) {
 }
 
 func genBOpCode(ins IRIns, regs [3]registerResult) {
+
+	// TODO: Codegen Issue is here
+	// Load Arg1 to regs0
+	// Move Arg1 to regs2
+	// regs1 is same as regs2
+	// Move Arg2 to reg2 and overwrite assumed previous value
+
 	load(regs[0], ins.Arg1)
 	spill(regs[2].Spill)
 	Code += fmt.Sprintf("movl %s, %s\n", regs[0].Register, regs[2].Register)

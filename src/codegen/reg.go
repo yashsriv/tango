@@ -38,13 +38,7 @@ func assignHelper(uinfo map[*SymbolTableVariableEntry]UseInfo, dst *SymbolTableV
 		// return that register
 		if addrDesc[i].regLocation != "" {
 			cannotbeReplaced[addrDesc[i].regLocation] = uinfo[i].NextUse == -1
-			currentMap := map[*SymbolTableVariableEntry]bool{}
-			for v := range regDesc[addrDesc[i].regLocation] {
-				if v != i {
-					currentMap[v] = true
-				}
-			}
-			return registerResult{Register: addrDesc[i].regLocation, Spill: currentMap}
+			return registerResult{Register: addrDesc[i].regLocation, Spill: regDesc[addrDesc[i].regLocation]}
 		}
 
 		for register, variable := range regDesc {
@@ -71,13 +65,12 @@ func assignHelper(uinfo map[*SymbolTableVariableEntry]UseInfo, dst *SymbolTableV
 			if val, ok := cannotbeReplaced[key]; ok && !(dst == i && val) {
 				score[key] = math.MaxInt32
 			} else {
+				score[key] = 0
 				for value := range values {
 					if addrDesc[value].memLocation == "" {
 						// addrDesc which are not in any memLocation
 						// we can overwrite the dst register if it is not going to be used
 						// in the future. So score shouldn't be incremented
-						// NOTE: Issue here. Variable isn't stored in memory and we are replacing it.
-						// If variable is used in another block, we have lost the value
 						if !(canReplace && value == dst) {
 							if uinfo[value].NextUse != -1 {
 								// If the variable we are replacing has to be used in the future,
