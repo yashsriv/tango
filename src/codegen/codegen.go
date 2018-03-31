@@ -267,14 +267,14 @@ func genCBRCode(ins IRIns, regs [3]registerResult) {
 
 func genSOpCode(ins IRIns, regs [3]registerResult) {
 
-	// TODO: Codegen Issue is here
-	// Load Arg1 to regs0
-	// Move Arg1 to regs2
-	// regs1 is same as regs2
-	// Move Arg2 to reg2 and overwrite assumed previous value
-
 	load(regs[0], ins.Arg1)
-	spill(regs[2].Spill)
+	// if arg1 register and dst register are same, it will be spilled in the previous statement
+	if regs[0].Register != regs[2].Register {
+		spill(regs[2].Spill)
+	}
+
+	// There is no issue like in genBOpCode because we have guaranteed that dst register is not
+	// equal to arg1 register or arg2 register
 	Code += fmt.Sprintf("movl %s, %s\n", regs[0].Register, regs[2].Register)
 
 	var valueString string
@@ -298,15 +298,12 @@ func genSOpCode(ins IRIns, regs [3]registerResult) {
 
 func genBOpCode(ins IRIns, regs [3]registerResult) {
 
-	// TODO: Codegen Issue is here
-	// Load Arg1 to regs0
-	// Move Arg1 to regs2
-	// regs1 is same as regs2
-	// Move Arg2 to reg2 and overwrite assumed previous value
-
 	load(regs[0], ins.Arg1)
-	spill(regs[2].Spill)
-	Code += fmt.Sprintf("movl %s, %s\n", regs[0].Register, regs[2].Register)
+
+	// if arg1 register and dst register are same, it will be spilled in the previous statement
+	if regs[0].Register != regs[2].Register {
+		spill(regs[2].Spill)
+	}
 
 	var valueString string
 	if regs[1].Register == "" {
@@ -316,23 +313,54 @@ func genBOpCode(ins IRIns, regs [3]registerResult) {
 		valueString = string(regs[1].Register)
 	}
 
+	var op1 string
+
+	// dst reg == arg2 reg
+	if regs[2].Register == regs[1].Register {
+		// This has to be a SymbolTableVariableEntry since a register was allocated
+		// if not program should fail... fatal error
+		entry := ins.Arg2.(*SymbolTableVariableEntry)
+		delete(regDesc[regs[1].Register], entry)
+		addrDesc[entry] = address{
+			regLocation: "",
+			memLocation: entry.MemoryLocation,
+		}
+		op1 = string(regs[0].Register)
+	} else if regs[2].Register == regs[0].Register {
+		// dst reg == arg1 reg
+		// This has to be a SymbolTableVariableEntry since a register was allocated
+		// if not program should fail... fatal error
+		entry := ins.Arg1.(*SymbolTableVariableEntry)
+		delete(regDesc[regs[0].Register], entry)
+		addrDesc[entry] = address{
+			regLocation: "",
+			memLocation: entry.MemoryLocation,
+		}
+		op1 = valueString
+	} else {
+		// All registers unique
+		// Move arg1 register to dst register
+		Code += fmt.Sprintf("movl %s, %s\n", regs[0].Register, regs[2].Register)
+		op1 = valueString
+	}
+
 	switch ins.Op {
 	case ADD:
-		Code += fmt.Sprintf("addl %s, %s\n", valueString, regs[2].Register)
+		Code += fmt.Sprintf("addl %s, %s\n", op1, regs[2].Register)
 	case SUB:
-		Code += fmt.Sprintf("subl %s, %s\n", valueString, regs[2].Register)
+		Code += fmt.Sprintf("subl %s, %s\n", op1, regs[2].Register)
 	case MUL:
-		Code += fmt.Sprintf("imul %s, %s\n", valueString, regs[2].Register)
+		Code += fmt.Sprintf("imul %s, %s\n", op1, regs[2].Register)
 	case AND:
 		fallthrough
 	case BAND:
-		Code += fmt.Sprintf("andl %s, %s\n", valueString, regs[2].Register)
+		Code += fmt.Sprintf("andl %s, %s\n", op1, regs[2].Register)
 	case OR:
 		fallthrough
 	case BOR:
-		Code += fmt.Sprintf("orl %s, %s\n", valueString, regs[2].Register)
+		Code += fmt.Sprintf("orl %s, %s\n", op1, regs[2].Register)
 	case XOR:
-		Code += fmt.Sprintf("xorl %s, %s\n", valueString, regs[2].Register)
+		Code += fmt.Sprintf("xorl %s, %s\n", op1, regs[2].Register)
 	}
 
 	dst := ins.Dst.(*SymbolTableVariableEntry)
