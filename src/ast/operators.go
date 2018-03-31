@@ -6,6 +6,7 @@ import (
 	"tango/src/token"
 )
 
+// UnaryOp generates code for a unary expression
 func UnaryOp(a Attrib, b Attrib) (*AddrCode, error) {
 	op := string(a.(*token.Token).Lit)
 	el, ok := b.(*AddrCode)
@@ -18,26 +19,21 @@ func UnaryOp(a Attrib, b Attrib) (*AddrCode, error) {
 		return nil, err
 	}
 	code := el.Code
-	var ncode codegen.IRIns
+	var irOp codegen.IROp
 	switch op {
 	case "-":
-		ncode = codegen.IRIns{
-			Typ:  codegen.UOP,
-			Op:   codegen.NEG,
-			Dst:  entry,
-			Arg1: el.Symbol,
-		}
+		irOp = codegen.NEG
 	case "^":
-		ncode = codegen.IRIns{
-			Typ:  codegen.UOP,
-			Op:   codegen.BNOT,
-			Dst:  entry,
-			Arg1: el.Symbol,
-		}
+		irOp = codegen.BNOT
 	default:
 		return nil, ErrUnsupported
 	}
-	code = append(code, ncode)
+	code = append(code, codegen.IRIns{
+		Typ:  codegen.UOP,
+		Op:   irOp,
+		Dst:  entry,
+		Arg1: el.Symbol,
+	})
 	addrcode := &AddrCode{
 		Symbol: entry,
 		Code:   code,
@@ -45,6 +41,7 @@ func UnaryOp(a Attrib, b Attrib) (*AddrCode, error) {
 	return addrcode, nil
 }
 
+// BinaryOp generates code for a binary expression
 func BinaryOp(a Attrib, b Attrib, c Attrib) (*AddrCode, error) {
 	op := string(b.(*token.Token).Lit)
 	el1, ok := a.(*AddrCode)
@@ -61,92 +58,38 @@ func BinaryOp(a Attrib, b Attrib, c Attrib) (*AddrCode, error) {
 		return nil, err
 	}
 	code := append(el1.Code, el2.Code...)
-	var ncode codegen.IRIns
+	var irOp codegen.IROp
 	switch op {
 	case "+":
-		ncode = codegen.IRIns{
-			Typ:  codegen.BOP,
-			Op:   codegen.ADD,
-			Dst:  entry,
-			Arg1: el1.Symbol,
-			Arg2: el2.Symbol,
-		}
+		irOp = codegen.ADD
 	case "-":
-		ncode = codegen.IRIns{
-			Typ:  codegen.BOP,
-			Op:   codegen.SUB,
-			Dst:  entry,
-			Arg1: el1.Symbol,
-			Arg2: el2.Symbol,
-		}
+		irOp = codegen.SUB
 	case "*":
-		ncode = codegen.IRIns{
-			Typ:  codegen.BOP,
-			Op:   codegen.MUL,
-			Dst:  entry,
-			Arg1: el1.Symbol,
-			Arg2: el2.Symbol,
-		}
+		irOp = codegen.MUL
 	case "^":
-		ncode = codegen.IRIns{
-			Typ:  codegen.BOP,
-			Op:   codegen.XOR,
-			Dst:  entry,
-			Arg1: el1.Symbol,
-			Arg2: el2.Symbol,
-		}
+		irOp = codegen.XOR
 	case "|":
-		ncode = codegen.IRIns{
-			Typ:  codegen.BOP,
-			Op:   codegen.BOR,
-			Dst:  entry,
-			Arg1: el1.Symbol,
-			Arg2: el2.Symbol,
-		}
+		irOp = codegen.BOR
 	case "/":
-		ncode = codegen.IRIns{
-			Typ:  codegen.BOP,
-			Op:   codegen.DIV,
-			Dst:  entry,
-			Arg1: el1.Symbol,
-			Arg2: el2.Symbol,
-		}
+		irOp = codegen.DIV
 	case "%":
-		ncode = codegen.IRIns{
-			Typ:  codegen.BOP,
-			Op:   codegen.REM,
-			Dst:  entry,
-			Arg1: el1.Symbol,
-			Arg2: el2.Symbol,
-		}
+		irOp = codegen.REM
 	case "<<":
-		ncode = codegen.IRIns{
-			Typ:  codegen.BOP,
-			Op:   codegen.BSL,
-			Dst:  entry,
-			Arg1: el1.Symbol,
-			Arg2: el2.Symbol,
-		}
+		irOp = codegen.BSL
 	case ">>":
-		ncode = codegen.IRIns{
-			Typ:  codegen.BOP,
-			Op:   codegen.BSR,
-			Dst:  entry,
-			Arg1: el1.Symbol,
-			Arg2: el2.Symbol,
-		}
+		irOp = codegen.BSR
 	case "&":
-		ncode = codegen.IRIns{
-			Typ:  codegen.BOP,
-			Op:   codegen.BAND,
-			Dst:  entry,
-			Arg1: el1.Symbol,
-			Arg2: el2.Symbol,
-		}
+		irOp = codegen.BAND
 	default:
 		return nil, ErrUnsupported
 	}
-	code = append(code, ncode)
+	code = append(code, codegen.IRIns{
+		Typ:  codegen.BOP,
+		Op:   irOp,
+		Dst:  entry,
+		Arg1: el1.Symbol,
+		Arg2: el2.Symbol,
+	})
 	addrcode := &AddrCode{
 		Symbol: entry,
 		Code:   code,
