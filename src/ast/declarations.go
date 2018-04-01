@@ -121,3 +121,25 @@ func MultConstDecl(decl, decllist Attrib) (*AddrCode, error) {
 
 	return addrcode, nil
 }
+
+// FuncDecl is a declaration of a function
+func FuncDecl(a, b Attrib) (*AddrCode, error) {
+	name, ok := a.(*AddrCode)
+	if !ok {
+		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", a)
+	}
+	body, ok := b.(*AddrCode)
+	if !ok {
+		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
+	}
+	code := make([]codegen.IRIns, 1, len(body.Code)+1)
+	code[0] = codegen.IRIns{
+		Typ: codegen.LBL,
+		Dst: name.Symbol,
+	}
+	code = append(code, body.Code...)
+	addrcode := &AddrCode{
+		Code: code,
+	}
+	return addrcode, nil
+}

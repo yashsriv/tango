@@ -30,5 +30,5 @@ func (i IRIns) String() string {
 	if i.Typ == LBL {
 		return fmt.Sprintf("%s:", i.Dst.SymbolTableString())
 	}
-	return fmt.Sprintf("%s\t%s, %s, %s", i.Op, dst, arg1, arg2)
+	return fmt.Sprintf("%s,%s,%s,%s", i.Op, dst, arg1, arg2)
 }

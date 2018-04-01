@@ -136,7 +136,7 @@ ImportHere : empty
 
 /* Declarations */
 Declaration : CommonDecl << $0, nil >>
-            | FuncDecl	<< ast.AddNode("Declaration", $0) >>
+            | FuncDecl	<< $0, nil >>
             | NonDeclStmt	<< ast.AddNode("Declaration", $0) >>
 //            | error
             ;
@@ -167,17 +167,18 @@ ConstDecl1 : ConstDecl	<< $0, nil >>
            | DeclNameList	<< nil, ast.ErrUnsupported >>
            ;
 
-TypeDeclName : identifier	<< ast.AddNode("TypeDeclName", $0) >>
+TypeDeclName : identifier	<< nil, ast.ErrUnsupported >>
              ;
 
-TypeDecl : TypeDeclName NType	<< ast.AddNode("TypeDecl", $0, $1) >>
+TypeDecl : TypeDeclName NType	<< nil, ast.ErrUnsupported >>
          ;
 
+// TODO: Think about addressable left hand side
 SimpleStmt : Expr	<< $0, nil >>
-           | Expr mod_assign_op Expr	<< ast.AddNode("SimpleStmt", $0, $1, $2) >>
-           | ExprList norm_assign_op ExprList	<< ast.AddNode("SimpleStmt", $0, $1, $2) >>
+           | Expr mod_assign_op Expr	<< ast.ModAssignment($0, $1, $2) >>
+           | ExprList norm_assign_op ExprList	<< ast.Assignments($0, $2) >>
            | ExprList auto_assign_op ExprList	<< nil, ast.ErrUnsupported >>
-           | Expr inc_dec_op	<< ast.AddNode("SimpleStmt", $0, $1) >>
+           | Expr inc_dec_op	<< ast.IncDec($0, $1) >>
            ;
 
 Case : keyword_case ExprOrTypeList label_op	<< ast.AddNode("Case", $0, $1, $2) >>
@@ -260,11 +261,11 @@ InterfaceType : keyword_interface left_block_bracket InterfaceDeclList OSemi rig
               ;
 
 /* Function Stuff - All together to show how crappy it is */
-FuncDecl : keyword_func FuncDecl_ FuncBody	<< ast.AddNode("FuncDecl", $0, $1, $2) >>
+FuncDecl : keyword_func FuncDecl_ FuncBody	                                      << ast.FuncDecl($1, $2) >>
          ;
 
-FuncDecl_ : identifier ArgList FuncRes	<< ast.AddNode("FuncDecl_", $0, $1, $2) >>
-          | left_tuple OArgTypeListOComma right_tuple identifier ArgList FuncRes	<< ast.AddNode("FuncDecl_", $0, $1, $2, $3, $4, $5) >>
+FuncDecl_ : identifier ArgList FuncRes                                            << ast.FuncSign($0, $1, $2, nil) >>
+          | left_tuple OArgTypeListOComma right_tuple identifier ArgList FuncRes  << ast.FuncSign($3, $4, $5, $1) >>
           ;
 
 FuncType : keyword_func ArgList FuncRes	<< ast.AddNode("FuncType", $0, $1, $2) >>
@@ -274,8 +275,8 @@ ArgList : left_paren OArgTypeListOComma right_paren	<< ast.AddNode("ArgList", $0
         | ArgList left_paren OArgTypeListOComma right_paren	<< ast.AddNode("ArgList", $0, $1, $2, $3) >>
         ;
 
-FuncBody : empty	<< ast.AddNode("FuncBody") >>
-         | left_block_bracket StmtList right_block_bracket	<< ast.AddNode("FuncBody", $0, $1, $2) >>
+FuncBody : empty	<< &ast.AddrCode{}, nil >>
+         | left_block_bracket StmtList right_block_bracket	<< ast.MergeCodeList($1) >>
          ;
 
 FuncRes : empty	<< ast.AddNode("FuncRes") >>
@@ -398,8 +399,8 @@ DeclNameList : DeclName	<< ast.NewList($0) >>
              | DeclNameList comma DeclName	<< ast.AddToList($0, $2) >>
              ;
 
-StmtList : Stmt	<< ast.AddNode("StmtList", $0) >>
-         | StmtList stmt_end Stmt	<< ast.AddNode("StmtList", $0, $1, $2) >>
+StmtList : Stmt	<< ast.NewList($0) >>
+         | StmtList stmt_end Stmt	<< ast.AddToList($0, $2) >>
          ;
 
 NewNameList : NewName	<< ast.AddNode("NewNameList", $0) >>
@@ -437,14 +438,14 @@ OArgTypeListOComma : empty	<< ast.AddNode("OArgTypeListOComma") >>
                    ;
 
 /* Statement */
-Stmt : empty	<< ast.AddNode("Stmt") >>
+Stmt : empty	<< &ast.AddrCode{}, nil >>
      | CompoundStmt	<< ast.AddNode("Stmt", $0) >>
-     | CommonDecl	<< ast.AddNode("Stmt", $0) >>
-     | NonDeclStmt	<< ast.AddNode("Stmt", $0) >>
+     | CommonDecl	<< $0, nil >>
+     | NonDeclStmt	<< $0, nil >>
 //     | error
      ;
 
-NonDeclStmt : SimpleStmt	<< ast.AddNode("NonDeclStmt", $0) >>
+NonDeclStmt : SimpleStmt	<< $0, nil >>
             | ForStmt	<< ast.AddNode("NonDeclStmt", $0) >>
             | SwitchStmt	<< ast.AddNode("NonDeclStmt", $0) >>
             | IfStmt	<< ast.AddNode("NonDeclStmt", $0) >>

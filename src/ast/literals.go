@@ -32,3 +32,17 @@ func Identifier(l Attrib) (*AddrCode, error) {
 	}
 	return addrcode, nil
 }
+
+// Label gets a label from the table
+func Label(l Attrib) (*AddrCode, error) {
+	identifier := string(l.(*token.Token).Lit)
+	entry, err := codegen.InsertToSymbolTable("#_func_" + identifier)
+	if err != nil {
+		return nil, err
+	}
+	addrcode := &AddrCode{
+		Symbol: entry,
+		Code:   nil,
+	}
+	return addrcode, nil
+}

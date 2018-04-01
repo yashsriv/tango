@@ -59,6 +59,7 @@ func BinaryOp(a Attrib, b Attrib, c Attrib) (*AddrCode, error) {
 	}
 	code := append(el1.Code, el2.Code...)
 	var irOp codegen.IROp
+	var irType = codegen.BOP
 	switch op {
 	case "+":
 		irOp = codegen.ADD
@@ -66,25 +67,33 @@ func BinaryOp(a Attrib, b Attrib, c Attrib) (*AddrCode, error) {
 		irOp = codegen.SUB
 	case "*":
 		irOp = codegen.MUL
-	case "^":
-		irOp = codegen.XOR
-	case "|":
-		irOp = codegen.BOR
-	case "/":
-		irOp = codegen.DIV
-	case "%":
-		irOp = codegen.REM
-	case "<<":
-		irOp = codegen.BSL
-	case ">>":
-		irOp = codegen.BSR
+	case "&&":
+		irOp = codegen.AND
+	case "||":
+		irOp = codegen.OR
 	case "&":
 		irOp = codegen.BAND
+	case "|":
+		irOp = codegen.BOR
+	case "^":
+		irOp = codegen.XOR
+	case "/":
+		irType = codegen.DOP
+		irOp = codegen.DIV
+	case "%":
+		irType = codegen.DOP
+		irOp = codegen.REM
+	case "<<":
+		irType = codegen.SOP
+		irOp = codegen.BSL
+	case ">>":
+		irType = codegen.SOP
+		irOp = codegen.BSR
 	default:
 		return nil, ErrUnsupported
 	}
 	code = append(code, codegen.IRIns{
-		Typ:  codegen.BOP,
+		Typ:  irType,
 		Op:   irOp,
 		Dst:  entry,
 		Arg1: el1.Symbol,

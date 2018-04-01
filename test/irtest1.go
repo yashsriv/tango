@@ -10,3 +10,10 @@ const (
 var (
 	x, y int = a + c, 6
 )
+
+var z int
+
+func main() {
+	var g int = 5
+	g += 6
+}
