@@ -46,3 +46,29 @@ func MergeCodeList(list Attrib) (*AddrCode, error) {
 	}
 	return addrcode, nil
 }
+
+// NewIfElseList creates a new list of attrib with initial element
+func NewIfElseList(el Attrib) ([]*ifElse, error) {
+	list := make([]*ifElse, 0)
+	if el != nil {
+		elAsAddrCode, ok := el.(*ifElse)
+		if !ok {
+			return nil, fmt.Errorf("unable to type cast %v to *AddrCode", el)
+		}
+		list = append(list, elAsAddrCode)
+	}
+	return list, nil
+}
+
+// AddToIfElseList adds an element to the list
+func AddToIfElseList(list Attrib, el Attrib) ([]*ifElse, error) {
+	asList, ok := list.([]*ifElse)
+	if !ok {
+		return nil, fmt.Errorf("unable to type cast %v to []*AddrCode", list)
+	}
+	elAsAddrCode, ok := el.(*ifElse)
+	if !ok {
+		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", el)
+	}
+	return append(asList, elAsAddrCode), nil
+}

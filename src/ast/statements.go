@@ -155,9 +155,6 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 		if !ok {
 			return nil, fmt.Errorf("lhs %s of expression should be a literal", declName)
 		}
-		if entry.Declared {
-			return nil, fmt.Errorf("%s is being declared twice in this scope", entry.SymbolTableString())
-		}
 		entry.Declared = true
 
 		// if there is a rhs
