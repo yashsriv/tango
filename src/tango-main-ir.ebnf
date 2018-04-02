@@ -137,7 +137,7 @@ ImportHere : empty
 /* Declarations */
 Declaration : CommonDecl << $0, nil >>
             | FuncDecl	<< $0, nil >>
-            | NonDeclStmt	<< ast.AddNode("Declaration", $0) >>
+            | NonDeclStmt	<< $0, nil >>
 //            | error
             ;
 
@@ -205,15 +205,15 @@ RangeStmt : ExprList norm_assign_op keyword_range Expr	<< ast.AddNode("RangeStmt
           | keyword_range Expr	<< ast.AddNode("RangeStmt", $0, $1) >>
           ;
 
-ForHeader : OSimpleStmt stmt_end OSimpleStmt stmt_end OSimpleStmt	<< ast.AddNode("ForHeader", $0, $1, $2, $3, $4) >>
-          | OSimpleStmt	<< ast.AddNode("ForHeader", $0) >>
-          | RangeStmt	<< ast.AddNode("ForHeader", $0) >>
+ForHeader : OSimpleStmt stmt_end OExpr stmt_end OSimpleStmt << ast.EvalForHeader($0, $2, $4) >>
+          | OExpr     	                                    << ast.EvalForHeader(&ast.AddrCode{}, $0, &ast.AddrCode{}) >>
+          | RangeStmt	                                      << nil, ast.ErrUnsupported >>
           ;
 
-ForBody : ForHeader LoopBody	<< ast.AddNode("ForBody", $0, $1) >>
+ForBody : ForHeader LoopBody	                        << ast.EvalForBody($0, $1) >>
         ;
 
-ForStmt : keyword_for ForBody	<< ast.AddNode("ForStmt", $0, $1) >>
+ForStmt : keyword_for ForBody	                        << $1, nil >>
         ;
 
 IfHeader : Expr       	                              << $0, nil >>
@@ -446,7 +446,7 @@ Stmt : empty	      << &ast.AddrCode{}, nil >>
      ;
 
 NonDeclStmt : SimpleStmt	              << $0, nil >>
-            | ForStmt	                  << ast.AddNode("NonDeclStmt", $0) >>
+            | ForStmt	                  << $0, nil >>
             | SwitchStmt	              << ast.AddNode("NonDeclStmt", $0) >>
             | IfStmt	                  << $0, nil >>
             | LabelName label_op Stmt	  << ast.AddNode("NonDeclStmt", $0, $1, $2) >>

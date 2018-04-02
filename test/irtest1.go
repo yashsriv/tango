@@ -26,4 +26,9 @@ func main() {
 	} else {
 		g = 7
 	}
+
+	var i int
+	for i = 0; i < 5; i++ {
+		g += 2
+	}
 }
