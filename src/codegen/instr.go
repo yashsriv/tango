@@ -28,7 +28,7 @@ func (i IRIns) String() string {
 		dst = i.Dst.SymbolTableString()
 	}
 	if i.Typ == LBL {
-		return fmt.Sprintf("%s:", i.Dst.SymbolTableString())
+		return fmt.Sprintf("%s:", i.Dst.(*SymbolTableTargetEntry).Target)
 	}
 	return fmt.Sprintf("%s,%s,%s,%s", i.Op, dst, arg1, arg2)
 }
