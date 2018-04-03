@@ -138,6 +138,10 @@ func FuncDecl(a, b Attrib) (*AddrCode, error) {
 		Dst: name.Symbol,
 	}
 	code = append(code, body.Code...)
+	code = append(code, codegen.IRIns{
+		Typ: codegen.KEY,
+		Op:  codegen.RET,
+	})
 	addrcode := &AddrCode{
 		Code: code,
 	}

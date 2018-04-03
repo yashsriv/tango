@@ -72,3 +72,22 @@ func AddToIfElseList(list Attrib, el Attrib) ([]*ifElse, error) {
 	}
 	return append(asList, elAsAddrCode), nil
 }
+
+// NewCaseBlockList creates a new list of attrib with initial element
+func NewCaseBlockList() ([]*caseDecl, error) {
+	list := make([]*caseDecl, 0)
+	return list, nil
+}
+
+// AddToCaseBlockList adds an element to the list
+func AddToCaseBlockList(list Attrib, el Attrib) ([]*caseDecl, error) {
+	asList, ok := list.([]*caseDecl)
+	if !ok {
+		return nil, fmt.Errorf("unable to type cast %v to []*AddrCode", list)
+	}
+	elAsAddrCode, ok := el.(*caseDecl)
+	if !ok {
+		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", el)
+	}
+	return append(asList, elAsAddrCode), nil
+}

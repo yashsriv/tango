@@ -109,8 +109,7 @@ func BinaryOp(a Attrib, b Attrib, c Attrib) (*AddrCode, error) {
 var relOpCount = 0
 
 // RelOp generates code for a binary expression
-func RelOp(a Attrib, b Attrib, c Attrib) (*AddrCode, error) {
-	op := string(b.(*token.Token).Lit)
+func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 	el1, ok := a.(*AddrCode)
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", a)
