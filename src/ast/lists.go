@@ -3,6 +3,7 @@ package ast
 import (
 	"fmt"
 	"tango/src/codegen"
+	"tango/src/token"
 )
 
 // NewList creates a new list of attrib with initial element
@@ -45,6 +46,32 @@ func MergeCodeList(list Attrib) (*AddrCode, error) {
 		Code: code,
 	}
 	return addrcode, nil
+}
+
+// NewIdList creates a new list of identifiers with initial element
+func NewIdList(el Attrib) ([]*token.Token, error) {
+	list := make([]*token.Token, 0)
+	if el != nil {
+		elAsToken, ok := el.(*token.Token)
+		if !ok {
+			return nil, fmt.Errorf("unable to type cast %v to *AddrCode", el)
+		}
+		list = append(list, elAsToken)
+	}
+	return list, nil
+}
+
+// AddToIdList adds an element to the list
+func AddToIdList(list Attrib, el Attrib) ([]*token.Token, error) {
+	asList, ok := list.([]*token.Token)
+	if !ok {
+		return nil, fmt.Errorf("unable to type cast %v to []*Token", list)
+	}
+	elAsAddrCode, ok := el.(*token.Token)
+	if !ok {
+		return nil, fmt.Errorf("unable to type cast %v to *Token", el)
+	}
+	return append(asList, elAsAddrCode), nil
 }
 
 // NewIfElseList creates a new list of attrib with initial element

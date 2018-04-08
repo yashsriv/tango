@@ -13,6 +13,10 @@ var (
 
 var z int
 
+func testing() {
+
+}
+
 func main() {
 	var g int = 5
 	g += 6
@@ -27,8 +31,13 @@ func main() {
 		g = 7
 	}
 
-	var i int
+	var i, j int
+koko:
 	for i = 0; i < 5; i++ {
 		g += 2
+		for j = 0; j < 6; j++ {
+		}
 	}
+
+	return testing()
 }

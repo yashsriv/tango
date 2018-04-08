@@ -3,21 +3,22 @@ package ast
 import (
 	"fmt"
 	"tango/src/codegen"
+	"tango/src/token"
 )
 
 // Decl is used to create a declaration statement
 func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error) {
 
 	// Obtain list of identifiers
-	declnamelistAs, ok := declnamelist.([]*AddrCode)
+	declnamelistAs, ok := declnamelist.([]*token.Token)
 	if !ok {
-		return nil, fmt.Errorf("unable to typecast %v to []*AddrCode", declnamelist)
+		return nil, fmt.Errorf("unable to typecast %v to []*Token", declnamelist)
 	}
 
 	// Obtain rhs of expression
 	var exprlistAs []*AddrCode
 
-	// exprlist can be nil in case of var declration so we must first check
+	// exprlist can be nil in case of var declaration so we must first check
 	if exprlist != nil {
 		exprlistAs, ok = exprlist.([]*AddrCode)
 		if !ok {
@@ -64,15 +65,16 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 
 	// For each element in the rhs, perform some operations
 	for i, declName := range declnamelistAs {
-		entry, ok := declName.Symbol.(*codegen.SymbolTableVariableEntry)
-		if !ok {
-			return nil, fmt.Errorf("lhs %s of expression should be a literal", declName)
+		identifier := string(declName.Lit)
+		_, ok := codegen.AccSymbolMap(identifier)
+		if ok {
+			return nil, fmt.Errorf("Identifier %s is being declared twice in this scope", identifier)
 		}
-		if entry.Declared {
-			return nil, fmt.Errorf("%s is being declared twice in this scope", entry.SymbolTableString())
+		entry := &codegen.SymbolTableVariableEntry{
+			MemoryLocation: "v" + identifier,
 		}
 		entry.Declared = true
-
+		codegen.InsertToSymbolMap(identifier, entry)
 		// if there is a rhs
 		if exprlist != nil {
 			entry.Assignments++
@@ -90,7 +92,7 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 			ins := codegen.IRIns{
 				Typ:  codegen.ASN,
 				Op:   codegen.ASNO,
-				Dst:  declName.Symbol,
+				Dst:  entry,
 				Arg1: arg1,
 			}
 			code = append(code, ins)

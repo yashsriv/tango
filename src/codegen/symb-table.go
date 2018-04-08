@@ -50,6 +50,16 @@ var SymbolTable []SymbolTableEntry
 
 var symbolMap = make(map[string]SymbolTableEntry)
 
+func InsertToSymbolMap(key string, value SymbolTableEntry) error {
+	symbolMap[key] = value
+	return nil
+}
+
+func AccSymbolMap(key string) (SymbolTableEntry, bool) {
+	x, ok := symbolMap[key]
+	return x, ok
+}
+
 // InsertToSymbolTable inserts a single entry into table
 func InsertToSymbolTable(val string) (SymbolTableEntry, error) {
 	if val, ok := symbolMap[val]; ok {

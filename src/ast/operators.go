@@ -372,3 +372,14 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 	}
 	return addrcode, nil
 }
+
+func ProcessName(a Attrib) (*AddrCode, error) {
+	identifier := string(a.(*token.Token).Lit)
+	entry, ok := codegen.AccSymbolMap(identifier)
+	if !ok {
+		return nil, fmt.Errorf("Identifier %s not declared yet", identifier)
+	}
+	return &AddrCode{
+		Symbol: entry,
+	}, nil
+}

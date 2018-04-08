@@ -88,6 +88,7 @@ const (
 // Key Operations
 const (
 	CALL      IROp = "call"
+	ARG            = "arg"
 	INC            = "inc"
 	DEC            = "dec"
 	PARAM          = "param"

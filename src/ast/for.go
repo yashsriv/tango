@@ -9,6 +9,8 @@ type forHeader struct {
 	preStatement  *AddrCode
 	Expr          *AddrCode
 	postStatement *AddrCode
+	start         *codegen.SymbolTableTargetEntry
+	end           *codegen.SymbolTableTargetEntry
 }
 
 var forCount = 0
@@ -29,7 +31,16 @@ func EvalForHeader(a, b, c Attrib) (forHeader, error) {
 		return forHeader{}, fmt.Errorf("unable to type cast %v to *AddrCode", c)
 	}
 
-	return forHeader{preStatement, expr, postStatement}, nil
+	start := &codegen.SymbolTableTargetEntry{
+		Target: fmt.Sprintf("_for_%d_start", forCount),
+	}
+	end := &codegen.SymbolTableTargetEntry{
+		Target: fmt.Sprintf("_for_%d_end", forCount),
+	}
+	continueStack = continueStack.Push(start)
+	breakStack = breakStack.Push(end)
+	forCount++
+	return forHeader{preStatement, expr, postStatement, start, end}, nil
 }
 
 // EvalForBody evaluates a ForBody
@@ -45,16 +56,8 @@ func EvalForBody(a, b Attrib) (*AddrCode, error) {
 	}
 
 	// Labels
-	start, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_for_%d_start", forCount))
-	if err != nil {
-		return nil, err
-	}
-	end, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_for_%d_end", forCount))
-	if err != nil {
-		return nil, err
-	}
-	forCount++
-
+	start := header.start
+	end := header.end
 	// PreStatement
 	code := header.preStatement.Code
 
@@ -96,6 +99,16 @@ func EvalForBody(a, b Attrib) (*AddrCode, error) {
 
 	addrCode := &AddrCode{
 		Code: code,
+	}
+
+	var entry *codegen.SymbolTableTargetEntry
+	breakStack, entry = breakStack.Pop()
+	if entry != end {
+		return nil, fmt.Errorf("break labels do not match. something is very very wrong")
+	}
+	continueStack, entry = continueStack.Pop()
+	if entry != start {
+		return nil, fmt.Errorf("continue labels do not match. something is very very wrong")
 	}
 	return addrCode, nil
 }

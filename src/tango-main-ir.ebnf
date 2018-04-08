@@ -140,9 +140,9 @@ ImportHere : empty
            ;
 
 /* Declarations */
-Declaration : CommonDecl << $0, nil >>
-            | FuncDecl	<< $0, nil >>
-            | NonDeclStmt	<< $0, nil >>
+Declaration : CommonDecl  << $0, nil >>
+            | FuncDecl    << $0, nil >>
+            | NonDeclStmt << $0, nil >>
 //            | error
             ;
 
@@ -314,9 +314,9 @@ InterfaceDecl : NewName InDecl                    << ast.AddNode("InterfaceDecl"
 InDecl : left_paren OArgTypeListOComma right_paren FuncRes  << ast.AddNode("InDecl", $0, $1, $2, $3) >>
        ;
 
-LabelName : NewName   << ast.AddNode("LabelName", $0) >>
+LabelName : NewName   << ast.EvalLabelName($0) >>
           ;
-NewName : identifier	<< ast.AddNode("NewName", $0) >>
+NewName : identifier	<< $0, nil >>
         ;
 
 PtrType : star NType	<< ast.AddNode("PtrType", $0, $1) >>
@@ -401,8 +401,8 @@ TypeDeclList : TypeDecl                       << ast.AddNode("TypeDeclList", $0)
              | TypeDeclList stmt_end TypeDecl << ast.AddNode("TypeDeclList", $0, $1, $2) >>
              ;
 
-DeclNameList : DeclName                     << ast.NewList($0) >>
-             | DeclNameList comma DeclName  << ast.AddToList($0, $2) >>
+DeclNameList : DeclName                     << ast.NewIdList($0) >>
+             | DeclNameList comma DeclName  << ast.AddToIdList($0, $2) >>
              ;
 
 StmtList : Stmt                    << ast.NewList($0) >>
@@ -423,10 +423,10 @@ BracedKeyvalList : empty	<< ast.AddNode("BracedKeyvalList") >>
                  | KeyvalList OComma	<< ast.AddNode("BracedKeyvalList", $0, $1) >>
                  ;
 
-DeclName : identifier	<< ast.Identifier($0) >>
+DeclName : identifier	<< $0, nil >>
          ;
 
-Name : identifier	<< ast.Identifier($0) >>
+Name : identifier	<< $0, nil >>
      ;
 
 ArgType : NameOrType	<< ast.AddNode("ArgType", $0) >>
@@ -455,12 +455,12 @@ NonDeclStmt : SimpleStmt	              << $0, nil >>
             | ForStmt	                  << $0, nil >>
             | SwitchStmt	              << $0, nil >>
             | IfStmt	                  << $0, nil >>
-            | LabelName label_op Stmt	  << ast.AddNode("NonDeclStmt", $0, $1, $2) >>
-            | keyword_break ONewName	  << ast.AddNode("NonDeclStmt", $0, $1) >>
-            | keyword_continue ONewName	<< ast.AddNode("NonDeclStmt", $0, $1) >>
-            | keyword_defer PseudoCall  << ast.AddNode("NonDeclStmt", $0, $1) >>
-            | keyword_goto NewName      << ast.AddNode("NonDeclStmt", $0, $1) >>
-            | keyword_return OExprList  << ast.AddNode("NonDeclStmt", $0, $1) >>
+            | keyword_break ONewName	  << ast.EvalBreak() >>
+            | keyword_continue ONewName	<< ast.EvalContinue() >>
+            | LabelName label_op Stmt	  << ast.EvalLabel($0, $2) >>
+            | keyword_goto NewName      << ast.EvalGoto($1) >>
+            | keyword_return OExprList  << ast.EvalReturn($1) >>
+            | keyword_defer PseudoCall  << nil, ast.ErrUnsupported >>
             ;
 
 DotDotDot : spread_op                     << ast.AddNode("DotDotDot", $0) >>
@@ -468,23 +468,23 @@ DotDotDot : spread_op                     << ast.AddNode("DotDotDot", $0) >>
           ;
 
 PExpr : PExprNoParen                      << $0, nil >>
-      | left_paren ExprOrType right_paren << ast.AddNode("PExpr", $0, $1, $2) >>
+      | left_paren ExprOrType right_paren << $1, nil >>
       ;
 
 PExprNoParen : Literal                                                                << $0, nil >>
-             | Name                                                                   << $0, nil >>
+             | Name                                                                   << ast.ProcessName($0) >>
+             | PseudoCall                                                             << $0, nil >>
              | PExpr dot identifier	                                                  << nil, ast.ErrUnsupported >>
              | PExpr dot left_paren ExprOrType right_paren	                          << nil, ast.ErrUnsupported >>
              | PExpr dot left_paren keyword_type right_paren	                        << nil, ast.ErrUnsupported >>
              | PExpr left_sq_paren Expr right_sq_paren	                              << nil, ast.ErrUnsupported >>
              | PExpr left_sq_paren OExpr label_op OExpr right_sq_paren	              << nil, ast.ErrUnsupported >>
              | PExpr left_sq_paren OExpr label_op OExpr label_op OExpr right_sq_paren	<< nil, ast.ErrUnsupported >>
-             | PseudoCall                                                             << nil, ast.ErrUnsupported >>
              | ConvType left_angle Expr OComma right_angle                            << nil, ast.ErrUnsupported >>
              | CompType left_banana BracedKeyvalList right_banana                     << nil, ast.ErrUnsupported >>
              | PExpr left_banana BracedKeyvalList right_banana                        << nil, ast.ErrUnsupported >>
-             | FuncLiteral                                                            << ast.AddNode("PExprNoParen", $0) >>
-             | ForCompExpr                                                            << ast.AddNode("PExprNoParen", $0) >>
+             | FuncLiteral                                                            << nil, ast.ErrUnsupported >>
+             | ForCompExpr                                                            << nil, ast.ErrUnsupported >>
              ;
 
 ConvType : FuncType   << ast.AddNode("ConvType", $0) >>
@@ -498,19 +498,19 @@ CompType : OtherType  << ast.AddNode("CompType", $0) >>
 StartCompLit : empty  << ast.AddNode("StartCompLit") >>
              ;
 
-Keyval : Expr label_op CompLitExpr  << ast.AddNode("Keyval", $0, $1, $2) >>
+Keyval : Expr label_op CompLitExpr  << nil, ast.ErrUnsupported >>
        ;
 
 BareCompLitExpr : Expr                                      << ast.AddNode("BareCompLitExpr", $0) >>
                 | left_banana BracedKeyvalList right_banana << ast.AddNode("BareCompLitExpr", $0, $1, $2) >>
                 ;
 
-CompLitExpr : Expr                                      << ast.AddNode("CompLitExpr", $0) >>
-            | left_banana BracedKeyvalList right_banana << ast.AddNode("CompLitExpr", $0, $1, $2) >>
+CompLitExpr : Expr                                      << $0, nil >>
+            | left_banana BracedKeyvalList right_banana << nil, ast.ErrUnsupported >>
             ;
 
 ExprOrType : Expr         << $0, nil >>
-           | NonExprType  << ast.AddNode("ExprOrType", $0) >>
+           | NonExprType  << nil, ast.ErrUnsupported >>
            ;
 
 NameOrType : NType        << ast.AddNode("NameOrType", $0) >>
@@ -530,7 +530,7 @@ Prec5Expr_ : UExpr	                            << $0, nil >>
 Prec4Expr_ : Prec5Expr_	                        << $0, nil >>
            | Prec4Expr_ plus Prec5Expr_	        << ast.BinaryOp($0, $1, $2) >>
            | Prec4Expr_ minus Prec5Expr_	      << ast.BinaryOp($0, $1, $2) >>
-           | Prec4Expr_ xor Prec5Expr_	        << ast.BinaryOp($0, $1, $2) >>
+           | Prec4Expr_ xor Prec5Expr_          << ast.BinaryOp($0, $1, $2) >>
            | Prec4Expr_ simple_pipe Prec5Expr_	<< ast.BinaryOp($0, $1, $2) >>
            ;
 
@@ -558,8 +558,8 @@ ForCompExpr : left_sq_paren Expr pipe RangeStmt right_sq_paren	<< ast.AddNode("F
             ;
 
 /* Call-Like Statements that can be preceded by 'defer' */
-PseudoCall : PExpr left_paren right_paren	                                << ast.AddNode("PseudoCall", $0, $1, $2) >>
-           | PExpr left_paren ExprOrTypeList OComma right_paren	          << ast.AddNode("PseudoCall", $0, $1, $2, $3, $4) >>
-           | PExpr left_paren ExprOrTypeList spread_op OComma right_paren	<< ast.AddNode("PseudoCall", $0, $1, $2, $3, $4, $5) >>
+PseudoCall : PExpr left_paren right_paren	                                << ast.EvalCall($0, []*ast.AddrCode{}) >>
+           | PExpr left_paren ExprOrTypeList OComma right_paren	          << ast.EvalCall($0, $2) >>
+           | PExpr left_paren ExprOrTypeList spread_op OComma right_paren	<< nil, ast.ErrUnsupported >>
            ;
 
