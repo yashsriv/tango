@@ -83,6 +83,20 @@ asgn3: clean
 	zip -r asgn3 asgn3
 	rm -rf asgn3
 
+asgn4: clean
+	mkdir -p asgn4
+	mkdir -p asgn4/src
+	mkdir -p asgn4/test
+	cp README.md asgn4/
+	cp Gopkg.lock asgn4/
+	cp Gopkg.toml asgn4/
+	cp Makefile asgn4/
+	cp EffortSheet.pdf asgn4/
+	cp -r src asgn4/
+	cp -r test asgn4/
+	zip -r asgn4 asgn4
+	rm -rf asgn4
+
 clean:
 	@echo -e "\e[1;31mCleaning Files \e[0m"
 	@echo -e "\e[1;31m  Clearing pkg and bin \e[0m"
