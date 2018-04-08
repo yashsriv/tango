@@ -52,3 +52,35 @@ func NewSourceFile(declList Attrib) (*AddrCode, error) {
 }
 
 var tempCount int
+
+var predecID = []string{
+	"bool", "byte", "error", "float32",
+	"int", "int8", "int16", "int32", "rune", "string",
+	"uint", "uint8", "uint16", "uint32", "uintptr",
+}
+
+var predecConst = map[string]int{
+	"true":  1,
+	"false": 0,
+}
+
+var predecFunc = []string{
+	"printf",
+}
+
+func init() {
+	for _, v := range predecID {
+		// TODO: Make this symboltable type entry or something
+		codegen.InsertToSymbolMap(v, nil)
+	}
+	for k, v := range predecConst {
+		codegen.InsertToSymbolMap(k, &codegen.SymbolTableLiteralEntry{
+			Value: v,
+		})
+	}
+	for _, v := range predecFunc {
+		codegen.InsertToSymbolMap(v, &codegen.SymbolTableTargetEntry{
+			Target: v,
+		})
+	}
+}

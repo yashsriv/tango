@@ -39,5 +39,7 @@ koko:
 		}
 	}
 
+	printf(g, x, y)
+
 	return testing()
 }
