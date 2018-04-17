@@ -39,12 +39,12 @@ func EvalSwitch(a, b Attrib) (*AddrCode, error) {
 
 	code = append(code, expr.Code...)
 
-	endLbl := &codegen.SymbolTableTargetEntry{
+	endLbl := &codegen.TargetEntry{
 		Target: fmt.Sprintf("#_switch_case_%d_end", switchCaseCount),
 	}
 
 	for i, block := range blocks {
-		endBlockLbl := &codegen.SymbolTableTargetEntry{
+		endBlockLbl := &codegen.TargetEntry{
 			Target: fmt.Sprintf("#_switch_case_%d_%d_end", switchCaseCount, i),
 		}
 		if len(block.exprList) != 0 {
@@ -72,7 +72,7 @@ func EvalSwitch(a, b Attrib) (*AddrCode, error) {
 				Typ: codegen.CBR,
 				Op:  codegen.BRNEQ,
 				Dst: endBlockLbl,
-				Arg1: &codegen.SymbolTableLiteralEntry{
+				Arg1: &codegen.LiteralEntry{
 					Value: 1,
 				},
 				Arg2: orExpr.Symbol,

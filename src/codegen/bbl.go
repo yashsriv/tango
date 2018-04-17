@@ -1,24 +1,9 @@
 package codegen
 
-import "fmt"
-
 // BBLEntry is Single entry in BBL List
 type BBLEntry struct {
 	Block []IRIns
-	Info  []map[*SymbolTableVariableEntry]UseInfo
-}
-
-func (b *BBLEntry) String() string {
-	repr := "\n<BBL Begin>\n"
-	for i, ins := range b.Block {
-		nmap := map[string]UseInfo{}
-		for key, value := range b.Info[i] {
-			nmap[key.MemoryLocation] = value
-		}
-		repr += fmt.Sprintf("%s %v\n", ins.String(), nmap)
-	}
-	repr += "<BBL End>\n\n"
-	return repr
+	Info  []map[*VariableEntry]UseInfo
 }
 
 // UseInfo stores life and next Use Information of a variable
@@ -30,11 +15,11 @@ type UseInfo struct {
 // BBLList is the list of all the Basic Blocks
 var BBLList []BBLEntry
 
-var symbolInfo = make(map[*SymbolTableVariableEntry]UseInfo)
+var symbolInfo = make(map[*VariableEntry]UseInfo)
 
 func setSymbolInfo(arg SymbolTableEntry) {
 	if arg != nil {
-		if arg, isRegister := arg.(*SymbolTableVariableEntry); isRegister {
+		if arg, isRegister := arg.(*VariableEntry); isRegister {
 			symbolInfo[arg] = UseInfo{true, -1}
 		}
 	}
@@ -71,9 +56,9 @@ func isEndBlock(typ IRType, op IROp) bool {
 		(typ == KEY && op != PARAM && op != SETRET && op != INC && op != DEC)
 }
 
-func isRegister(entry SymbolTableEntry) (*SymbolTableVariableEntry, bool) {
+func isRegister(entry SymbolTableEntry) (*VariableEntry, bool) {
 	if entry != nil {
-		entry, ok := entry.(*SymbolTableVariableEntry)
+		entry, ok := entry.(*VariableEntry)
 		return entry, ok
 	}
 	return nil, false
@@ -81,8 +66,8 @@ func isRegister(entry SymbolTableEntry) (*SymbolTableVariableEntry, bool) {
 
 // Adds Operands' UseInfo in the BBL
 func addUseInfo(bbl BBLEntry) BBLEntry {
-	bbl.Info = make([]map[*SymbolTableVariableEntry]UseInfo, len(bbl.Block))
-	infomap := make(map[*SymbolTableVariableEntry]UseInfo)
+	bbl.Info = make([]map[*VariableEntry]UseInfo, len(bbl.Block))
+	infomap := make(map[*VariableEntry]UseInfo)
 	for i := len(bbl.Block) - 1; i >= 0; i-- {
 		if dst, isReg := isRegister(bbl.Block[i].Dst); isReg {
 			infomap[dst] = symbolInfo[dst]
@@ -96,7 +81,7 @@ func addUseInfo(bbl BBLEntry) BBLEntry {
 			infomap[arg2] = symbolInfo[arg2]
 			symbolInfo[arg2] = UseInfo{true, i}
 		}
-		ninfomap := make(map[*SymbolTableVariableEntry]UseInfo)
+		ninfomap := make(map[*VariableEntry]UseInfo)
 		for k, v := range infomap {
 			ninfomap[k] = v
 		}

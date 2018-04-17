@@ -74,12 +74,12 @@ func init() {
 		codegen.SymbolTable.InsertSymbol(v, nil)
 	}
 	for k, v := range predecConst {
-		codegen.SymbolTable.InsertSymbol(k, &codegen.SymbolTableLiteralEntry{
+		codegen.SymbolTable.InsertSymbol(k, &codegen.LiteralEntry{
 			Value: v,
 		})
 	}
 	for _, v := range predecFunc {
-		codegen.SymbolTable.InsertSymbol(v, &codegen.SymbolTableTargetEntry{
+		codegen.SymbolTable.InsertSymbol(v, &codegen.TargetEntry{
 			Target: v,
 		})
 	}

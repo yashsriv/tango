@@ -7,24 +7,25 @@ import (
 )
 
 type labelName struct {
-	start *codegen.SymbolTableTargetEntry
-	end   *codegen.SymbolTableTargetEntry
+	start *codegen.TargetEntry
+	end   *codegen.TargetEntry
 }
 
 // EvalLabelName is used to evaluate a label
 func EvalLabelName(a Attrib) (labelName, error) {
 	identifier := string(a.(*token.Token).Lit)
-	start := &codegen.SymbolTableTargetEntry{
+	start := &codegen.TargetEntry{
 		Target: fmt.Sprintf("_label_%s", identifier),
 	}
 	// Associating identifier with some entry
 	err := codegen.SymbolTable.InsertSymbol(identifier, start)
-	end := &codegen.SymbolTableTargetEntry{
+	end := &codegen.TargetEntry{
 		Target: fmt.Sprintf("_labelend_%s", identifier),
 	}
 	return labelName{start, end}, err
 }
 
+// EvalLabel is used to evaluate a label
 func EvalLabel(a, b Attrib) (*AddrCode, error) {
 	label, ok := a.(labelName)
 	if !ok {
@@ -68,6 +69,7 @@ func EvalGoto(a Attrib) (*AddrCode, error) {
 	}, nil
 }
 
+// EvalReturn evaluates a return statement
 func EvalReturn(a Attrib) (*AddrCode, error) {
 	expr, ok := a.([]*AddrCode)
 	if !ok {
@@ -95,9 +97,10 @@ func EvalReturn(a Attrib) (*AddrCode, error) {
 	}, nil
 }
 
+// EvalCall evaluates a call statement
 func EvalCall(a, b Attrib) (*AddrCode, error) {
 	entry_ := a.(*AddrCode).Symbol
-	entry, ok := entry_.(*codegen.SymbolTableTargetEntry)
+	entry, ok := entry_.(*codegen.TargetEntry)
 	if !ok {
 		return nil, fmt.Errorf("invalid function call statement")
 	}

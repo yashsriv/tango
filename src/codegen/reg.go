@@ -7,33 +7,33 @@ import (
 
 type address struct {
 	regLocation MachineRegister
-	memLocation string
+	memLocation MemoryLocation
 }
 
 type registerResult struct {
 	Register MachineRegister
-	Spill    map[*SymbolTableVariableEntry]bool
+	Spill    map[*VariableEntry]bool
 }
 
 // MachineRegister represents a register in a machine
 type MachineRegister string
 
 // Initialization of regDesc
-var regDesc = map[MachineRegister]map[*SymbolTableVariableEntry]bool{
-	"%eax": map[*SymbolTableVariableEntry]bool{},
-	"%ebx": map[*SymbolTableVariableEntry]bool{},
-	"%ecx": map[*SymbolTableVariableEntry]bool{},
-	"%edx": map[*SymbolTableVariableEntry]bool{},
+var regDesc = map[MachineRegister]map[*VariableEntry]bool{
+	"%eax": map[*VariableEntry]bool{},
+	"%ebx": map[*VariableEntry]bool{},
+	"%ecx": map[*VariableEntry]bool{},
+	"%edx": map[*VariableEntry]bool{},
 }
 
 //Initialization of addrDesc
-var addrDesc = make(map[*SymbolTableVariableEntry]address)
+var addrDesc = make(map[*VariableEntry]address)
 
-func assignHelper(uinfo map[*SymbolTableVariableEntry]UseInfo, dst *SymbolTableVariableEntry, canReplace bool, cannotbeReplaced map[MachineRegister]bool) func(*SymbolTableVariableEntry) registerResult {
+func assignHelper(uinfo map[*VariableEntry]UseInfo, dst *VariableEntry, canReplace bool, cannotbeReplaced map[MachineRegister]bool) func(*VariableEntry) registerResult {
 
 	// Create a closure
 
-	return func(i *SymbolTableVariableEntry) registerResult {
+	return func(i *VariableEntry) registerResult {
 		// If variable to be assigned is already in a register
 		// return that register
 		if addrDesc[i].regLocation != "" {
@@ -67,7 +67,7 @@ func assignHelper(uinfo map[*SymbolTableVariableEntry]UseInfo, dst *SymbolTableV
 			} else {
 				score[key] = 0
 				for value := range values {
-					if addrDesc[value].memLocation == "" {
+					if addrDesc[value].memLocation == nil {
 						// addrDesc which are not in any memLocation
 						// we can overwrite the dst register if it is not going to be used
 						// in the future. So score shouldn't be incremented
@@ -101,7 +101,7 @@ func assignHelper(uinfo map[*SymbolTableVariableEntry]UseInfo, dst *SymbolTableV
 }
 
 // getReg returns an allocation of regDesc for the operands
-func getReg(ins IRIns, uinfo map[*SymbolTableVariableEntry]UseInfo) (arg1res, arg2res, dstres registerResult) {
+func getReg(ins IRIns, uinfo map[*VariableEntry]UseInfo) (arg1res, arg2res, dstres registerResult) {
 
 	instructionType := ins.Typ
 
@@ -132,15 +132,15 @@ func getReg(ins IRIns, uinfo map[*SymbolTableVariableEntry]UseInfo) (arg1res, ar
 			}
 		}
 	case BOP:
-		dst := ins.Dst.(*SymbolTableVariableEntry)
+		dst := ins.Dst.(*VariableEntry)
 		if ins.Op == BSL || ins.Op == BSR {
 			assignRegister := assignHelper(uinfo, nil, false, map[MachineRegister]bool{"%ecx": true})
-			if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
+			if arg1, isRegister := ins.Arg1.(*VariableEntry); isRegister {
 				//  i is a SymbolTableRegister
 				arg1res = assignRegister(arg1)
 			}
 			dstres = assignRegister(dst)
-			if _, isRegister := ins.Arg2.(*SymbolTableVariableEntry); isRegister {
+			if _, isRegister := ins.Arg2.(*VariableEntry); isRegister {
 				//  i is a SymbolTableRegister
 				arg2res = registerResult{
 					Register: "%ecx",
@@ -152,31 +152,31 @@ func getReg(ins IRIns, uinfo map[*SymbolTableVariableEntry]UseInfo) (arg1res, ar
 
 		canReplace := ins.Dst != ins.Arg1 && ins.Dst != ins.Arg2
 		assignRegister := assignHelper(uinfo, dst, canReplace, make(map[MachineRegister]bool))
-		if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
+		if arg1, isRegister := ins.Arg1.(*VariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg1res = assignRegister(arg1)
 		}
-		if arg2, isRegister := ins.Arg2.(*SymbolTableVariableEntry); isRegister {
+		if arg2, isRegister := ins.Arg2.(*VariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg2res = assignRegister(arg2)
 		}
 		dstres = assignRegister(dst)
 	case UOP:
 		canReplace := ins.Dst != ins.Arg1
-		dst := ins.Dst.(*SymbolTableVariableEntry)
+		dst := ins.Dst.(*VariableEntry)
 		assignRegister := assignHelper(uinfo, dst, canReplace, make(map[MachineRegister]bool))
-		if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
+		if arg1, isRegister := ins.Arg1.(*VariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg1res = assignRegister(arg1)
 		}
 		dstres = assignRegister(dst)
 	case CBR:
 		assignRegister := assignHelper(uinfo, nil, false, make(map[MachineRegister]bool))
-		if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
+		if arg1, isRegister := ins.Arg1.(*VariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg1res = assignRegister(arg1)
 		}
-		if arg2, isRegister := ins.Arg2.(*SymbolTableVariableEntry); isRegister {
+		if arg2, isRegister := ins.Arg2.(*VariableEntry); isRegister {
 			//  i is a SymbolTableRegister
 			arg2res = assignRegister(arg2)
 		}
@@ -185,14 +185,14 @@ func getReg(ins IRIns, uinfo map[*SymbolTableVariableEntry]UseInfo) (arg1res, ar
 	case LBL:
 		// Do Nothing
 	case ASN:
-		dst := ins.Dst.(*SymbolTableVariableEntry)
+		dst := ins.Dst.(*VariableEntry)
 		assignRegister := assignHelper(uinfo, dst, false, make(map[MachineRegister]bool))
 		arg1res = assignRegister(dst)
 		dstres = arg1res
 	case KEY:
 		assignRegister := assignHelper(uinfo, nil, false, make(map[MachineRegister]bool))
 		if !(ins.Op == RET || ins.Op == HALT) {
-			if arg1, isRegister := ins.Arg1.(*SymbolTableVariableEntry); isRegister {
+			if arg1, isRegister := ins.Arg1.(*VariableEntry); isRegister {
 				//  i is a SymbolTableRegister
 				arg1res = assignRegister(arg1)
 			}

@@ -5,13 +5,13 @@ import (
 	"tango/src/codegen"
 )
 
-type labelStack []*codegen.SymbolTableTargetEntry
+type labelStack []*codegen.TargetEntry
 
-func (s labelStack) Push(v *codegen.SymbolTableTargetEntry) labelStack {
+func (s labelStack) Push(v *codegen.TargetEntry) labelStack {
 	return append(s, v)
 }
 
-func (s labelStack) Pop() (labelStack, *codegen.SymbolTableTargetEntry) {
+func (s labelStack) Pop() (labelStack, *codegen.TargetEntry) {
 	// FIXME: What do we do if the labelStack is empty, though?
 
 	l := len(s)
@@ -25,6 +25,7 @@ func (s labelStack) Empty() bool {
 var breakStack labelStack
 var continueStack labelStack
 
+// EvalBreak is used to evaluate a break statement
 func EvalBreak() (*AddrCode, error) {
 	if breakStack.Empty() {
 		return nil, fmt.Errorf("misplaced break statement")
@@ -43,6 +44,7 @@ func EvalBreak() (*AddrCode, error) {
 	}, nil
 }
 
+// EvalContinue is used to evaluate a continue statement
 func EvalContinue() (*AddrCode, error) {
 	if continueStack.Empty() {
 		return nil, fmt.Errorf("misplaced continue statement")

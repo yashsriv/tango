@@ -34,6 +34,7 @@ func main() {
 	var i, j int
 koko:
 	for i = 0; i < 5; i++ {
+		var j int
 		g += 2
 		for j = 0; j < 6; j++ {
 		}

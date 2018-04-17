@@ -111,11 +111,11 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", c)
 	}
 
-	trueLbl := &codegen.SymbolTableTargetEntry{
+	trueLbl := &codegen.TargetEntry{
 		Target: fmt.Sprintf("#_rel_op_%d_true", relOpCount),
 	}
 
-	endLbl := &codegen.SymbolTableTargetEntry{
+	endLbl := &codegen.TargetEntry{
 		Target: fmt.Sprintf("#_rel_op_%d_end", relOpCount),
 	}
 
@@ -153,7 +153,7 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 		Typ: codegen.ASN,
 		Op:  codegen.ASNO,
 		Dst: entry,
-		Arg1: &codegen.SymbolTableLiteralEntry{
+		Arg1: &codegen.LiteralEntry{
 			Value: 0,
 		},
 	})
@@ -170,7 +170,7 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 		Typ: codegen.ASN,
 		Op:  codegen.ASNO,
 		Dst: entry,
-		Arg1: &codegen.SymbolTableLiteralEntry{
+		Arg1: &codegen.LiteralEntry{
 			Value: 1,
 		},
 	})
@@ -194,11 +194,11 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
 	}
-	falseLbl := &codegen.SymbolTableTargetEntry{
+	falseLbl := &codegen.TargetEntry{
 		Target: fmt.Sprintf("#_rel_op_%d_false", relOpCount),
 	}
 
-	endLbl := &codegen.SymbolTableTargetEntry{
+	endLbl := &codegen.TargetEntry{
 		Target: fmt.Sprintf("#_rel_op_%d_end", relOpCount),
 	}
 
@@ -210,7 +210,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		Typ: codegen.CBR,
 		Op:  codegen.BRNEQ,
 		Dst: falseLbl,
-		Arg1: &codegen.SymbolTableLiteralEntry{
+		Arg1: &codegen.LiteralEntry{
 			Value: 1,
 		},
 		Arg2: el1.Symbol,
@@ -220,7 +220,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		Typ: codegen.CBR,
 		Op:  codegen.BRNEQ,
 		Dst: falseLbl,
-		Arg1: &codegen.SymbolTableLiteralEntry{
+		Arg1: &codegen.LiteralEntry{
 			Value: 1,
 		},
 		Arg2: el2.Symbol,
@@ -229,7 +229,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		Typ: codegen.ASN,
 		Op:  codegen.ASNO,
 		Dst: entry,
-		Arg1: &codegen.SymbolTableLiteralEntry{
+		Arg1: &codegen.LiteralEntry{
 			Value: 1,
 		},
 	})
@@ -246,7 +246,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		Typ: codegen.ASN,
 		Op:  codegen.ASNO,
 		Dst: entry,
-		Arg1: &codegen.SymbolTableLiteralEntry{
+		Arg1: &codegen.LiteralEntry{
 			Value: 0,
 		},
 	})
@@ -270,10 +270,10 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
 	}
-	trueLbl := &codegen.SymbolTableTargetEntry{
+	trueLbl := &codegen.TargetEntry{
 		Target: fmt.Sprintf("#_rel_op_%d_true", relOpCount),
 	}
-	endLbl := &codegen.SymbolTableTargetEntry{
+	endLbl := &codegen.TargetEntry{
 		Target: fmt.Sprintf("#_rel_op_%d_end", relOpCount),
 	}
 
@@ -285,7 +285,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Typ: codegen.CBR,
 		Op:  codegen.BREQ,
 		Dst: trueLbl,
-		Arg1: &codegen.SymbolTableLiteralEntry{
+		Arg1: &codegen.LiteralEntry{
 			Value: 1,
 		},
 		Arg2: el1.Symbol,
@@ -295,7 +295,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Typ: codegen.CBR,
 		Op:  codegen.BREQ,
 		Dst: trueLbl,
-		Arg1: &codegen.SymbolTableLiteralEntry{
+		Arg1: &codegen.LiteralEntry{
 			Value: 1,
 		},
 		Arg2: el2.Symbol,
@@ -304,7 +304,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Typ: codegen.ASN,
 		Op:  codegen.ASNO,
 		Dst: entry,
-		Arg1: &codegen.SymbolTableLiteralEntry{
+		Arg1: &codegen.LiteralEntry{
 			Value: 0,
 		},
 	})
@@ -321,7 +321,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Typ: codegen.ASN,
 		Op:  codegen.ASNO,
 		Dst: entry,
-		Arg1: &codegen.SymbolTableLiteralEntry{
+		Arg1: &codegen.LiteralEntry{
 			Value: 1,
 		},
 	})
@@ -339,9 +339,9 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 // ProcessName is used to process a name
 func ProcessName(a Attrib) (*AddrCode, error) {
 	switch v := a.(type) {
-	case *codegen.SymbolTableVariableEntry:
+	case *codegen.VariableEntry:
 		return &AddrCode{Symbol: v}, nil
-	case *codegen.SymbolTableTargetEntry:
+	case *codegen.TargetEntry:
 		return &AddrCode{Symbol: v}, nil
 	default:
 		return nil, ErrShouldBeVariable

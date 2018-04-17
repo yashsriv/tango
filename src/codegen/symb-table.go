@@ -1,47 +1,5 @@
 package codegen
 
-import (
-	"errors"
-	"fmt"
-)
-
-// SymbolTableEntry is an entry in the SymbolTable
-type SymbolTableEntry interface {
-	SymbolTableString() string
-}
-
-// SymbolTableLiteralEntry refers to a literal in the symbol table
-type SymbolTableLiteralEntry struct {
-	Value int
-}
-
-// SymbolTableString returns a string representation and also ensures types
-func (s SymbolTableLiteralEntry) SymbolTableString() string {
-	return fmt.Sprintf("$%d", s.Value)
-}
-
-// SymbolTableTargetEntry refers to a target in the symbol table
-type SymbolTableTargetEntry struct {
-	Target string
-}
-
-// SymbolTableString returns a string representation and also ensures types
-func (s SymbolTableTargetEntry) SymbolTableString() string {
-	return fmt.Sprintf("#%s", s.Target)
-}
-
-// SymbolTableVariableEntry refers to a register in the symbol table
-type SymbolTableVariableEntry struct {
-	MemoryLocation string
-	Declared       bool
-	Assignments    int
-}
-
-// SymbolTableString returns a string representation and also ensures types
-func (s SymbolTableVariableEntry) SymbolTableString() string {
-	return fmt.Sprintf("%%%s", s.MemoryLocation)
-}
-
 // symbolTable represents a table
 type symbolTable struct {
 	symbolMap map[string]SymbolTableEntry
@@ -82,15 +40,6 @@ func popFromStack() (table *symbolTable, err error) {
 	tableStack = tableStack[:l-1]
 	return
 }
-
-// ErrAlreadyExists is error when symbol already exists in table
-var ErrAlreadyExists = errors.New("symbol already exists in table")
-
-// ErrDoesntExist is error when symbol is not in table
-var ErrDoesntExist = errors.New("symbol doesn't exist in table")
-
-// ErrEmptyTableStack is an error thrown when trying to pop off empty table stack
-var ErrEmptyTableStack = errors.New("expected tableStack to never be empty")
 
 func (s *symbolTable) InsertSymbol(key string, value SymbolTableEntry) error {
 	// Check if already exists in current scope

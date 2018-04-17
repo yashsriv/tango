@@ -10,7 +10,7 @@ import (
 func FuncSign(a, b, c, d Attrib) (*AddrCode, error) {
 	// TODO: Handle other stuff like arg list, return type and method declarations
 	identifier := string(a.(*token.Token).Lit)
-	start := &codegen.SymbolTableTargetEntry{
+	start := &codegen.TargetEntry{
 		Target: fmt.Sprintf("_func_%s", identifier),
 	}
 	// Associating identifier with some entry

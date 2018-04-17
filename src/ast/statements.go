@@ -147,14 +147,16 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 	// For each element in the rhs, perform some operations
 	for i, declName := range lhsList {
 		// TODO: Check Addressable
-		entry, ok := declName.Symbol.(*codegen.SymbolTableVariableEntry)
+		entry, ok := declName.Symbol.(*codegen.VariableEntry)
 		if !ok {
 			return nil, fmt.Errorf("[Assignments] lhs %s of expression should be a literal", declName)
 		}
-		entry.Declared = true
+
+		if entry.Constant {
+			return nil, fmt.Errorf("[Assignments] cannot assign to a constant")
+		}
 
 		// if there is a rhs
-		entry.Assignments++
 		var arg1 codegen.SymbolTableEntry
 		// If number of expressions are greater than 1, they have
 		// already been evaluated and assigned a value above.

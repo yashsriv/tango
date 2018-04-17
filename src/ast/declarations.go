@@ -10,7 +10,7 @@ import (
 func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error) {
 
 	// Obtain list of identifiers
-	declnamelistAs, ok := declnamelist.([]*codegen.SymbolTableVariableEntry)
+	declnamelistAs, ok := declnamelist.([]*codegen.VariableEntry)
 	if !ok {
 		return nil, fmt.Errorf("unable to typecast %v to []*SymbolTableVariableEntry", declnamelist)
 	}
@@ -61,10 +61,9 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 
 	// For each element in the rhs, perform some operations
 	for i, declName := range declnamelistAs {
-		declName.Declared = true
+		declName.Constant = isConst
 		// if there is a rhs
 		if exprlist != nil {
-			declName.Assignments++
 			var arg1 codegen.SymbolTableEntry
 			// If number of expressions are greater than 1, they have
 			// already been evaluated and assigned a value above.
@@ -138,10 +137,11 @@ func FuncDecl(a, b Attrib) (*AddrCode, error) {
 }
 
 // NewName creates a new symbol table entry for a variable
-func NewName(a Attrib) (symbol *codegen.SymbolTableVariableEntry, err error) {
+func NewName(a Attrib) (symbol *codegen.VariableEntry, err error) {
 	identifier := string(a.(*token.Token).Lit)
-	symbol = &codegen.SymbolTableVariableEntry{
-		MemoryLocation: "v" + identifier,
+	symbol = &codegen.VariableEntry{
+		MemoryLocation: codegen.GlobalMemory{Location: "v" + identifier},
+		Name:           identifier,
 	}
 	err = codegen.SymbolTable.InsertSymbol(identifier, symbol)
 	return
@@ -155,9 +155,10 @@ func Name(a Attrib) (symbol codegen.SymbolTableEntry, err error) {
 }
 
 // CreateTemporary creates a temporary variable
-func CreateTemporary() (symbol *codegen.SymbolTableVariableEntry) {
-	symbol = &codegen.SymbolTableVariableEntry{
-		MemoryLocation: fmt.Sprintf("rtmp%d", tempCount),
+func CreateTemporary() (symbol *codegen.VariableEntry) {
+	symbol = &codegen.VariableEntry{
+		MemoryLocation: codegen.GlobalMemory{Location: fmt.Sprintf("rtmp%d", tempCount)},
+		Name:           fmt.Sprintf("rtmp%d", tempCount),
 	}
 	tempCount++
 	return

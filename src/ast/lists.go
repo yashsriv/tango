@@ -48,10 +48,10 @@ func MergeCodeList(list Attrib) (*AddrCode, error) {
 }
 
 // NewIdList creates a new list of identifiers with initial element
-func NewIdList(el Attrib) ([]*codegen.SymbolTableVariableEntry, error) {
-	list := make([]*codegen.SymbolTableVariableEntry, 0)
+func NewIdList(el Attrib) ([]*codegen.VariableEntry, error) {
+	list := make([]*codegen.VariableEntry, 0)
 	if el != nil {
-		elAsToken, ok := el.(*codegen.SymbolTableVariableEntry)
+		elAsToken, ok := el.(*codegen.VariableEntry)
 		if !ok {
 			return nil, fmt.Errorf("[NewIdList] unable to type cast %v to *SymbolTableVariableEntry", el)
 		}
@@ -61,12 +61,12 @@ func NewIdList(el Attrib) ([]*codegen.SymbolTableVariableEntry, error) {
 }
 
 // AddToIdList adds an element to the list
-func AddToIdList(list Attrib, el Attrib) ([]*codegen.SymbolTableVariableEntry, error) {
-	asList, ok := list.([]*codegen.SymbolTableVariableEntry)
+func AddToIdList(list Attrib, el Attrib) ([]*codegen.VariableEntry, error) {
+	asList, ok := list.([]*codegen.VariableEntry)
 	if !ok {
 		return nil, fmt.Errorf("[AddToIdList] unable to type cast %v to []*SymbolTableVariableEntry", list)
 	}
-	elAsAddrCode, ok := el.(*codegen.SymbolTableVariableEntry)
+	elAsAddrCode, ok := el.(*codegen.VariableEntry)
 	if !ok {
 		return nil, fmt.Errorf("[AddToIdList] unable to type cast %v to *SymbolTableVariableEntry", el)
 	}

@@ -13,7 +13,7 @@ func IntLit(l Attrib) (*AddrCode, error) {
 	if err != nil {
 		return nil, err
 	}
-	entry := &codegen.SymbolTableLiteralEntry{
+	entry := &codegen.LiteralEntry{
 		Value: int(val),
 	}
 	addrcode := &AddrCode{
