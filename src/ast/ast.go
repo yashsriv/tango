@@ -2,6 +2,7 @@ package ast
 
 import (
 	"errors"
+	"fmt"
 	"tango/src/codegen"
 )
 
@@ -48,7 +49,65 @@ var ErrUnsupported = errors.New("unsupported operation")
 
 // NewSourceFile creates a source file from the decl list
 func NewSourceFile(declList Attrib) (*AddrCode, error) {
-	return MergeCodeList(declList)
+	// Perform hoisting
+	// TODO: get names and types of all functions available
+	var initAddrCode *AddrCode
+	initList := make([]*AddrCode, 0)
+	funcList := make([]*AddrCode, 0)
+	asList, ok := declList.([]*AddrCode)
+	if !ok {
+		return nil, fmt.Errorf("[NewSourceFile] unable to typecast %v to []*AddrCode", declList)
+	}
+	for _, v := range asList {
+		if len(v.Code) == 0 {
+			continue
+		}
+		if v.Code[0].Typ == codegen.LBL {
+			// Function Declaration
+			// We just need to check if it isn't the declaration for the
+			// init function
+			if v.Code[0].Dst.(*codegen.TargetEntry).Target == "_func_init" {
+				initAddrCode = v
+			} else {
+				funcList = append(funcList, v)
+			}
+		} else {
+			initList = append(initList, v)
+		}
+	}
+	initCode, err := MergeCodeList(initList)
+	if err != nil {
+		return nil, err
+	}
+	funcCode, err := MergeCodeList(funcList)
+	if err != nil {
+		return nil, err
+	}
+	if initAddrCode != nil {
+		initCode.Code = append(initCode.Code, initAddrCode.Code[1:]...)
+	}
+	code := make([]codegen.IRIns, 1)
+
+	// Declare our own init function
+	code[0] = codegen.IRIns{
+		Typ: codegen.LBL,
+		Dst: &codegen.TargetEntry{
+			Target: "_func_init",
+		},
+	}
+	code = append(code, initCode.Code...)
+	code = append(code, codegen.IRIns{
+		Typ: codegen.KEY,
+		Op:  codegen.RET,
+	})
+
+	// Add remaining stuff
+	code = append(code, funcCode.Code...)
+
+	addrcode := &AddrCode{
+		Code: code,
+	}
+	return addrcode, nil
 }
 
 var tempCount int
