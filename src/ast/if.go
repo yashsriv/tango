@@ -64,13 +64,11 @@ func EvalIf(a, b, c, d Attrib) (*AddrCode, error) {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", d)
 	}
 
-	end, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_if_else_%d_end", ifElseCount))
-	if err != nil {
-		return nil, err
+	end := &codegen.SymbolTableTargetEntry{
+		Target: fmt.Sprintf("#_if_else_%d_end", ifElseCount),
 	}
-	entry, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_if_%d_end", ifElseCount))
-	if err != nil {
-		return nil, err
+	entry := &codegen.SymbolTableTargetEntry{
+		Target: fmt.Sprintf("#_if_%d_end", ifElseCount),
 	}
 	code := make([]codegen.IRIns, 0)
 
@@ -83,7 +81,6 @@ func EvalIf(a, b, c, d Attrib) (*AddrCode, error) {
 		Op:  codegen.BRNEQ,
 		Arg1: &codegen.SymbolTableLiteralEntry{
 			Value: 1,
-			Repr:  "$1",
 		},
 		Arg2: ifexpr.Symbol,
 		Dst:  entry,
@@ -102,9 +99,8 @@ func EvalIf(a, b, c, d Attrib) (*AddrCode, error) {
 	})
 
 	for i, v := range elseifList {
-		entry, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_if_%d_else_if_%d_end", ifElseCount, i))
-		if err != nil {
-			return nil, err
+		entry := &codegen.SymbolTableTargetEntry{
+			Target: fmt.Sprintf("#_if_%d_else_if_%d_end", ifElseCount, i),
 		}
 		// Evaluate Expression
 		code = append(code, v.expr.Code...)
@@ -115,7 +111,6 @@ func EvalIf(a, b, c, d Attrib) (*AddrCode, error) {
 			Op:  codegen.BRNEQ,
 			Arg1: &codegen.SymbolTableLiteralEntry{
 				Value: 1,
-				Repr:  "$1",
 			},
 			Arg2: v.expr.Symbol,
 			Dst:  entry,

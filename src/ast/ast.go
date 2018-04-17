@@ -71,15 +71,15 @@ var predecFunc = []string{
 func init() {
 	for _, v := range predecID {
 		// TODO: Make this symboltable type entry or something
-		codegen.InsertToSymbolMap(v, nil)
+		codegen.SymbolTable.InsertSymbol(v, nil)
 	}
 	for k, v := range predecConst {
-		codegen.InsertToSymbolMap(k, &codegen.SymbolTableLiteralEntry{
+		codegen.SymbolTable.InsertSymbol(k, &codegen.SymbolTableLiteralEntry{
 			Value: v,
 		})
 	}
 	for _, v := range predecFunc {
-		codegen.InsertToSymbolMap(v, &codegen.SymbolTableTargetEntry{
+		codegen.SymbolTable.InsertSymbol(v, &codegen.SymbolTableTargetEntry{
 			Target: v,
 		})
 	}

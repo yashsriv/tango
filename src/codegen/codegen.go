@@ -456,14 +456,7 @@ func genOpCode(ins IRIns, regs [3]registerResult) {
 }
 
 func genCode() {
-	for _, symbol := range SymbolTable {
-		if variable, isVar := symbol.(*SymbolTableVariableEntry); isVar {
-			addrDesc[variable] = address{
-				memLocation: variable.MemoryLocation,
-			}
-		}
-	}
-
+	// TODO: handle missing variable in addrDesc gracefully
 	for _, bbl := range BBLList {
 		Code += "# Begin Basic Block\n"
 		for i, ins := range bbl.Block {
@@ -497,9 +490,10 @@ func genData() {
 	Code += "_fmtint: .string \"%d\"\n"
 	Code += "_fmtchar: .string \"%c\"\n"
 	Code += "_fmtstr: .string \"%s\"\n"
-	for _, symbol := range SymbolTable {
-		if variable, isVar := symbol.(*SymbolTableVariableEntry); isVar {
-			Code += fmt.Sprintf("%s: .long 0\n", variable.MemoryLocation)
+	for _, symbol := range SymbolTable.symbolMap {
+		switch v := symbol.(type) {
+		case *SymbolTableVariableEntry:
+			Code += fmt.Sprintf("%s: .long 0\n", v.MemoryLocation)
 		}
 	}
 }

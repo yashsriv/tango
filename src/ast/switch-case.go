@@ -16,7 +16,7 @@ type caseDecl struct {
 func EvalCaseDecl(a, b Attrib, isFall bool) (*caseDecl, error) {
 	exprList, ok := a.([]*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to []*AddrCode", a)
+		return nil, fmt.Errorf("[EvalCaseDecl] unable to type cast %v to []*AddrCode", a)
 	}
 	caseBody, err := MergeCodeList(b)
 	if err != nil {
@@ -29,25 +29,23 @@ func EvalCaseDecl(a, b Attrib, isFall bool) (*caseDecl, error) {
 func EvalSwitch(a, b Attrib) (*AddrCode, error) {
 	expr, ok := a.(*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", a)
+		return nil, fmt.Errorf("[EvalSwitch] unable to type cast %v to *AddrCode", a)
 	}
 	blocks, ok := b.([]*caseDecl)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to []*caseDecl", b)
+		return nil, fmt.Errorf("[EvalSwitch] unable to type cast %v to []*caseDecl", b)
 	}
 	code := make([]codegen.IRIns, 0)
 
 	code = append(code, expr.Code...)
 
-	endLbl, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_switch_case_%d_end", switchCaseCount))
-	if err != nil {
-		return nil, err
+	endLbl := &codegen.SymbolTableTargetEntry{
+		Target: fmt.Sprintf("#_switch_case_%d_end", switchCaseCount),
 	}
 
 	for i, block := range blocks {
-		endBlockLbl, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_switch_case_%d_%d_end", switchCaseCount, i))
-		if err != nil {
-			return nil, err
+		endBlockLbl := &codegen.SymbolTableTargetEntry{
+			Target: fmt.Sprintf("#_switch_case_%d_%d_end", switchCaseCount, i),
 		}
 		if len(block.exprList) != 0 {
 			// Not default case
@@ -75,7 +73,6 @@ func EvalSwitch(a, b Attrib) (*AddrCode, error) {
 				Op:  codegen.BRNEQ,
 				Dst: endBlockLbl,
 				Arg1: &codegen.SymbolTableLiteralEntry{
-					Repr:  "$1",
 					Value: 1,
 				},
 				Arg2: orExpr.Symbol,

@@ -3,7 +3,6 @@ package ast
 import (
 	"fmt"
 	"tango/src/codegen"
-	"tango/src/token"
 )
 
 // NewList creates a new list of attrib with initial element
@@ -12,7 +11,7 @@ func NewList(el Attrib) ([]*AddrCode, error) {
 	if el != nil {
 		elAsAddrCode, ok := el.(*AddrCode)
 		if !ok {
-			return nil, fmt.Errorf("unable to type cast %v to *AddrCode", el)
+			return nil, fmt.Errorf("[NewList] unable to type cast %v to *AddrCode", el)
 		}
 		list = append(list, elAsAddrCode)
 	}
@@ -23,11 +22,11 @@ func NewList(el Attrib) ([]*AddrCode, error) {
 func AddToList(list Attrib, el Attrib) ([]*AddrCode, error) {
 	asList, ok := list.([]*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to []*AddrCode", list)
+		return nil, fmt.Errorf("[AddToList] unable to type cast %v to []*AddrCode", list)
 	}
 	elAsAddrCode, ok := el.(*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", el)
+		return nil, fmt.Errorf("[AddToList] unable to type cast %v to *AddrCode", el)
 	}
 	return append(asList, elAsAddrCode), nil
 }
@@ -36,7 +35,7 @@ func AddToList(list Attrib, el Attrib) ([]*AddrCode, error) {
 func MergeCodeList(list Attrib) (*AddrCode, error) {
 	asList, ok := list.([]*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to typecast %v to []*AddrCode", list)
+		return nil, fmt.Errorf("[MergeCodeList] unable to typecast %v to []*AddrCode", list)
 	}
 	code := make([]codegen.IRIns, 0)
 	for _, v := range asList {
@@ -49,12 +48,12 @@ func MergeCodeList(list Attrib) (*AddrCode, error) {
 }
 
 // NewIdList creates a new list of identifiers with initial element
-func NewIdList(el Attrib) ([]*token.Token, error) {
-	list := make([]*token.Token, 0)
+func NewIdList(el Attrib) ([]*codegen.SymbolTableVariableEntry, error) {
+	list := make([]*codegen.SymbolTableVariableEntry, 0)
 	if el != nil {
-		elAsToken, ok := el.(*token.Token)
+		elAsToken, ok := el.(*codegen.SymbolTableVariableEntry)
 		if !ok {
-			return nil, fmt.Errorf("unable to type cast %v to *AddrCode", el)
+			return nil, fmt.Errorf("[NewIdList] unable to type cast %v to *SymbolTableVariableEntry", el)
 		}
 		list = append(list, elAsToken)
 	}
@@ -62,14 +61,14 @@ func NewIdList(el Attrib) ([]*token.Token, error) {
 }
 
 // AddToIdList adds an element to the list
-func AddToIdList(list Attrib, el Attrib) ([]*token.Token, error) {
-	asList, ok := list.([]*token.Token)
+func AddToIdList(list Attrib, el Attrib) ([]*codegen.SymbolTableVariableEntry, error) {
+	asList, ok := list.([]*codegen.SymbolTableVariableEntry)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to []*Token", list)
+		return nil, fmt.Errorf("[AddToIdList] unable to type cast %v to []*SymbolTableVariableEntry", list)
 	}
-	elAsAddrCode, ok := el.(*token.Token)
+	elAsAddrCode, ok := el.(*codegen.SymbolTableVariableEntry)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to *Token", el)
+		return nil, fmt.Errorf("[AddToIdList] unable to type cast %v to *SymbolTableVariableEntry", el)
 	}
 	return append(asList, elAsAddrCode), nil
 }
@@ -80,7 +79,7 @@ func NewIfElseList(el Attrib) ([]*ifElse, error) {
 	if el != nil {
 		elAsAddrCode, ok := el.(*ifElse)
 		if !ok {
-			return nil, fmt.Errorf("unable to type cast %v to *AddrCode", el)
+			return nil, fmt.Errorf("[NewIfElseList] unable to type cast %v to *ifElse", el)
 		}
 		list = append(list, elAsAddrCode)
 	}
@@ -91,11 +90,11 @@ func NewIfElseList(el Attrib) ([]*ifElse, error) {
 func AddToIfElseList(list Attrib, el Attrib) ([]*ifElse, error) {
 	asList, ok := list.([]*ifElse)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to []*AddrCode", list)
+		return nil, fmt.Errorf("[AddToIfElseList] unable to type cast %v to []*ifElse", list)
 	}
 	elAsAddrCode, ok := el.(*ifElse)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", el)
+		return nil, fmt.Errorf("[AddToIfElseList] unable to type cast %v to *ifElse", el)
 	}
 	return append(asList, elAsAddrCode), nil
 }
@@ -110,11 +109,11 @@ func NewCaseBlockList() ([]*caseDecl, error) {
 func AddToCaseBlockList(list Attrib, el Attrib) ([]*caseDecl, error) {
 	asList, ok := list.([]*caseDecl)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to []*AddrCode", list)
+		return nil, fmt.Errorf("[AddToCaseBlockList] unable to type cast %v to []*caseDecl", list)
 	}
 	elAsAddrCode, ok := el.(*caseDecl)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", el)
+		return nil, fmt.Errorf("[AddToCaseBlockList] unable to type cast %v to *caseDecl", el)
 	}
 	return append(asList, elAsAddrCode), nil
 }

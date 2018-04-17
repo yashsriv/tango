@@ -12,17 +12,17 @@ func ModAssignment(a, b, c Attrib) (*AddrCode, error) {
 	// TODO: Check el1 is addressable
 	el1, ok := a.(*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", a)
+		return nil, fmt.Errorf("[ModAssignment] unable to type cast %v to *AddrCode", a)
 	}
 	if el1.Symbol == nil {
-		return nil, fmt.Errorf("lhs must have a symbol table entry")
+		return nil, fmt.Errorf("[ModAssignment] lhs must have a symbol table entry")
 	}
 	el2, ok := c.(*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", c)
+		return nil, fmt.Errorf("[ModAssignment] unable to type cast %v to *AddrCode", c)
 	}
 	if el2.Symbol == nil {
-		return nil, fmt.Errorf("rhs must have a symbol table entry")
+		return nil, fmt.Errorf("[ModAssignment] rhs must have a symbol table entry")
 	}
 
 	var irOp codegen.IROp
@@ -75,10 +75,10 @@ func IncDec(a, b Attrib) (*AddrCode, error) {
 	// TODO: Check el1 is addressable
 	el1, ok := a.(*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", a)
+		return nil, fmt.Errorf("[IncDec] unable to type cast %v to *AddrCode", a)
 	}
 	if el1.Symbol == nil {
-		return nil, fmt.Errorf("lhs must have a symbol table entry")
+		return nil, fmt.Errorf("[IncDec] lhs must have a symbol table entry")
 	}
 	code := append(el1.Code)
 	var irOp codegen.IROp
@@ -105,18 +105,18 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 	// Obtain list of identifiers
 	lhsList, ok := lhs.([]*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to typecast %v to []*AddrCode", lhs)
+		return nil, fmt.Errorf("[Assignments] unable to typecast %v to []*AddrCode", lhs)
 	}
 
 	// Obtain rhs of expression
 	rhsList, ok := rhs.([]*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to typecast %v to []*AddrCode", rhs)
+		return nil, fmt.Errorf("[Assignments] unable to typecast %v to []*AddrCode", rhs)
 	}
 
 	// Number of elements in lhs and rhs must be same
 	if len(lhsList) != len(rhsList) {
-		return nil, fmt.Errorf("unequal number of elements in lhs and rhs: %d and %d", len(lhsList), len(rhsList))
+		return nil, fmt.Errorf("[Assignments] unequal number of elements in lhs and rhs: %d and %d", len(lhsList), len(rhsList))
 	}
 
 	// The code returned for this particular statement
@@ -132,12 +132,8 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 		// For each expression, store its value in a temporary variable
 		for i, expr := range rhsList {
 			code = append(code, expr.Code...)
-			entry, err := codegen.InsertToSymbolTable(fmt.Sprintf("rtmp%d", tempCount))
+			entry := CreateTemporary()
 			entries[i] = entry
-			tempCount++
-			if err != nil {
-				return nil, err
-			}
 			ins := codegen.IRIns{
 				Typ:  codegen.ASN,
 				Op:   codegen.ASNO,
@@ -153,7 +149,7 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 		// TODO: Check Addressable
 		entry, ok := declName.Symbol.(*codegen.SymbolTableVariableEntry)
 		if !ok {
-			return nil, fmt.Errorf("lhs %s of expression should be a literal", declName)
+			return nil, fmt.Errorf("[Assignments] lhs %s of expression should be a literal", declName)
 		}
 		entry.Declared = true
 

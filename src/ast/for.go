@@ -74,7 +74,6 @@ func EvalForBody(a, b Attrib) (*AddrCode, error) {
 			Op:  codegen.BRNEQ,
 			Arg1: &codegen.SymbolTableLiteralEntry{
 				Value: 1,
-				Repr:  "$1",
 			},
 			Arg2: header.Expr.Symbol,
 			Dst:  end,

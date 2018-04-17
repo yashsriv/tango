@@ -10,9 +10,9 @@ import (
 func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error) {
 
 	// Obtain list of identifiers
-	declnamelistAs, ok := declnamelist.([]*token.Token)
+	declnamelistAs, ok := declnamelist.([]*codegen.SymbolTableVariableEntry)
 	if !ok {
-		return nil, fmt.Errorf("unable to typecast %v to []*Token", declnamelist)
+		return nil, fmt.Errorf("unable to typecast %v to []*SymbolTableVariableEntry", declnamelist)
 	}
 
 	// Obtain rhs of expression
@@ -47,12 +47,8 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 		// For each expression, store its value in a temporary variable
 		for i, expr := range exprlistAs {
 			code = append(code, expr.Code...)
-			entry, err := codegen.InsertToSymbolTable(fmt.Sprintf("rtmp%d", tempCount))
+			entry := CreateTemporary()
 			entries[i] = entry
-			tempCount++
-			if err != nil {
-				return nil, err
-			}
 			ins := codegen.IRIns{
 				Typ:  codegen.ASN,
 				Op:   codegen.ASNO,
@@ -65,19 +61,10 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 
 	// For each element in the rhs, perform some operations
 	for i, declName := range declnamelistAs {
-		identifier := string(declName.Lit)
-		_, ok := codegen.AccSymbolMap(identifier)
-		if ok {
-			return nil, fmt.Errorf("Identifier %s is being declared twice in this scope", identifier)
-		}
-		entry := &codegen.SymbolTableVariableEntry{
-			MemoryLocation: "v" + identifier,
-		}
-		entry.Declared = true
-		codegen.InsertToSymbolMap(identifier, entry)
+		declName.Declared = true
 		// if there is a rhs
 		if exprlist != nil {
-			entry.Assignments++
+			declName.Assignments++
 			var arg1 codegen.SymbolTableEntry
 			// If number of expressions are greater than 1, they have
 			// already been evaluated and assigned a value above.
@@ -92,7 +79,7 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 			ins := codegen.IRIns{
 				Typ:  codegen.ASN,
 				Op:   codegen.ASNO,
-				Dst:  entry,
+				Dst:  declName,
 				Arg1: arg1,
 			}
 			code = append(code, ins)
@@ -114,7 +101,7 @@ func MultConstDecl(decl, decllist Attrib) (*AddrCode, error) {
 	}
 	declAsAddr, ok := decl.(*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", decl)
+		return nil, fmt.Errorf("[MultConstDecl] unable to type cast %v to *AddrCode", decl)
 	}
 	code := append(declAsAddr.Code, mergedList.Code...)
 	addrcode := &AddrCode{
@@ -128,11 +115,11 @@ func MultConstDecl(decl, decllist Attrib) (*AddrCode, error) {
 func FuncDecl(a, b Attrib) (*AddrCode, error) {
 	name, ok := a.(*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", a)
+		return nil, fmt.Errorf("[FuncDecl] unable to type cast %v to *AddrCode", a)
 	}
 	body, ok := b.(*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
+		return nil, fmt.Errorf("[FuncDecl] unable to type cast %v to *AddrCode", b)
 	}
 	code := make([]codegen.IRIns, 1, len(body.Code)+1)
 	code[0] = codegen.IRIns{
@@ -148,4 +135,30 @@ func FuncDecl(a, b Attrib) (*AddrCode, error) {
 		Code: code,
 	}
 	return addrcode, nil
+}
+
+// NewName creates a new symbol table entry for a variable
+func NewName(a Attrib) (symbol *codegen.SymbolTableVariableEntry, err error) {
+	identifier := string(a.(*token.Token).Lit)
+	symbol = &codegen.SymbolTableVariableEntry{
+		MemoryLocation: "v" + identifier,
+	}
+	err = codegen.SymbolTable.InsertSymbol(identifier, symbol)
+	return
+}
+
+// Name gets table entry for a symbol
+func Name(a Attrib) (symbol codegen.SymbolTableEntry, err error) {
+	identifier := string(a.(*token.Token).Lit)
+	symbol, err = codegen.SymbolTable.GetSymbol(identifier)
+	return
+}
+
+// CreateTemporary creates a temporary variable
+func CreateTemporary() (symbol *codegen.SymbolTableVariableEntry) {
+	symbol = &codegen.SymbolTableVariableEntry{
+		MemoryLocation: fmt.Sprintf("rtmp%d", tempCount),
+	}
+	tempCount++
+	return
 }

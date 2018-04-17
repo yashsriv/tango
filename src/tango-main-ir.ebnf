@@ -192,7 +192,13 @@ Case : keyword_case ExprOrTypeList label_op	                      << $1, nil >>
      | keyword_default label_op	                                  << []*ast.AddrCode{}, nil >>
      ;
 
-CompoundStmt : left_block_bracket StmtList right_block_bracket	<< ast.MergeCodeList($1) >>
+CompoundStmt : left_block_bracket NewScope StmtList EndScope right_block_bracket	<< ast.MergeCodeList($2) >>
+             ;
+
+NewScope     : empty << ast.NewScope() >>
+             ;
+
+EndScope     : empty << ast.EndScope() >>
              ;
 
 CaseBlock : Case StmtList	                                       << ast.EvalCaseDecl($0, $1, false) >>
@@ -203,7 +209,7 @@ CaseBlockList : empty	                  << ast.NewCaseBlockList() >>
               | CaseBlockList CaseBlock	<< ast.AddToCaseBlockList($0, $1) >>
               ;
 
-LoopBody : left_block_bracket StmtList right_block_bracket	<< ast.MergeCodeList($1) >>
+LoopBody : left_block_bracket NewScope StmtList EndScope right_block_bracket	<< ast.MergeCodeList($2) >>
          ;
 
 RangeStmt : ExprList norm_assign_op keyword_range Expr	<< ast.AddNode("RangeStmt", $0, $1, $2, $3) >>
@@ -219,17 +225,17 @@ ForHeader : OSimpleStmt stmt_end OExpr stmt_end OSimpleStmt << ast.EvalForHeader
 ForBody : ForHeader LoopBody	                        << ast.EvalForBody($0, $1) >>
         ;
 
-ForStmt : keyword_for ForBody	                        << $1, nil >>
+ForStmt : keyword_for NewScope ForBody EndScope	              << $2, nil >>
         ;
 
 IfHeader : Expr       	                              << $0, nil >>
          | OSimpleStmt stmt_end Expr       	          << ast.EvalIfHeader($0, $2) >>
          ;
 
-IfStmt : keyword_if IfHeader LoopBody ElseIfList Else	<< ast.EvalIf($1, $2, $3, $4) >>
+IfStmt : keyword_if NewScope IfHeader LoopBody ElseIfList Else EndScope << ast.EvalIf($2, $3, $4, $5) >>
        ;
 
-ElseIf : keyword_else keyword_if IfHeader LoopBody	  << ast.EvalElseIf($2, $3) >>
+ElseIf : keyword_else keyword_if NewScope IfHeader LoopBody EndScope  << ast.EvalElseIf($3, $4) >>
        ;
 
 ElseIfList : empty                                    << ast.NewIfElseList(nil) >>
@@ -267,7 +273,7 @@ InterfaceType : keyword_interface left_block_bracket InterfaceDeclList OSemi rig
               ;
 
 /* Function Stuff - All together to show how crappy it is */
-FuncDecl : keyword_func FuncDecl_ FuncBody	                                      << ast.FuncDecl($1, $2) >>
+FuncDecl : keyword_func FuncDecl_ NewScope FuncBody	EndScope                      << ast.FuncDecl($1, $3) >>
          ;
 
 FuncDecl_ : identifier ArgList FuncRes                                            << ast.FuncSign($0, $1, $2, nil) >>
@@ -314,10 +320,8 @@ InterfaceDecl : NewName InDecl                    << ast.AddNode("InterfaceDecl"
 InDecl : left_paren OArgTypeListOComma right_paren FuncRes  << ast.AddNode("InDecl", $0, $1, $2, $3) >>
        ;
 
-LabelName : NewName   << ast.EvalLabelName($0) >>
+LabelName : identifier   << ast.EvalLabelName($0) >>
           ;
-NewName : identifier	<< $0, nil >>
-        ;
 
 PtrType : star NType	<< ast.AddNode("PtrType", $0, $1) >>
         ;
@@ -423,10 +427,13 @@ BracedKeyvalList : empty	<< ast.AddNode("BracedKeyvalList") >>
                  | KeyvalList OComma	<< ast.AddNode("BracedKeyvalList", $0, $1) >>
                  ;
 
-DeclName : identifier	<< $0, nil >>
+DeclName : NewName  << $0, nil >>
          ;
 
-Name : identifier	<< $0, nil >>
+NewName : identifier << ast.NewName($0) >>
+        ;
+
+Name : identifier	<< ast.Name($0) >>
      ;
 
 ArgType : NameOrType	<< ast.AddNode("ArgType", $0) >>
@@ -494,10 +501,6 @@ ConvType : FuncType   << ast.AddNode("ConvType", $0) >>
 CompType : OtherType  << ast.AddNode("CompType", $0) >>
          ;
 
-// Signifies beginning of a composite expression
-StartCompLit : empty  << ast.AddNode("StartCompLit") >>
-             ;
-
 Keyval : Expr label_op CompLitExpr  << nil, ast.ErrUnsupported >>
        ;
 
@@ -516,7 +519,7 @@ ExprOrType : Expr         << $0, nil >>
 NameOrType : NType        << ast.AddNode("NameOrType", $0) >>
            ;
 
-SwitchStmt : keyword_switch IfHeader left_block_bracket CaseBlockList right_block_bracket	<< ast.EvalSwitch($1, $3) >>
+SwitchStmt : keyword_switch NewScope IfHeader left_block_bracket CaseBlockList EndScope right_block_bracket	<< ast.EvalSwitch($2, $4) >>
            ;
            
 /* Expressions */

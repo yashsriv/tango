@@ -11,29 +11,28 @@ type labelName struct {
 	end   *codegen.SymbolTableTargetEntry
 }
 
+// EvalLabelName is used to evaluate a label
 func EvalLabelName(a Attrib) (labelName, error) {
 	identifier := string(a.(*token.Token).Lit)
-	if _, ok := codegen.AccSymbolMap(identifier); ok {
-		return labelName{}, fmt.Errorf("Identifier %s is being declared twice in this scope", identifier)
-	}
 	start := &codegen.SymbolTableTargetEntry{
 		Target: fmt.Sprintf("_label_%s", identifier),
 	}
-	codegen.InsertToSymbolMap(identifier, start)
+	// Associating identifier with some entry
+	err := codegen.SymbolTable.InsertSymbol(identifier, start)
 	end := &codegen.SymbolTableTargetEntry{
 		Target: fmt.Sprintf("_labelend_%s", identifier),
 	}
-	return labelName{start, end}, nil
+	return labelName{start, end}, err
 }
 
 func EvalLabel(a, b Attrib) (*AddrCode, error) {
 	label, ok := a.(labelName)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to labelName", a)
+		return nil, fmt.Errorf("[EvalLabel] unable to type cast %v to labelName", a)
 	}
 	stmt, ok := b.(*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
+		return nil, fmt.Errorf("[EvalLabel] unable to type cast %v to *AddrCode", b)
 	}
 
 	code := make([]codegen.IRIns, 0)
@@ -51,11 +50,12 @@ func EvalLabel(a, b Attrib) (*AddrCode, error) {
 	}, nil
 }
 
+// EvalGoto evaluates a goto statement
 func EvalGoto(a Attrib) (*AddrCode, error) {
 	identifier := string(a.(*token.Token).Lit)
-	entry, ok := codegen.AccSymbolMap(identifier)
-	if !ok {
-		return nil, fmt.Errorf("Identifier %s is undefined in this scope", identifier)
+	entry, err := codegen.SymbolTable.GetSymbol(identifier)
+	if err != nil {
+		return nil, err
 	}
 	code := make([]codegen.IRIns, 0)
 	code = append(code, codegen.IRIns{
@@ -71,7 +71,7 @@ func EvalGoto(a Attrib) (*AddrCode, error) {
 func EvalReturn(a Attrib) (*AddrCode, error) {
 	expr, ok := a.([]*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to typecast %v to []*AddrCode", a)
+		return nil, fmt.Errorf("[EvalReturn] unable to typecast %v to []*AddrCode", a)
 	}
 	code := make([]codegen.IRIns, 0)
 	switch len(expr) {
@@ -119,18 +119,26 @@ func EvalCall(a, b Attrib) (*AddrCode, error) {
 		Op:   codegen.CALL,
 		Arg1: entry,
 	})
-	entry1, err := codegen.InsertToSymbolTable(fmt.Sprintf("rtmp%d", tempCount))
-	if err != nil {
-		return nil, err
-	}
+	entry1 := CreateTemporary()
 	code = append(code, codegen.IRIns{
 		Typ:  codegen.KEY,
 		Op:   codegen.SETRET,
 		Arg1: entry1,
 	})
-	tempCount++
 	return &AddrCode{
 		Code:   code,
 		Symbol: entry1,
 	}, nil
+}
+
+// NewScope marks the start of a scope
+func NewScope() (Attrib, error) {
+	codegen.NewScope()
+	return nil, nil
+}
+
+// EndScope marks end of the scope
+func EndScope() (Attrib, error) {
+	err := codegen.EndScope()
+	return nil, err
 }

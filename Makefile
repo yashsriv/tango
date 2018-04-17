@@ -8,7 +8,7 @@ GOFLAGS :=
 
 .PHONY: all clean test runcode
 
-all: vendor bin/lexer bin/codegen bin/parser bin/irgen
+all: vendor bin/lexer bin/parser bin/irgen
 
 debug: GOFLAGS += -tags debug
 debug: all
@@ -22,10 +22,6 @@ vendor:
 bin/lexer: src/main/lexer/lexer.go src/lexer/lexer.go src/lexer/*.go
 	@echo -e "\e[1;32mCompiling Lexer \e[0m"
 	go install $(GOFLAGS) $(current_dir)/src/main/lexer/lexer.go
-
-bin/codegen: src/main/codegen/codegen.go src/codegen/*.go
-	@echo -e "\e[1;32mCompiling Codegen \e[0m"
-	go install $(GOFLAGS) $(current_dir)/src/main/codegen/codegen.go
 
 bin/parser: src/main/parser/parser.go src/parser/parser.go src/ast/*.go src/html/*.go
 	@echo -e "\e[1;32mCompiling Parser \e[0m"

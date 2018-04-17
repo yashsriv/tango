@@ -3,8 +3,6 @@ package codegen
 import (
 	"errors"
 	"fmt"
-	"log"
-	"strconv"
 )
 
 // SymbolTableEntry is an entry in the SymbolTable
@@ -14,7 +12,6 @@ type SymbolTableEntry interface {
 
 // SymbolTableLiteralEntry refers to a literal in the symbol table
 type SymbolTableLiteralEntry struct {
-	Repr  string
 	Value int
 }
 
@@ -45,115 +42,93 @@ func (s SymbolTableVariableEntry) SymbolTableString() string {
 	return fmt.Sprintf("%%%s", s.MemoryLocation)
 }
 
-// SymbolTable is an array of SymbolTableEntries
-var SymbolTable []SymbolTableEntry
+// symbolTable represents a table
+type symbolTable struct {
+	symbolMap map[string]SymbolTableEntry
+	parent    *symbolTable
+}
 
-var symbolMap = make(map[string]SymbolTableEntry)
+// SymbolTable is current table
+var SymbolTable *symbolTable
 
-func InsertToSymbolMap(key string, value SymbolTableEntry) error {
-	symbolMap[key] = value
+// rootTable refers to the global rootTable
+var rootTable *symbolTable
+
+// tableStack maintains a stack of symbol tables
+var tableStack []*symbolTable
+
+// Initialize data structures
+func init() {
+	rootTable = &symbolTable{
+		symbolMap: make(map[string]SymbolTableEntry),
+		parent:    nil,
+	}
+	SymbolTable = rootTable
+}
+
+// push to table stack
+func pushToStack() {
+	tableStack = append(tableStack, SymbolTable)
+}
+
+// pop from table stack
+func popFromStack() (table *symbolTable, err error) {
+	l := len(tableStack)
+	if l == 0 {
+		err = ErrEmptyTableStack
+		return
+	}
+	table = tableStack[l-1]
+	tableStack = tableStack[:l-1]
+	return
+}
+
+// ErrAlreadyExists is error when symbol already exists in table
+var ErrAlreadyExists = errors.New("symbol already exists in table")
+
+// ErrDoesntExist is error when symbol is not in table
+var ErrDoesntExist = errors.New("symbol doesn't exist in table")
+
+// ErrEmptyTableStack is an error thrown when trying to pop off empty table stack
+var ErrEmptyTableStack = errors.New("expected tableStack to never be empty")
+
+func (s *symbolTable) InsertSymbol(key string, value SymbolTableEntry) error {
+	// Check if already exists in current scope
+	_, ok := s.symbolMap[key]
+	if ok {
+		return ErrAlreadyExists
+	}
+
+	// Insert otherwise
+	s.symbolMap[key] = value
 	return nil
 }
 
-func AccSymbolMap(key string) (SymbolTableEntry, bool) {
-	x, ok := symbolMap[key]
-	return x, ok
+func (s *symbolTable) GetSymbol(key string) (SymbolTableEntry, error) {
+	// Check if symbol exists in current scope
+	x, ok := s.symbolMap[key]
+	if !ok {
+		if s.parent != nil {
+			// If not, check in higher scopes
+			return s.parent.GetSymbol(key)
+		}
+		return nil, ErrDoesntExist
+	}
+	// If highest scope, then result of this layer is the result
+	return x, nil
 }
 
-// InsertToSymbolTable inserts a single entry into table
-func InsertToSymbolTable(val string) (SymbolTableEntry, error) {
-	if val, ok := symbolMap[val]; ok {
-		return val, nil
+// NewScope creates a new scope
+func NewScope() {
+	pushToStack()
+	SymbolTable = &symbolTable{
+		symbolMap: make(map[string]SymbolTableEntry),
+		parent:    SymbolTable,
 	}
-	var entry SymbolTableEntry
-	switch val[0] {
-	case '$':
-		i, err := strconv.ParseInt(val[1:], 0, 32)
-		if err != nil {
-			return nil, err
-		}
-
-		entry = &SymbolTableLiteralEntry{
-			Repr:  val,
-			Value: int(i),
-		}
-	case '#':
-		entry = &SymbolTableTargetEntry{
-			Target: val[1:],
-		}
-	case 'r':
-		entry = &SymbolTableVariableEntry{
-			MemoryLocation: val,
-		}
-	default:
-		log.Fatalf("Unknown argument: %s", val)
-	}
-	SymbolTable = append(SymbolTable, entry)
-	symbolMap[val] = entry
-	return entry, nil
 }
 
-// GetRegs populates symbol table and gets virtual registers
-func GetRegs(splitted []string, typ IRType, op IROp) (arg1, arg2, dst SymbolTableEntry, err error) {
-
-	if typ == LBL {
-		err = errors.New("we should never GetRegs for a label")
-		return
-	}
-
-	if typ == BOP || typ == CBR || typ == LOP || typ == SOP || typ == DOP {
-		if len(splitted) < 4 {
-			err = errors.New("not enough args to a binary operand")
-			return
-		}
-		dst, err = InsertToSymbolTable(splitted[1])
-		if err != nil {
-			return
-		}
-		arg1, err = InsertToSymbolTable(splitted[2])
-		if err != nil {
-			return
-		}
-		arg2, err = InsertToSymbolTable(splitted[3])
-		if err != nil {
-			return
-		}
-	} else if typ == UOP || typ == ASN {
-		if len(splitted) < 3 {
-			err = errors.New("not enough args to a unary operand")
-			return
-		}
-		dst, err = InsertToSymbolTable(splitted[1])
-		if err != nil {
-			return
-		}
-		arg1, err = InsertToSymbolTable(splitted[2])
-		if err != nil {
-			return
-		}
-	} else if typ == JMP {
-		if len(splitted) < 2 {
-			err = errors.New("not enough args to a jump operand")
-			return
-		}
-		arg1, err = InsertToSymbolTable(splitted[1])
-		if err != nil {
-			return
-		}
-	} else if typ == KEY {
-		if !(op == RET || op == HALT) {
-			if len(splitted) < 2 {
-				err = errors.New("not enough args to a call/key operand")
-				return
-			}
-			arg1, err = InsertToSymbolTable(splitted[1])
-			if err != nil {
-				return
-			}
-		}
-	} else {
-		err = fmt.Errorf("unknown instruction type: %d, %s", typ, op)
-		return
-	}
+// EndScope ends a scope
+func EndScope() (err error) {
+	SymbolTable, err = popFromStack()
 	return
 }

@@ -13,11 +13,7 @@ func UnaryOp(a Attrib, b Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
 	}
-	entry, err := codegen.InsertToSymbolTable(fmt.Sprintf("rtmp%d", tempCount))
-	tempCount++
-	if err != nil {
-		return nil, err
-	}
+	entry := CreateTemporary()
 	code := el.Code
 	var irOp codegen.IROp
 	switch op {
@@ -52,11 +48,7 @@ func BinaryOp(a Attrib, b Attrib, c Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", c)
 	}
-	entry, err := codegen.InsertToSymbolTable(fmt.Sprintf("rtmp%d", tempCount))
-	tempCount++
-	if err != nil {
-		return nil, err
-	}
+	entry := CreateTemporary()
 	code := append(el1.Code, el2.Code...)
 	var irOp codegen.IROp
 	var irType = codegen.BOP
@@ -119,23 +111,17 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", c)
 	}
 
-	trueLbl, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_rel_op_%d_true", relOpCount))
-	if err != nil {
-		return nil, err
+	trueLbl := &codegen.SymbolTableTargetEntry{
+		Target: fmt.Sprintf("#_rel_op_%d_true", relOpCount),
 	}
 
-	endLbl, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_rel_op_%d_end", relOpCount))
-	if err != nil {
-		return nil, err
+	endLbl := &codegen.SymbolTableTargetEntry{
+		Target: fmt.Sprintf("#_rel_op_%d_end", relOpCount),
 	}
 
 	relOpCount++
 
-	entry, err := codegen.InsertToSymbolTable(fmt.Sprintf("rtmp%d", tempCount))
-	if err != nil {
-		return nil, err
-	}
-	tempCount++
+	entry := CreateTemporary()
 	code := append(el1.Code, el2.Code...)
 	var irOp codegen.IROp
 	switch op {
@@ -168,7 +154,6 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 		Op:  codegen.ASNO,
 		Dst: entry,
 		Arg1: &codegen.SymbolTableLiteralEntry{
-			Repr:  "$0",
 			Value: 0,
 		},
 	})
@@ -186,7 +171,6 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 		Op:  codegen.ASNO,
 		Dst: entry,
 		Arg1: &codegen.SymbolTableLiteralEntry{
-			Repr:  "$1",
 			Value: 1,
 		},
 	})
@@ -210,30 +194,23 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
 	}
-	falseLbl, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_rel_op_%d_false", relOpCount))
-	if err != nil {
-		return nil, err
+	falseLbl := &codegen.SymbolTableTargetEntry{
+		Target: fmt.Sprintf("#_rel_op_%d_false", relOpCount),
 	}
 
-	endLbl, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_rel_op_%d_end", relOpCount))
-	if err != nil {
-		return nil, err
+	endLbl := &codegen.SymbolTableTargetEntry{
+		Target: fmt.Sprintf("#_rel_op_%d_end", relOpCount),
 	}
 
 	relOpCount++
 
-	entry, err := codegen.InsertToSymbolTable(fmt.Sprintf("rtmp%d", tempCount))
-	if err != nil {
-		return nil, err
-	}
-	tempCount++
+	entry := CreateTemporary()
 	code := append(el1.Code)
 	code = append(code, codegen.IRIns{
 		Typ: codegen.CBR,
 		Op:  codegen.BRNEQ,
 		Dst: falseLbl,
 		Arg1: &codegen.SymbolTableLiteralEntry{
-			Repr:  "$1",
 			Value: 1,
 		},
 		Arg2: el1.Symbol,
@@ -244,7 +221,6 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		Op:  codegen.BRNEQ,
 		Dst: falseLbl,
 		Arg1: &codegen.SymbolTableLiteralEntry{
-			Repr:  "$1",
 			Value: 1,
 		},
 		Arg2: el2.Symbol,
@@ -254,7 +230,6 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		Op:  codegen.ASNO,
 		Dst: entry,
 		Arg1: &codegen.SymbolTableLiteralEntry{
-			Repr:  "$1",
 			Value: 1,
 		},
 	})
@@ -272,7 +247,6 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		Op:  codegen.ASNO,
 		Dst: entry,
 		Arg1: &codegen.SymbolTableLiteralEntry{
-			Repr:  "$0",
 			Value: 0,
 		},
 	})
@@ -296,30 +270,22 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
 	}
-	trueLbl, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_rel_op_%d_true", relOpCount))
-	if err != nil {
-		return nil, err
+	trueLbl := &codegen.SymbolTableTargetEntry{
+		Target: fmt.Sprintf("#_rel_op_%d_true", relOpCount),
 	}
-
-	endLbl, err := codegen.InsertToSymbolTable(fmt.Sprintf("#_rel_op_%d_end", relOpCount))
-	if err != nil {
-		return nil, err
+	endLbl := &codegen.SymbolTableTargetEntry{
+		Target: fmt.Sprintf("#_rel_op_%d_end", relOpCount),
 	}
 
 	relOpCount++
 
-	entry, err := codegen.InsertToSymbolTable(fmt.Sprintf("rtmp%d", tempCount))
-	if err != nil {
-		return nil, err
-	}
-	tempCount++
+	entry := CreateTemporary()
 	code := append(el1.Code)
 	code = append(code, codegen.IRIns{
 		Typ: codegen.CBR,
 		Op:  codegen.BREQ,
 		Dst: trueLbl,
 		Arg1: &codegen.SymbolTableLiteralEntry{
-			Repr:  "$1",
 			Value: 1,
 		},
 		Arg2: el1.Symbol,
@@ -330,7 +296,6 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Op:  codegen.BREQ,
 		Dst: trueLbl,
 		Arg1: &codegen.SymbolTableLiteralEntry{
-			Repr:  "$1",
 			Value: 1,
 		},
 		Arg2: el2.Symbol,
@@ -340,7 +305,6 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Op:  codegen.ASNO,
 		Dst: entry,
 		Arg1: &codegen.SymbolTableLiteralEntry{
-			Repr:  "$0",
 			Value: 0,
 		},
 	})
@@ -358,7 +322,6 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Op:  codegen.ASNO,
 		Dst: entry,
 		Arg1: &codegen.SymbolTableLiteralEntry{
-			Repr:  "$1",
 			Value: 1,
 		},
 	})
@@ -373,13 +336,14 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 	return addrcode, nil
 }
 
+// ProcessName is used to process a name
 func ProcessName(a Attrib) (*AddrCode, error) {
-	identifier := string(a.(*token.Token).Lit)
-	entry, ok := codegen.AccSymbolMap(identifier)
-	if !ok {
-		return nil, fmt.Errorf("Identifier %s not declared yet", identifier)
+	switch v := a.(type) {
+	case *codegen.SymbolTableVariableEntry:
+		return &AddrCode{Symbol: v}, nil
+	case *codegen.SymbolTableTargetEntry:
+		return &AddrCode{Symbol: v}, nil
+	default:
+		return nil, ErrShouldBeVariable
 	}
-	return &AddrCode{
-		Symbol: entry,
-	}, nil
 }
