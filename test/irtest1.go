@@ -25,7 +25,7 @@ func main() {
 		g += 5
 	} else if 5 < 7 && g == 11 {
 		g = 15
-	} else if 80 {
+	} else if true {
 		g = 4
 	} else {
 		g = 7

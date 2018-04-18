@@ -65,10 +65,10 @@ func EvalIf(a, b, c, d Attrib) (*AddrCode, error) {
 	}
 
 	end := &codegen.TargetEntry{
-		Target: fmt.Sprintf("#_if_else_%d_end", ifElseCount),
+		Target: fmt.Sprintf("_if_else_%d_end", ifElseCount),
 	}
 	entry := &codegen.TargetEntry{
-		Target: fmt.Sprintf("#_if_%d_end", ifElseCount),
+		Target: fmt.Sprintf("_if_%d_end", ifElseCount),
 	}
 	code := make([]codegen.IRIns, 0)
 
@@ -100,7 +100,7 @@ func EvalIf(a, b, c, d Attrib) (*AddrCode, error) {
 
 	for i, v := range elseifList {
 		entry := &codegen.TargetEntry{
-			Target: fmt.Sprintf("#_if_%d_else_if_%d_end", ifElseCount, i),
+			Target: fmt.Sprintf("_if_%d_else_if_%d_end", ifElseCount, i),
 		}
 		// Evaluate Expression
 		code = append(code, v.expr.Code...)

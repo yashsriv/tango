@@ -14,6 +14,10 @@ type GlobalMemory struct {
 
 func (g GlobalMemory) memoryLocationDummy() {}
 
+func (g GlobalMemory) String() string {
+	return g.Location
+}
+
 // StackMemory refers to a location for a variable in the stack
 type StackMemory struct {
 	BaseOffset int

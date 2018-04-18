@@ -40,12 +40,12 @@ func EvalSwitch(a, b Attrib) (*AddrCode, error) {
 	code = append(code, expr.Code...)
 
 	endLbl := &codegen.TargetEntry{
-		Target: fmt.Sprintf("#_switch_case_%d_end", switchCaseCount),
+		Target: fmt.Sprintf("_switch_case_%d_end", switchCaseCount),
 	}
 
 	for i, block := range blocks {
 		endBlockLbl := &codegen.TargetEntry{
-			Target: fmt.Sprintf("#_switch_case_%d_%d_end", switchCaseCount, i),
+			Target: fmt.Sprintf("_switch_case_%d_%d_end", switchCaseCount, i),
 		}
 		if len(block.exprList) != 0 {
 			// Not default case

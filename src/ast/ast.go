@@ -118,9 +118,9 @@ var predecID = []string{
 	"uint", "uint8", "uint16", "uint32", "uintptr",
 }
 
-var predecConst = map[string]int{
-	"true":  1,
-	"false": 0,
+var predecConst = []string{
+	"true",
+	"false",
 }
 
 var predecFunc = []string{
@@ -132,9 +132,11 @@ func init() {
 		// TODO: Make this symboltable type entry or something
 		codegen.SymbolTable.InsertSymbol(v, nil)
 	}
-	for k, v := range predecConst {
-		codegen.SymbolTable.InsertSymbol(k, &codegen.LiteralEntry{
-			Value: v,
+	for _, v := range predecConst {
+		codegen.SymbolTable.InsertSymbol(v, &codegen.VariableEntry{
+			MemoryLocation: codegen.GlobalMemory{Location: v},
+			Name:           v,
+			Constant:       true,
 		})
 	}
 	for _, v := range predecFunc {

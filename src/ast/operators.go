@@ -111,12 +111,34 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", c)
 	}
 
+	if _, isLiteral := el1.Symbol.(*codegen.LiteralEntry); isLiteral {
+		tmp := CreateTemporary()
+		el1.Code = append(el1.Code, codegen.IRIns{
+			Typ:  codegen.ASN,
+			Op:   codegen.ASNO,
+			Dst:  tmp,
+			Arg1: el1.Symbol,
+		})
+		el1.Symbol = tmp
+	}
+
+	if _, isLiteral := el2.Symbol.(*codegen.LiteralEntry); isLiteral {
+		tmp := CreateTemporary()
+		el2.Code = append(el2.Code, codegen.IRIns{
+			Typ:  codegen.ASN,
+			Op:   codegen.ASNO,
+			Dst:  tmp,
+			Arg1: el2.Symbol,
+		})
+		el2.Symbol = tmp
+	}
+
 	trueLbl := &codegen.TargetEntry{
-		Target: fmt.Sprintf("#_rel_op_%d_true", relOpCount),
+		Target: fmt.Sprintf("_rel_op_%d_true", relOpCount),
 	}
 
 	endLbl := &codegen.TargetEntry{
-		Target: fmt.Sprintf("#_rel_op_%d_end", relOpCount),
+		Target: fmt.Sprintf("_rel_op_%d_end", relOpCount),
 	}
 
 	relOpCount++
@@ -195,11 +217,11 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
 	}
 	falseLbl := &codegen.TargetEntry{
-		Target: fmt.Sprintf("#_rel_op_%d_false", relOpCount),
+		Target: fmt.Sprintf("_rel_op_%d_false", relOpCount),
 	}
 
 	endLbl := &codegen.TargetEntry{
-		Target: fmt.Sprintf("#_rel_op_%d_end", relOpCount),
+		Target: fmt.Sprintf("_rel_op_%d_end", relOpCount),
 	}
 
 	relOpCount++
@@ -271,10 +293,10 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
 	}
 	trueLbl := &codegen.TargetEntry{
-		Target: fmt.Sprintf("#_rel_op_%d_true", relOpCount),
+		Target: fmt.Sprintf("_rel_op_%d_true", relOpCount),
 	}
 	endLbl := &codegen.TargetEntry{
-		Target: fmt.Sprintf("#_rel_op_%d_end", relOpCount),
+		Target: fmt.Sprintf("_rel_op_%d_end", relOpCount),
 	}
 
 	relOpCount++
@@ -344,6 +366,7 @@ func ProcessName(a Attrib) (*AddrCode, error) {
 	case *codegen.TargetEntry:
 		return &AddrCode{Symbol: v}, nil
 	default:
+		fmt.Printf("%T\n", v)
 		return nil, ErrShouldBeVariable
 	}
 }

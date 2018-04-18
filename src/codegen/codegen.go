@@ -62,134 +62,6 @@ func load(regres registerResult, memloc SymbolTableEntry) {
 	}
 }
 
-func genKeyCode(ins IRIns, regs [3]registerResult) {
-	switch ins.Op {
-	case CALL:
-		Code += fmt.Sprintf("call %s\n", ins.Arg1.(*TargetEntry).Target)
-	case PARAM:
-		if regs[0].Register == "" {
-			// This is a literal. Push directly.
-			Code += fmt.Sprintf("push $%d\n", ins.Arg1.(*LiteralEntry).Value)
-		} else {
-			// TODO: Instead of loading to register. If not in a register,
-			// then directly push from memory otherwise push from register
-			load(regs[0], ins.Arg1)
-			Code += fmt.Sprintf("push %s\n", regs[0].Register)
-		}
-	case SETRET:
-		regDesc[returnRegister][ins.Arg1.(*VariableEntry)] = true
-		addrDesc[ins.Arg1.(*VariableEntry)] = address{
-			regLocation: returnRegister,
-			memLocation: nil,
-		}
-	case RETI:
-		load(registerResult{Register: returnRegister}, ins.Arg1)
-		fallthrough
-	case RET:
-		Code += "movl %ebp, %esp\n"
-		Code += "pop %ebp\n"
-		Code += "ret\n"
-	case HALT:
-		Code += "call exit\n"
-	case PRINTINT:
-		if regs[0].Register == "" {
-			// This is a literal. Push directly.
-			Code += fmt.Sprintf("push $%d\n", ins.Arg1.(*LiteralEntry).Value)
-		} else {
-			load(regs[0], ins.Arg1)
-			Code += fmt.Sprintf("push %s\n", regs[0].Register)
-		}
-		Code += fmt.Sprintf("push $_fmtint\n")
-		Code += fmt.Sprintf("call printf\n")
-	case PRINTCHAR:
-		if regs[0].Register == "" {
-			// This is a literal. Push directly.
-			Code += fmt.Sprintf("push $%d\n", ins.Arg1.(*LiteralEntry).Value)
-		} else {
-			load(regs[0], ins.Arg1)
-			Code += fmt.Sprintf("push %s\n", regs[0].Register)
-		}
-		Code += fmt.Sprintf("push $_fmtchar\n")
-		Code += fmt.Sprintf("call printf\n")
-	case PRINTSTR:
-		if regs[0].Register == "" {
-			// This is a literal. Push directly.
-			Code += fmt.Sprintf("push $%d\n", ins.Arg1.(*LiteralEntry).Value)
-		} else {
-			load(regs[0], ins.Arg1)
-			Code += fmt.Sprintf("push %s\n", regs[0].Register)
-		}
-		Code += fmt.Sprintf("push $_fmtstr\n")
-		Code += fmt.Sprintf("call printf\n")
-	case SCANINT:
-
-		arg1 := ins.Arg1.(*VariableEntry)
-		Code += fmt.Sprintf("push $%s\n", arg1.MemoryLocation)
-		Code += fmt.Sprintf("push $_fmtint\n")
-		Code += fmt.Sprintf("call scanf\n")
-
-		// Invalidate registers if any
-		if addrDesc[arg1].regLocation != "" {
-			delete(regDesc[addrDesc[arg1].regLocation], arg1)
-			addrDesc[arg1] = address{
-				regLocation: "",
-				memLocation: arg1.MemoryLocation,
-			}
-		}
-
-	case SCANCHAR:
-		arg1 := ins.Arg1.(*VariableEntry)
-		Code += fmt.Sprintf("push $%s\n", arg1.MemoryLocation)
-		Code += fmt.Sprintf("push $_fmtchar\n")
-		Code += fmt.Sprintf("call scanf\n")
-		// Invalidate registers if any
-		if addrDesc[arg1].regLocation != "" {
-			delete(regDesc[addrDesc[arg1].regLocation], arg1)
-			addrDesc[arg1] = address{
-				regLocation: "",
-				memLocation: arg1.MemoryLocation,
-			}
-		}
-
-	case SCANSTR:
-		arg1 := ins.Arg1.(*VariableEntry)
-		Code += fmt.Sprintf("push $%s\n", arg1.MemoryLocation)
-		Code += fmt.Sprintf("push $_fmtstr\n")
-		Code += fmt.Sprintf("call scanf\n")
-		// Invalidate registers if any
-		if addrDesc[arg1].regLocation != "" {
-			delete(regDesc[addrDesc[arg1].regLocation], arg1)
-			addrDesc[arg1] = address{
-				regLocation: "",
-				memLocation: arg1.MemoryLocation,
-			}
-		}
-
-	case INC:
-		arg1 := ins.Arg1.(*VariableEntry)
-		if addrDesc[arg1].regLocation == "" {
-			Code += fmt.Sprintf("incl (%s)\n", arg1.MemoryLocation)
-		} else {
-			Code += fmt.Sprintf("incl %s\n", addrDesc[arg1].regLocation)
-			addrDesc[arg1] = address{
-				regLocation: addrDesc[arg1].regLocation,
-				memLocation: nil,
-			}
-		}
-	case DEC:
-		arg1 := ins.Arg1.(*VariableEntry)
-		if addrDesc[arg1].regLocation == "" {
-			Code += fmt.Sprintf("decl (%s)\n", arg1.MemoryLocation)
-		} else {
-			Code += fmt.Sprintf("decl %s\n", addrDesc[arg1].regLocation)
-			addrDesc[arg1] = address{
-				regLocation: addrDesc[arg1].regLocation,
-				memLocation: nil,
-			}
-		}
-	}
-}
-
 func updateVariable(variable *VariableEntry, register MachineRegister) {
 	if curreg := addrDesc[variable].regLocation; curreg != "" {
 		delete(regDesc[curreg], variable)
@@ -199,217 +71,6 @@ func updateVariable(variable *VariableEntry, register MachineRegister) {
 		regLocation: register,
 		memLocation: nil,
 	}
-}
-
-func genUOpCode(ins IRIns, regs [3]registerResult) {
-	spill(regs[2].Spill)
-	switch ins.Op {
-	case NEG:
-		var valueString string
-		if regs[0].Register == "" {
-			valueString = fmt.Sprintf("$%d", ins.Arg1.(*LiteralEntry).Value)
-		} else {
-			load(regs[0], ins.Arg1)
-			valueString = string(regs[0].Register)
-		}
-		Code += fmt.Sprintf("movl %s, %s\n", valueString, regs[2].Register)
-		Code += fmt.Sprintf("negl %s\n", regs[2].Register)
-	case BNOT:
-		load(regs[0], ins.Arg1)
-		Code += fmt.Sprintf("movl %s, %s\n", regs[0].Register, regs[2].Register)
-		Code += fmt.Sprintf("notl %s\n", regs[2].Register)
-	case VAL:
-		log.Fatalf("Unhandled pointer stuff")
-		// TODO: Discuss with Sir
-		// Maintain a pointer map while dereferencing. Check if what we
-		// want to dereference is in registers
-	case ADDR:
-		log.Fatalf("Unhandled pointer stuff")
-		// TODO: Discuss with Sir
-		// Maintain a pointer map while dereferencing. Check if what we
-		// want to dereference is in registers
-	}
-
-	dst := ins.Dst.(*VariableEntry)
-	updateVariable(dst, regs[2].Register)
-}
-
-func genCBRCode(ins IRIns, regs [3]registerResult) {
-	var op1, op2 string
-	if regs[0].Register == "" {
-		op1 = fmt.Sprintf("$%d", ins.Arg1.(*LiteralEntry).Value)
-	} else {
-		load(regs[0], ins.Arg1)
-		op1 = string(regs[0].Register)
-	}
-	if regs[1].Register == "" {
-		log.Fatalf("2nd Operand of cmp cannot be a constant")
-	} else {
-		load(regs[1], ins.Arg2)
-		op2 = string(regs[1].Register)
-	}
-	Code += fmt.Sprintf("cmpl %s, %s\n", op1, op2)
-	switch ins.Op {
-	case BREQ:
-		Code += fmt.Sprintf("je %s\n", ins.Dst.(*TargetEntry).Target)
-	case BRNEQ:
-		Code += fmt.Sprintf("jne %s\n", ins.Dst.(*TargetEntry).Target)
-	case BRLT:
-		Code += fmt.Sprintf("jl %s\n", ins.Dst.(*TargetEntry).Target)
-	case BRLTE:
-		Code += fmt.Sprintf("jle %s\n", ins.Dst.(*TargetEntry).Target)
-	case BRGT:
-		Code += fmt.Sprintf("jg %s\n", ins.Dst.(*TargetEntry).Target)
-	case BRGTE:
-		Code += fmt.Sprintf("jge %s\n", ins.Dst.(*TargetEntry).Target)
-	}
-}
-
-func genSOpCode(ins IRIns, regs [3]registerResult) {
-
-	load(regs[0], ins.Arg1)
-	// if arg1 register and dst register are same, it will be spilled in the previous statement
-	if regs[0].Register != regs[2].Register {
-		spill(regs[2].Spill)
-	}
-
-	// There is no issue like in genBOpCode because we have guaranteed that dst register is not
-	// equal to arg1 register or arg2 register
-	Code += fmt.Sprintf("movl %s, %s\n", regs[0].Register, regs[2].Register)
-
-	var valueString string
-	if regs[1].Register == "" {
-		valueString = fmt.Sprintf("$%d", ins.Arg2.(*LiteralEntry).Value)
-	} else {
-		load(regs[1], ins.Arg2)
-		valueString = "%cl"
-	}
-
-	switch ins.Op {
-	case BSL:
-		Code += fmt.Sprintf("shl %s, %s\n", valueString, regs[2].Register)
-	case BSR:
-		Code += fmt.Sprintf("shr %s, %s\n", valueString, regs[2].Register)
-	}
-
-	dst := ins.Dst.(*VariableEntry)
-	updateVariable(dst, regs[2].Register)
-}
-
-func genBOpCode(ins IRIns, regs [3]registerResult) {
-
-	load(regs[0], ins.Arg1)
-
-	// if arg1 register and dst register are same, it will be spilled in the previous statement
-	if regs[0].Register != regs[2].Register {
-		spill(regs[2].Spill)
-	}
-
-	var valueString string
-	if regs[1].Register == "" {
-		valueString = fmt.Sprintf("$%d", ins.Arg2.(*LiteralEntry).Value)
-	} else {
-		load(regs[1], ins.Arg2)
-		valueString = string(regs[1].Register)
-	}
-
-	var op1 string
-
-	// dst reg == arg2 reg
-	if regs[2].Register == regs[1].Register {
-		// This has to be a SymbolTableVariableEntry since a register was allocated
-		// if not program should fail... fatal error
-		entry := ins.Arg2.(*VariableEntry)
-		delete(regDesc[regs[1].Register], entry)
-		addrDesc[entry] = address{
-			regLocation: "",
-			memLocation: entry.MemoryLocation,
-		}
-		op1 = string(regs[0].Register)
-	} else if regs[2].Register == regs[0].Register {
-		// dst reg == arg1 reg
-		// This has to be a SymbolTableVariableEntry since a register was allocated
-		// if not program should fail... fatal error
-		entry := ins.Arg1.(*VariableEntry)
-		delete(regDesc[regs[0].Register], entry)
-		addrDesc[entry] = address{
-			regLocation: "",
-			memLocation: entry.MemoryLocation,
-		}
-		op1 = valueString
-	} else {
-		// All registers unique
-		// Move arg1 register to dst register
-		Code += fmt.Sprintf("movl %s, %s\n", regs[0].Register, regs[2].Register)
-		op1 = valueString
-	}
-
-	switch ins.Op {
-	case ADD:
-		Code += fmt.Sprintf("addl %s, %s\n", op1, regs[2].Register)
-	case SUB:
-		Code += fmt.Sprintf("subl %s, %s\n", op1, regs[2].Register)
-	case MUL:
-		Code += fmt.Sprintf("imul %s, %s\n", op1, regs[2].Register)
-	case AND:
-		fallthrough
-	case BAND:
-		Code += fmt.Sprintf("andl %s, %s\n", op1, regs[2].Register)
-	case OR:
-		fallthrough
-	case BOR:
-		Code += fmt.Sprintf("orl %s, %s\n", op1, regs[2].Register)
-	case XOR:
-		Code += fmt.Sprintf("xorl %s, %s\n", op1, regs[2].Register)
-	}
-
-	dst := ins.Dst.(*VariableEntry)
-	updateVariable(dst, regs[2].Register)
-}
-
-func genLOpCode(ins IRIns, regs [3]registerResult) {
-	load(regs[0], ins.Arg1)
-	spill(regs[2].Spill)
-
-	var op1, op2 string
-	if regs[0].Register == "" {
-		op1 = fmt.Sprintf("$%d", ins.Arg1.(*LiteralEntry).Value)
-	} else {
-		load(regs[0], ins.Arg1)
-		op1 = string(regs[0].Register)
-	}
-	if regs[1].Register == "" {
-		log.Fatalf("2nd Operand of cmp cannot be a constant")
-	} else {
-		load(regs[1], ins.Arg2)
-		op2 = string(regs[1].Register)
-	}
-	Code += fmt.Sprintf("cmpl %s, %s\n", op1, op2)
-
-	switch ins.Op {
-	case EQ:
-		Code += fmt.Sprintf("je _logic_start_%d\n", logicCounter)
-	case NEQ:
-		Code += fmt.Sprintf("jne _logic_start_%d\n", logicCounter)
-	case LT:
-		Code += fmt.Sprintf("jl _logic_start_%d\n", logicCounter)
-	case LTE:
-		Code += fmt.Sprintf("jle _logic_start_%d", logicCounter)
-	case GT:
-		Code += fmt.Sprintf("jg _logic_start_%d", logicCounter)
-	case GTE:
-		Code += fmt.Sprintf("jge _logic_start_%d", logicCounter)
-	}
-
-	Code += fmt.Sprintf("movl $0, %s\n", regs[2].Register)
-	Code += fmt.Sprintf("jmp _logic_end_%d", logicCounter)
-	Code += fmt.Sprintf("_logic_start_%d:", logicCounter)
-	Code += fmt.Sprintf("movl $1, %s\n", regs[2].Register)
-	Code += fmt.Sprintf("_logic_end_%d:", logicCounter)
-	logicCounter++
-
-	dst := ins.Dst.(*VariableEntry)
-	updateVariable(dst, regs[2].Register)
 }
 
 func genDOpCode(ins IRIns, regs [3]registerResult) {
@@ -487,13 +148,17 @@ func genCode() {
 
 func genData() {
 	Code += ".section .data\n\n"
+	Code += "true:  .long 1\n"
+	Code += "false: .long 0\n"
 	Code += "_fmtint: .string \"%d\"\n"
 	Code += "_fmtchar: .string \"%c\"\n"
 	Code += "_fmtstr: .string \"%s\"\n"
 	for _, symbol := range SymbolTable.symbolMap {
 		switch v := symbol.(type) {
 		case *VariableEntry:
-			Code += fmt.Sprintf("%s: .long 0\n", v.MemoryLocation)
+			if v.Name != "true" && v.Name != "false" {
+				Code += fmt.Sprintf("%s: .long 0\n", v.MemoryLocation)
+			}
 		}
 	}
 }
@@ -529,6 +194,7 @@ func genMisc() {
 .globl main
 
 main:
+call _func_init
 call _func_main
 push $0
 call exit
