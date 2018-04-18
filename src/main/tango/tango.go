@@ -31,13 +31,13 @@ func main() {
 		panic("Expected an AddrCode")
 	}
 
-	// for _, val := range sourceFile.Code {
-	// fmt.Fprintln(os.Stderr, val)
-	// }
+	for _, val := range sourceFile.Code {
+		fmt.Fprintln(os.Stderr, val)
+	}
 	codegen.GenBBLList(sourceFile.Code)
 	codegen.GenerateASM()
 
-	fmt.Println(codegen.Code)
+	// fmt.Println(codegen.Code)
 
 	gccCmd := exec.Command("gcc", "-m32", "-o", "prog", "-x", "assembler", "-")
 

@@ -14,9 +14,13 @@ const returnRegister = "%eax"
 
 func spill(entries map[*VariableEntry]bool) {
 	for entry := range entries {
-		Code += fmt.Sprintf("movl %s, (%s)\n", addrDesc[entry].regLocation, entry.MemoryLocation)
+		if val, ok := addrDesc[entry]; ok {
+			Code += fmt.Sprintf("movl %s, (%s)\n", val.regLocation, entry.MemoryLocation)
 
-		delete(regDesc[addrDesc[entry].regLocation], entry)
+			delete(regDesc[val.regLocation], entry)
+		} else {
+			log.Fatalf("[spill] addrDesc is empty")
+		}
 
 		addrDesc[entry] = address{
 			regLocation: "",
@@ -46,11 +50,15 @@ func load(regres registerResult, memloc SymbolTableEntry) {
 	// Load the value onto the register
 	// can be a virtual register or a constant
 	if _memloc, isRegister := memloc.(*VariableEntry); isRegister {
-		if addrDesc[_memloc].memLocation == nil {
-			Code += fmt.Sprintf("movl %s, %s\n", addrDesc[_memloc].regLocation, reg)
-			delete(regDesc[addrDesc[_memloc].regLocation], _memloc)
+		if val, ok := addrDesc[_memloc]; ok {
+			if val.memLocation == nil {
+				Code += fmt.Sprintf("movl %s, %s\n", val.regLocation, reg)
+				delete(regDesc[val.regLocation], _memloc)
+			} else {
+				Code += fmt.Sprintf("movl (%s), %s\n", _memloc.MemoryLocation, reg)
+			}
 		} else {
-			Code += fmt.Sprintf("movl (%s), %s\n", _memloc.MemoryLocation, reg)
+			log.Fatalf("[load] addrDesc missing")
 		}
 		regDesc[reg][_memloc] = true
 		addrDesc[_memloc] = address{
@@ -63,8 +71,12 @@ func load(regres registerResult, memloc SymbolTableEntry) {
 }
 
 func updateVariable(variable *VariableEntry, register MachineRegister) {
-	if curreg := addrDesc[variable].regLocation; curreg != "" {
-		delete(regDesc[curreg], variable)
+	if val, ok := addrDesc[variable]; ok {
+		if val.regLocation != "" {
+			delete(regDesc[val.regLocation], variable)
+		}
+	} else {
+		log.Fatalf("[updateVariable] addrDesc is missing")
 	}
 	regDesc[register][variable] = true
 	addrDesc[variable] = address{
@@ -181,8 +193,12 @@ func saveBBL() {
 	// Code += "\n\n# Saving Stuff\n"
 	for register, variables := range regDesc {
 		for variable := range variables {
-			if addrDesc[variable].memLocation == nil {
-				Code += fmt.Sprintf("movl %s, (%s)\n", register, variable.MemoryLocation)
+			if val, ok := addrDesc[variable]; ok {
+				if val.memLocation == nil {
+					Code += fmt.Sprintf("movl %s, (%s)\n", register, variable.MemoryLocation)
+				}
+			} else {
+				log.Fatalf("[saveBBL] addrDesc missing")
 			}
 		}
 	}

@@ -1,6 +1,9 @@
 package codegen
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 func genKeyCode(ins IRIns, regs [3]registerResult) {
 	switch ins.Op {
@@ -69,12 +72,14 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 		Code += fmt.Sprintf("call scanf\n")
 
 		// Invalidate registers if any
-		if addrDesc[arg1].regLocation != "" {
-			delete(regDesc[addrDesc[arg1].regLocation], arg1)
+		if val, ok := addrDesc[arg1]; ok && val.regLocation != "" {
+			delete(regDesc[val.regLocation], arg1)
 			addrDesc[arg1] = address{
 				regLocation: "",
 				memLocation: arg1.MemoryLocation,
 			}
+		} else if !ok {
+			log.Fatalf("[scanint] addrDesc missing")
 		}
 
 	case SCANCHAR:
@@ -83,12 +88,14 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 		Code += fmt.Sprintf("push $_fmtchar\n")
 		Code += fmt.Sprintf("call scanf\n")
 		// Invalidate registers if any
-		if addrDesc[arg1].regLocation != "" {
-			delete(regDesc[addrDesc[arg1].regLocation], arg1)
+		if val, ok := addrDesc[arg1]; ok && val.regLocation != "" {
+			delete(regDesc[val.regLocation], arg1)
 			addrDesc[arg1] = address{
 				regLocation: "",
 				memLocation: arg1.MemoryLocation,
 			}
+		} else if !ok {
+			log.Fatalf("[scanint] addrDesc missing")
 		}
 
 	case SCANSTR:
@@ -97,35 +104,41 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 		Code += fmt.Sprintf("push $_fmtstr\n")
 		Code += fmt.Sprintf("call scanf\n")
 		// Invalidate registers if any
-		if addrDesc[arg1].regLocation != "" {
-			delete(regDesc[addrDesc[arg1].regLocation], arg1)
+		if val, ok := addrDesc[arg1]; ok && val.regLocation != "" {
+			delete(regDesc[val.regLocation], arg1)
 			addrDesc[arg1] = address{
 				regLocation: "",
 				memLocation: arg1.MemoryLocation,
 			}
+		} else if !ok {
+			log.Fatalf("[scanint] addrDesc missing")
 		}
 
 	case INC:
 		arg1 := ins.Arg1.(*VariableEntry)
-		if addrDesc[arg1].regLocation == "" {
+		if val, ok := addrDesc[arg1]; ok && val.regLocation == "" {
 			Code += fmt.Sprintf("incl (%s)\n", arg1.MemoryLocation)
-		} else {
-			Code += fmt.Sprintf("incl %s\n", addrDesc[arg1].regLocation)
+		} else if ok {
+			Code += fmt.Sprintf("incl %s\n", val.regLocation)
 			addrDesc[arg1] = address{
-				regLocation: addrDesc[arg1].regLocation,
+				regLocation: val.regLocation,
 				memLocation: nil,
 			}
+		} else {
+			log.Fatalf("[INC] AddrDesc missing")
 		}
 	case DEC:
 		arg1 := ins.Arg1.(*VariableEntry)
-		if addrDesc[arg1].regLocation == "" {
+		if val, ok := addrDesc[arg1]; ok && val.regLocation == "" {
 			Code += fmt.Sprintf("decl (%s)\n", arg1.MemoryLocation)
-		} else {
-			Code += fmt.Sprintf("decl %s\n", addrDesc[arg1].regLocation)
+		} else if ok {
+			Code += fmt.Sprintf("decl %s\n", val.regLocation)
 			addrDesc[arg1] = address{
-				regLocation: addrDesc[arg1].regLocation,
+				regLocation: val.regLocation,
 				memLocation: nil,
 			}
+		} else {
+			log.Fatalf("[DEC] AddrDesc missing")
 		}
 	}
 }

@@ -36,9 +36,11 @@ func assignHelper(uinfo map[*VariableEntry]UseInfo, dst *VariableEntry, canRepla
 	return func(i *VariableEntry) registerResult {
 		// If variable to be assigned is already in a register
 		// return that register
-		if addrDesc[i].regLocation != "" {
-			cannotbeReplaced[addrDesc[i].regLocation] = uinfo[i].NextUse == -1
-			return registerResult{Register: addrDesc[i].regLocation, Spill: regDesc[addrDesc[i].regLocation]}
+		if val, ok := addrDesc[i]; ok && val.regLocation != "" {
+			cannotbeReplaced[val.regLocation] = uinfo[i].NextUse == -1
+			return registerResult{Register: val.regLocation, Spill: regDesc[val.regLocation]}
+		} else if !ok {
+			log.Fatalf("[assignHelper] addrDesc is empty")
 		}
 
 		for register, variable := range regDesc {
@@ -67,7 +69,7 @@ func assignHelper(uinfo map[*VariableEntry]UseInfo, dst *VariableEntry, canRepla
 			} else {
 				score[key] = 0
 				for value := range values {
-					if addrDesc[value].memLocation == nil {
+					if val, ok := addrDesc[value]; ok && val.memLocation == nil {
 						// addrDesc which are not in any memLocation
 						// we can overwrite the dst register if it is not going to be used
 						// in the future. So score shouldn't be incremented
@@ -78,6 +80,8 @@ func assignHelper(uinfo map[*VariableEntry]UseInfo, dst *VariableEntry, canRepla
 								score[key]++
 							}
 						}
+					} else if !ok {
+						log.Fatalf("[getReg] addrDesc missing")
 					}
 				}
 			}

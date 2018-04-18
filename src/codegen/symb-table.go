@@ -50,6 +50,7 @@ func (s *symbolTable) InsertSymbol(key string, value SymbolTableEntry) error {
 
 	// Insert otherwise
 	s.symbolMap[key] = value
+
 	return nil
 }
 
