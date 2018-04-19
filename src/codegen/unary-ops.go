@@ -32,6 +32,8 @@ func genUOpCode(ins IRIns, regs [3]registerResult) {
 		// TODO: Discuss with Sir
 		// Maintain a pointer map while dereferencing. Check if what we
 		// want to dereference is in registers
+	default:
+		log.Fatalf("Unknown op code for unary op: %s", ins.Op)
 	}
 
 	dst := ins.Dst.(*VariableEntry)

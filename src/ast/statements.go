@@ -133,11 +133,12 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 		for i, expr := range rhsList {
 			code = append(code, expr.Code...)
 			entry := CreateTemporary()
-			entries[i] = entry
+			entries[i] = entry.Symbol
+			code = append(code, entry.Code...)
 			ins := codegen.IRIns{
 				Typ:  codegen.ASN,
 				Op:   codegen.ASNO,
-				Dst:  entry,
+				Dst:  entry.Symbol,
 				Arg1: expr.Symbol,
 			}
 			code = append(code, ins)

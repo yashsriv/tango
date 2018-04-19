@@ -15,7 +15,7 @@ const returnRegister = "%eax"
 func spill(entries map[*VariableEntry]bool) {
 	for entry := range entries {
 		if val, ok := addrDesc[entry]; ok {
-			Code += fmt.Sprintf("movl %s, (%s)\n", val.regLocation, entry.MemoryLocation)
+			Code += fmt.Sprintf("movl %s, %s\n", val.regLocation, entry.MemoryLocation)
 
 			delete(regDesc[val.regLocation], entry)
 		} else {
@@ -55,7 +55,7 @@ func load(regres registerResult, memloc SymbolTableEntry) {
 				Code += fmt.Sprintf("movl %s, %s\n", val.regLocation, reg)
 				delete(regDesc[val.regLocation], _memloc)
 			} else {
-				Code += fmt.Sprintf("movl (%s), %s\n", _memloc.MemoryLocation, reg)
+				Code += fmt.Sprintf("movl %s, %s\n", _memloc.MemoryLocation, reg)
 			}
 		} else {
 			log.Fatalf("[load] addrDesc missing")
@@ -165,11 +165,10 @@ func genData() {
 	Code += "_fmtint: .string \"%d\"\n"
 	Code += "_fmtchar: .string \"%c\"\n"
 	Code += "_fmtstr: .string \"%s\"\n"
-	for _, symbol := range SymbolTable.symbolMap {
-		switch v := symbol.(type) {
-		case *VariableEntry:
-			if v.Name != "true" && v.Name != "false" {
-				Code += fmt.Sprintf("%s: .long 0\n", v.MemoryLocation)
+	for v, address := range addrDesc {
+		if v.Name != "true" && v.Name != "false" {
+			if glob, ok := address.memLocation.(GlobalMemory); ok {
+				Code += fmt.Sprintf("%s: .long 0\n", glob.Location)
 			}
 		}
 	}
@@ -195,7 +194,7 @@ func saveBBL() {
 		for variable := range variables {
 			if val, ok := addrDesc[variable]; ok {
 				if val.memLocation == nil {
-					Code += fmt.Sprintf("movl %s, (%s)\n", register, variable.MemoryLocation)
+					Code += fmt.Sprintf("movl %s, %s\n", register, variable.MemoryLocation)
 				}
 			} else {
 				log.Fatalf("[saveBBL] addrDesc missing")

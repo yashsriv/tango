@@ -113,7 +113,7 @@ func EvalCall(a, b Attrib) (*AddrCode, error) {
 		code = append(code, exprList[i].Code...)
 		code = append(code, codegen.IRIns{
 			Typ:  codegen.KEY,
-			Op:   codegen.ARG,
+			Op:   codegen.PARAM,
 			Arg1: exprList[i].Symbol,
 		})
 	}
@@ -122,15 +122,23 @@ func EvalCall(a, b Attrib) (*AddrCode, error) {
 		Op:   codegen.CALL,
 		Arg1: entry,
 	})
+	code = append(code, codegen.IRIns{
+		Typ: codegen.KEY,
+		Op:  codegen.UNALLOC,
+		Arg1: &codegen.LiteralEntry{
+			Value: len(exprList) * 4,
+		},
+	})
 	entry1 := CreateTemporary()
+	code = append(code, entry1.Code...)
 	code = append(code, codegen.IRIns{
 		Typ:  codegen.KEY,
 		Op:   codegen.SETRET,
-		Arg1: entry1,
+		Arg1: entry1.Symbol,
 	})
 	return &AddrCode{
 		Code:   code,
-		Symbol: entry1,
+		Symbol: entry1.Symbol,
 	}, nil
 }
 

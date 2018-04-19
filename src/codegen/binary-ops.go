@@ -1,6 +1,9 @@
 package codegen
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 func genBOpCode(ins IRIns, regs [3]registerResult) {
 
@@ -67,6 +70,8 @@ func genBOpCode(ins IRIns, regs [3]registerResult) {
 		Code += fmt.Sprintf("orl %s, %s\n", op1, regs[2].Register)
 	case XOR:
 		Code += fmt.Sprintf("xorl %s, %s\n", op1, regs[2].Register)
+	default:
+		log.Fatalf("Unknown op code for binary op: %s", ins.Op)
 	}
 
 	dst := ins.Dst.(*VariableEntry)

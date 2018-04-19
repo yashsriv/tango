@@ -273,7 +273,7 @@ InterfaceType : keyword_interface left_block_bracket InterfaceDeclList OSemi rig
               ;
 
 /* Function Stuff - All together to show how crappy it is */
-FuncDecl : keyword_func FuncDecl_ NewScope FuncBody	EndScope                      << ast.FuncDecl($1, $3) >>
+FuncDecl : keyword_func FuncDecl_ FuncBody EndScope                      << ast.FuncDecl($1, $2) >>
          ;
 
 FuncDecl_ : identifier ArgList FuncRes                                            << ast.FuncSign($0, $1, $2, nil) >>
@@ -283,8 +283,8 @@ FuncDecl_ : identifier ArgList FuncRes                                          
 FuncType : keyword_func ArgList FuncRes	<< ast.AddNode("FuncType", $0, $1, $2) >>
          ;
 
-ArgList : left_paren OArgTypeListOComma right_paren	        << ast.AddNode("ArgList", $0, $1, $2) >>
-        | ArgList left_paren OArgTypeListOComma right_paren	<< ast.AddNode("ArgList", $0, $1, $2, $3) >>
+ArgList : left_paren OArgTypeListOComma right_paren	        << $1, nil >>
+        | ArgList left_paren OArgTypeListOComma right_paren	<< nil, ast.ErrUnsupported >>
         ;
 
 FuncBody : empty                                            << &ast.AddrCode{}, nil >>
@@ -352,6 +352,10 @@ ONewName : empty   << ast.AddNode("ONewName") >>
          | NewName << ast.AddNode("ONewName", $0) >>
          ;
 
+OName    : empty    << nil, nil >>
+         | Name     << $0, nil >>
+         ;
+
 OExpr : empty	<< nil, nil >>
       | Expr	<< $0, nil >>
       ;
@@ -405,8 +409,8 @@ TypeDeclList : TypeDecl                       << ast.AddNode("TypeDeclList", $0)
              | TypeDeclList stmt_end TypeDecl << ast.AddNode("TypeDeclList", $0, $1, $2) >>
              ;
 
-DeclNameList : DeclName                     << ast.NewIdList($0) >>
-             | DeclNameList comma DeclName  << ast.AddToIdList($0, $2) >>
+DeclNameList : DeclName                     << ast.NewList($0) >>
+             | DeclNameList comma DeclName  << ast.AddToList($0, $2) >>
              ;
 
 StmtList : Stmt                    << ast.NewList($0) >>
@@ -436,18 +440,18 @@ NewName : identifier << ast.NewName($0) >>
 Name : identifier	<< ast.Name($0) >>
      ;
 
-ArgType : NameOrType	<< ast.AddNode("ArgType", $0) >>
-        | identifier NameOrType	<< ast.AddNode("ArgType", $0, $1) >>
-        | identifier DotDotDot	<< ast.AddNode("ArgType", $0, $1) >>
-        | DotDotDot	<< ast.AddNode("ArgType", $0) >>
+ArgType : identifier NameOrType << ast.EvalArgType($0, $1) >>
+        | identifier DotDotDot  << nil, ast.ErrUnsupported >>
+        | DotDotDot             << nil, ast.ErrUnsupported >>
+        | NameOrType	          << nil, ast.ErrUnsupported >>
         ;
 
-ArgTypeList : ArgType	<< ast.AddNode("ArgTypeList", $0) >>
-            | ArgTypeList comma ArgType	<< ast.AddNode("ArgTypeList", $0, $1, $2) >>
+ArgTypeList : ArgType                   << ast.NewArgTypeList($0) >>
+            | ArgTypeList comma ArgType << ast.AddToArgTypeList($0, $2) >>
             ;
 
-OArgTypeListOComma : empty	<< ast.AddNode("OArgTypeListOComma") >>
-                   | ArgTypeList OComma	<< ast.AddNode("OArgTypeListOComma", $0, $1) >>
+OArgTypeListOComma : empty              << ast.NewArgTypeList(nil) >>
+                   | ArgTypeList OComma	<< $0, nil >>
                    ;
 
 /* Statement */
@@ -462,10 +466,10 @@ NonDeclStmt : SimpleStmt	              << $0, nil >>
             | ForStmt	                  << $0, nil >>
             | SwitchStmt	              << $0, nil >>
             | IfStmt	                  << $0, nil >>
-            | keyword_break ONewName	  << ast.EvalBreak() >>
-            | keyword_continue ONewName	<< ast.EvalContinue() >>
+            | keyword_break OName	      << ast.EvalBreak() >>
+            | keyword_continue OName	  << ast.EvalContinue() >>
             | LabelName label_op Stmt	  << ast.EvalLabel($0, $2) >>
-            | keyword_goto NewName      << ast.EvalGoto($1) >>
+            | keyword_goto Name         << ast.EvalGoto($1) >>
             | keyword_return OExprList  << ast.EvalReturn($1) >>
             | keyword_defer PseudoCall  << nil, ast.ErrUnsupported >>
             ;

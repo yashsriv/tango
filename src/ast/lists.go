@@ -73,6 +73,30 @@ func AddToIdList(list Attrib, el Attrib) ([]*codegen.VariableEntry, error) {
 	return append(asList, elAsAddrCode), nil
 }
 
+func NewArgTypeList(el Attrib) ([]*ArgType, error) {
+	list := make([]*ArgType, 0)
+	if el != nil {
+		elAsToken, ok := el.(*ArgType)
+		if !ok {
+			return nil, fmt.Errorf("[NewArgTypeList] unable to type cast %v to *ArgType", el)
+		}
+		list = append(list, elAsToken)
+	}
+	return list, nil
+}
+
+func AddToArgTypeList(list, el Attrib) ([]*ArgType, error) {
+	asList, ok := list.([]*ArgType)
+	if !ok {
+		return nil, fmt.Errorf("[AddToArgTypeList] unable to type cast %v to []*ArgType", list)
+	}
+	elAsAddrCode, ok := el.(*ArgType)
+	if !ok {
+		return nil, fmt.Errorf("[AddToArgTypeList] unable to type cast %v to *ArgType", el)
+	}
+	return append(asList, elAsAddrCode), nil
+}
+
 // NewIfElseList creates a new list of attrib with initial element
 func NewIfElseList(el Attrib) ([]*ifElse, error) {
 	list := make([]*ifElse, 0)

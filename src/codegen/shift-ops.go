@@ -1,6 +1,9 @@
 package codegen
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 func genSOpCode(ins IRIns, regs [3]registerResult) {
 
@@ -27,6 +30,8 @@ func genSOpCode(ins IRIns, regs [3]registerResult) {
 		Code += fmt.Sprintf("shl %s, %s\n", valueString, regs[2].Register)
 	case BSR:
 		Code += fmt.Sprintf("shr %s, %s\n", valueString, regs[2].Register)
+	default:
+		log.Fatalf("Unknown op code for shift op: %s", ins.Op)
 	}
 
 	dst := ins.Dst.(*VariableEntry)

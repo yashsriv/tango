@@ -37,6 +37,8 @@ func genLOpCode(ins IRIns, regs [3]registerResult) {
 		Code += fmt.Sprintf("jg _logic_start_%d", logicCounter)
 	case GTE:
 		Code += fmt.Sprintf("jge _logic_start_%d", logicCounter)
+	default:
+		log.Fatalf("Unknown op code for logical op: %s", ins.Op)
 	}
 
 	Code += fmt.Sprintf("movl $0, %s\n", regs[2].Register)

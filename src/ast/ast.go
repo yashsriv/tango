@@ -133,11 +133,13 @@ func init() {
 		codegen.SymbolTable.InsertSymbol(v, nil)
 	}
 	for _, v := range predecConst {
-		codegen.SymbolTable.InsertSymbol(v, &codegen.VariableEntry{
+		symbol := &codegen.VariableEntry{
 			MemoryLocation: codegen.GlobalMemory{Location: v},
 			Name:           v,
 			Constant:       true,
-		})
+		}
+		codegen.SymbolTable.InsertSymbol(v, symbol)
+		codegen.CreateAddrDescEntry(symbol)
 	}
 	for _, v := range predecFunc {
 		codegen.SymbolTable.InsertSymbol(v, &codegen.TargetEntry{

@@ -15,6 +15,7 @@ func UnaryOp(a Attrib, b Attrib) (*AddrCode, error) {
 	}
 	entry := CreateTemporary()
 	code := el.Code
+	code = append(code, entry.Code...)
 	var irOp codegen.IROp
 	switch op {
 	case "-":
@@ -27,11 +28,11 @@ func UnaryOp(a Attrib, b Attrib) (*AddrCode, error) {
 	code = append(code, codegen.IRIns{
 		Typ:  codegen.UOP,
 		Op:   irOp,
-		Dst:  entry,
+		Dst:  entry.Symbol,
 		Arg1: el.Symbol,
 	})
 	addrcode := &AddrCode{
-		Symbol: entry,
+		Symbol: entry.Symbol,
 		Code:   code,
 	}
 	return addrcode, nil
@@ -50,6 +51,7 @@ func BinaryOp(a Attrib, b Attrib, c Attrib) (*AddrCode, error) {
 	}
 	entry := CreateTemporary()
 	code := append(el1.Code, el2.Code...)
+	code = append(code, entry.Code...)
 	var irOp codegen.IROp
 	var irType = codegen.BOP
 	switch op {
@@ -87,12 +89,12 @@ func BinaryOp(a Attrib, b Attrib, c Attrib) (*AddrCode, error) {
 	code = append(code, codegen.IRIns{
 		Typ:  irType,
 		Op:   irOp,
-		Dst:  entry,
+		Dst:  entry.Symbol,
 		Arg1: el1.Symbol,
 		Arg2: el2.Symbol,
 	})
 	addrcode := &AddrCode{
-		Symbol: entry,
+		Symbol: entry.Symbol,
 		Code:   code,
 	}
 	return addrcode, nil
@@ -113,24 +115,26 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 
 	if _, isLiteral := el1.Symbol.(*codegen.LiteralEntry); isLiteral {
 		tmp := CreateTemporary()
+		el1.Code = append(el1.Code, tmp.Code...)
 		el1.Code = append(el1.Code, codegen.IRIns{
 			Typ:  codegen.ASN,
 			Op:   codegen.ASNO,
-			Dst:  tmp,
+			Dst:  tmp.Symbol,
 			Arg1: el1.Symbol,
 		})
-		el1.Symbol = tmp
+		el1.Symbol = tmp.Symbol
 	}
 
 	if _, isLiteral := el2.Symbol.(*codegen.LiteralEntry); isLiteral {
 		tmp := CreateTemporary()
+		el2.Code = append(el2.Code, tmp.Code...)
 		el2.Code = append(el2.Code, codegen.IRIns{
 			Typ:  codegen.ASN,
 			Op:   codegen.ASNO,
-			Dst:  tmp,
+			Dst:  tmp.Symbol,
 			Arg1: el2.Symbol,
 		})
-		el2.Symbol = tmp
+		el2.Symbol = tmp.Symbol
 	}
 
 	trueLbl := &codegen.TargetEntry{
@@ -145,6 +149,7 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 
 	entry := CreateTemporary()
 	code := append(el1.Code, el2.Code...)
+	code = append(code, entry.Code...)
 	var irOp codegen.IROp
 	switch op {
 	case "<":
@@ -174,7 +179,7 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 	code = append(code, codegen.IRIns{
 		Typ: codegen.ASN,
 		Op:  codegen.ASNO,
-		Dst: entry,
+		Dst: entry.Symbol,
 		Arg1: &codegen.LiteralEntry{
 			Value: 0,
 		},
@@ -191,7 +196,7 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 	code = append(code, codegen.IRIns{
 		Typ: codegen.ASN,
 		Op:  codegen.ASNO,
-		Dst: entry,
+		Dst: entry.Symbol,
 		Arg1: &codegen.LiteralEntry{
 			Value: 1,
 		},
@@ -201,7 +206,7 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 		Dst: endLbl,
 	})
 	addrcode := &AddrCode{
-		Symbol: entry,
+		Symbol: entry.Symbol,
 		Code:   code,
 	}
 	return addrcode, nil
@@ -228,6 +233,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 
 	entry := CreateTemporary()
 	code := append(el1.Code)
+	code = append(code, entry.Code...)
 	code = append(code, codegen.IRIns{
 		Typ: codegen.CBR,
 		Op:  codegen.BRNEQ,
@@ -250,7 +256,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 	code = append(code, codegen.IRIns{
 		Typ: codegen.ASN,
 		Op:  codegen.ASNO,
-		Dst: entry,
+		Dst: entry.Symbol,
 		Arg1: &codegen.LiteralEntry{
 			Value: 1,
 		},
@@ -267,7 +273,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 	code = append(code, codegen.IRIns{
 		Typ: codegen.ASN,
 		Op:  codegen.ASNO,
-		Dst: entry,
+		Dst: entry.Symbol,
 		Arg1: &codegen.LiteralEntry{
 			Value: 0,
 		},
@@ -277,7 +283,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		Dst: endLbl,
 	})
 	addrcode := &AddrCode{
-		Symbol: entry,
+		Symbol: entry.Symbol,
 		Code:   code,
 	}
 	return addrcode, nil
@@ -303,6 +309,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 
 	entry := CreateTemporary()
 	code := append(el1.Code)
+	code = append(code, entry.Code...)
 	code = append(code, codegen.IRIns{
 		Typ: codegen.CBR,
 		Op:  codegen.BREQ,
@@ -325,7 +332,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 	code = append(code, codegen.IRIns{
 		Typ: codegen.ASN,
 		Op:  codegen.ASNO,
-		Dst: entry,
+		Dst: entry.Symbol,
 		Arg1: &codegen.LiteralEntry{
 			Value: 0,
 		},
@@ -342,7 +349,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 	code = append(code, codegen.IRIns{
 		Typ: codegen.ASN,
 		Op:  codegen.ASNO,
-		Dst: entry,
+		Dst: entry.Symbol,
 		Arg1: &codegen.LiteralEntry{
 			Value: 1,
 		},
@@ -352,7 +359,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Dst: endLbl,
 	})
 	addrcode := &AddrCode{
-		Symbol: entry,
+		Symbol: entry.Symbol,
 		Code:   code,
 	}
 	return addrcode, nil

@@ -67,7 +67,8 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 	case SCANINT:
 
 		arg1 := ins.Arg1.(*VariableEntry)
-		Code += fmt.Sprintf("push $%s\n", arg1.MemoryLocation)
+		Code += fmt.Sprintf("lea %s, %%eax\n", arg1.MemoryLocation)
+		Code += fmt.Sprintf("push %%eax\n")
 		Code += fmt.Sprintf("push $_fmtint\n")
 		Code += fmt.Sprintf("call scanf\n")
 
@@ -84,7 +85,8 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 
 	case SCANCHAR:
 		arg1 := ins.Arg1.(*VariableEntry)
-		Code += fmt.Sprintf("push $%s\n", arg1.MemoryLocation)
+		Code += fmt.Sprintf("lea %s, %%eax\n", arg1.MemoryLocation)
+		Code += fmt.Sprintf("push %%eax\n")
 		Code += fmt.Sprintf("push $_fmtchar\n")
 		Code += fmt.Sprintf("call scanf\n")
 		// Invalidate registers if any
@@ -100,7 +102,8 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 
 	case SCANSTR:
 		arg1 := ins.Arg1.(*VariableEntry)
-		Code += fmt.Sprintf("push $%s\n", arg1.MemoryLocation)
+		Code += fmt.Sprintf("lea %s, %%eax\n", arg1.MemoryLocation)
+		Code += fmt.Sprintf("push %%eax\n")
 		Code += fmt.Sprintf("push $_fmtstr\n")
 		Code += fmt.Sprintf("call scanf\n")
 		// Invalidate registers if any
@@ -117,7 +120,7 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 	case INC:
 		arg1 := ins.Arg1.(*VariableEntry)
 		if val, ok := addrDesc[arg1]; ok && val.regLocation == "" {
-			Code += fmt.Sprintf("incl (%s)\n", arg1.MemoryLocation)
+			Code += fmt.Sprintf("incl %s\n", arg1.MemoryLocation)
 		} else if ok {
 			Code += fmt.Sprintf("incl %s\n", val.regLocation)
 			addrDesc[arg1] = address{
@@ -130,7 +133,7 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 	case DEC:
 		arg1 := ins.Arg1.(*VariableEntry)
 		if val, ok := addrDesc[arg1]; ok && val.regLocation == "" {
-			Code += fmt.Sprintf("decl (%s)\n", arg1.MemoryLocation)
+			Code += fmt.Sprintf("decl %s\n", arg1.MemoryLocation)
 		} else if ok {
 			Code += fmt.Sprintf("decl %s\n", val.regLocation)
 			addrDesc[arg1] = address{
@@ -140,5 +143,13 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 		} else {
 			log.Fatalf("[DEC] AddrDesc missing")
 		}
+	case ALLOC:
+		arg1 := ins.Arg1.(*LiteralEntry)
+		Code += fmt.Sprintf("sub %s, %%esp\n", arg1)
+	case UNALLOC:
+		arg1 := ins.Arg1.(*LiteralEntry)
+		Code += fmt.Sprintf("add %s, %%esp\n", arg1)
+	default:
+		log.Fatalf("Unknown op code for key op: %s", ins.Op)
 	}
 }

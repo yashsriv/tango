@@ -4,6 +4,8 @@ package codegen
 type symbolTable struct {
 	symbolMap map[string]SymbolTableEntry
 	parent    *symbolTable
+	offset    int
+	curOffset int
 }
 
 // SymbolTable is current table
@@ -54,6 +56,14 @@ func (s *symbolTable) InsertSymbol(key string, value SymbolTableEntry) error {
 	return nil
 }
 
+// CreateAddrDescEntry creates an addrDesc entry for a variable
+func CreateAddrDescEntry(value *VariableEntry) {
+	addrDesc[value] = address{
+		regLocation: "",
+		memLocation: value.MemoryLocation,
+	}
+}
+
 func (s *symbolTable) GetSymbol(key string) (SymbolTableEntry, error) {
 	// Check if symbol exists in current scope
 	x, ok := s.symbolMap[key]
@@ -68,12 +78,27 @@ func (s *symbolTable) GetSymbol(key string) (SymbolTableEntry, error) {
 	return x, nil
 }
 
+func (s *symbolTable) IsRoot() bool {
+	return s.parent == nil
+}
+
+func (s *symbolTable) Alloc(size int) int {
+	s.curOffset -= size
+	return s.curOffset
+}
+
+func (s *symbolTable) UnAlloc(size int) {
+	s.curOffset += size
+}
+
 // NewScope creates a new scope
 func NewScope() {
 	pushToStack()
 	SymbolTable = &symbolTable{
 		symbolMap: make(map[string]SymbolTableEntry),
 		parent:    SymbolTable,
+		offset:    SymbolTable.curOffset,
+		curOffset: SymbolTable.curOffset,
 	}
 }
 

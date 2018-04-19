@@ -33,5 +33,7 @@ func genCBRCode(ins IRIns, regs [3]registerResult) {
 		Code += fmt.Sprintf("jg %s\n", ins.Dst.(*TargetEntry).Target)
 	case BRGTE:
 		Code += fmt.Sprintf("jge %s\n", ins.Dst.(*TargetEntry).Target)
+	default:
+		log.Fatalf("Unknown op code for branch op: %s", ins.Op)
 	}
 }

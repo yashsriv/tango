@@ -10,9 +10,9 @@ import (
 func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error) {
 
 	// Obtain list of identifiers
-	declnamelistAs, ok := declnamelist.([]*codegen.VariableEntry)
+	declnamelistAs, ok := declnamelist.([]*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("unable to typecast %v to []*SymbolTableVariableEntry", declnamelist)
+		return nil, fmt.Errorf("unable to typecast %v to []*AddrCode", declnamelist)
 	}
 
 	// Obtain rhs of expression
@@ -48,11 +48,12 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 		for i, expr := range exprlistAs {
 			code = append(code, expr.Code...)
 			entry := CreateTemporary()
-			entries[i] = entry
+			entries[i] = entry.Symbol
+			code = append(code, entry.Code...)
 			ins := codegen.IRIns{
 				Typ:  codegen.ASN,
 				Op:   codegen.ASNO,
-				Dst:  entry,
+				Dst:  entry.Symbol,
 				Arg1: expr.Symbol,
 			}
 			code = append(code, ins)
@@ -61,7 +62,8 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 
 	// For each element in the rhs, perform some operations
 	for i, declName := range declnamelistAs {
-		declName.Constant = isConst
+		declName.Symbol.(*codegen.VariableEntry).Constant = isConst
+		code = append(code, declName.Code...)
 		// if there is a rhs
 		if exprlist != nil {
 			var arg1 codegen.SymbolTableEntry
@@ -78,7 +80,7 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 			ins := codegen.IRIns{
 				Typ:  codegen.ASN,
 				Op:   codegen.ASNO,
-				Dst:  declName,
+				Dst:  declName.Symbol,
 				Arg1: arg1,
 			}
 			code = append(code, ins)
@@ -137,14 +139,34 @@ func FuncDecl(a, b Attrib) (*AddrCode, error) {
 }
 
 // NewName creates a new symbol table entry for a variable
-func NewName(a Attrib) (symbol *codegen.VariableEntry, err error) {
+func NewName(a Attrib) (*AddrCode, error) {
 	identifier := string(a.(*token.Token).Lit)
-	symbol = &codegen.VariableEntry{
-		MemoryLocation: codegen.GlobalMemory{Location: "v" + identifier},
+	var code = make([]codegen.IRIns, 0)
+	var location codegen.MemoryLocation
+	if codegen.SymbolTable.IsRoot() {
+		location = codegen.GlobalMemory{Location: "v" + identifier}
+	} else {
+		// TODO: This should be from types or something else
+		offset := codegen.SymbolTable.Alloc(4)
+		location = codegen.StackMemory{BaseOffset: offset}
+		code = append(code, codegen.IRIns{
+			Typ:  codegen.KEY,
+			Op:   codegen.ALLOC,
+			Arg1: &codegen.LiteralEntry{Value: 4},
+		})
+	}
+	symbol := &codegen.VariableEntry{
+		MemoryLocation: location,
 		Name:           identifier,
 	}
-	err = codegen.SymbolTable.InsertSymbol(identifier, symbol)
-	return
+	err := codegen.SymbolTable.InsertSymbol(identifier, symbol)
+	if err != nil {
+		return nil, err
+	}
+	// Create AddrDesc Entry
+	codegen.CreateAddrDescEntry(symbol)
+
+	return &AddrCode{Symbol: symbol, Code: code}, nil
 }
 
 // Name gets table entry for a symbol
@@ -155,11 +177,26 @@ func Name(a Attrib) (symbol codegen.SymbolTableEntry, err error) {
 }
 
 // CreateTemporary creates a temporary variable
-func CreateTemporary() (symbol *codegen.VariableEntry) {
-	symbol = &codegen.VariableEntry{
-		MemoryLocation: codegen.GlobalMemory{Location: fmt.Sprintf("rtmp%d", tempCount)},
+func CreateTemporary() *AddrCode {
+	var location codegen.MemoryLocation
+	var code = make([]codegen.IRIns, 0)
+	if codegen.SymbolTable.IsRoot() {
+		location = codegen.GlobalMemory{Location: fmt.Sprintf("rtmp%d", tempCount)}
+	} else {
+		// TODO: This should be from types or something else
+		offset := codegen.SymbolTable.Alloc(4)
+		location = codegen.StackMemory{BaseOffset: offset}
+		code = append(code, codegen.IRIns{
+			Typ:  codegen.KEY,
+			Op:   codegen.ALLOC,
+			Arg1: &codegen.LiteralEntry{Value: 4},
+		})
+	}
+	symbol := &codegen.VariableEntry{
+		MemoryLocation: location,
 		Name:           fmt.Sprintf("rtmp%d", tempCount),
 	}
+	codegen.CreateAddrDescEntry(symbol)
 	tempCount++
-	return
+	return &AddrCode{Symbol: symbol, Code: code}
 }

@@ -40,7 +40,7 @@ func assignHelper(uinfo map[*VariableEntry]UseInfo, dst *VariableEntry, canRepla
 			cannotbeReplaced[val.regLocation] = uinfo[i].NextUse == -1
 			return registerResult{Register: val.regLocation, Spill: regDesc[val.regLocation]}
 		} else if !ok {
-			log.Fatalf("[assignHelper] addrDesc is empty")
+			log.Fatalf("[assignHelper] addrDesc is empty for %v\n", i)
 		}
 
 		for register, variable := range regDesc {

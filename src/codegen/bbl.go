@@ -53,7 +53,7 @@ func GenBBLList(IRCode []IRIns) {
 
 func isEndBlock(typ IRType, op IROp) bool {
 	return typ == CBR || typ == JMP ||
-		(typ == KEY && op != PARAM && op != SETRET && op != INC && op != DEC)
+		(typ == KEY && op != PARAM && op != SETRET && op != INC && op != DEC && op != ALLOC && op != UNALLOC)
 }
 
 func isRegister(entry SymbolTableEntry) (*VariableEntry, bool) {
