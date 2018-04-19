@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"errors"
 	"fmt"
 	"tango/src/codegen"
 	"tango/src/token"
@@ -13,17 +14,23 @@ func UnaryOp(a Attrib, b Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
 	}
-	entry := CreateTemporary()
+	entry := CreateTemporary(el.Symbol.Type())
 	code := el.Code
 	code = append(code, entry.Code...)
 	var irOp codegen.IROp
 	switch op {
+	case "+":
+		irOp = codegen.ADD
 	case "-":
 		irOp = codegen.NEG
 	case "^":
 		irOp = codegen.BNOT
 	default:
 		return nil, ErrUnsupported
+	}
+	CheckOperandType(irOp, el.Symbol.Type())
+	if irOp == codegen.ADD {
+		return el, nil
 	}
 	code = append(code, codegen.IRIns{
 		Typ:  codegen.UOP,
@@ -49,7 +56,7 @@ func BinaryOp(a Attrib, b Attrib, c Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", c)
 	}
-	entry := CreateTemporary()
+	entry := CreateTemporary(el1.Symbol.Type())
 	code := append(el1.Code, el2.Code...)
 	code = append(code, entry.Code...)
 	var irOp codegen.IROp
@@ -86,6 +93,11 @@ func BinaryOp(a Attrib, b Attrib, c Attrib) (*AddrCode, error) {
 	default:
 		return nil, ErrUnsupported
 	}
+	CheckOperandType(irOp, el1.Symbol.Type())
+	CheckOperandType(irOp, el2.Symbol.Type())
+	if el1.Symbol.Type() != el2.Symbol.Type() {
+		return nil, errors.New("operands on either side of binary expression don't have the same type")
+	}
 	code = append(code, codegen.IRIns{
 		Typ:  irType,
 		Op:   irOp,
@@ -112,9 +124,8 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", c)
 	}
-
 	if _, isLiteral := el1.Symbol.(*codegen.LiteralEntry); isLiteral {
-		tmp := CreateTemporary()
+		tmp := CreateTemporary(el1.Symbol.Type())
 		el1.Code = append(el1.Code, tmp.Code...)
 		el1.Code = append(el1.Code, codegen.IRIns{
 			Typ:  codegen.ASN,
@@ -126,7 +137,7 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 	}
 
 	if _, isLiteral := el2.Symbol.(*codegen.LiteralEntry); isLiteral {
-		tmp := CreateTemporary()
+		tmp := CreateTemporary(el2.Symbol.Type())
 		el2.Code = append(el2.Code, tmp.Code...)
 		el2.Code = append(el2.Code, codegen.IRIns{
 			Typ:  codegen.ASN,
@@ -147,7 +158,7 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 
 	relOpCount++
 
-	entry := CreateTemporary()
+	entry := CreateTemporary(boolType)
 	code := append(el1.Code, el2.Code...)
 	code = append(code, entry.Code...)
 	var irOp codegen.IROp
@@ -168,6 +179,12 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 		return nil, ErrUnsupported
 	}
 
+	CheckOperandType(irOp, el1.Symbol.Type())
+	CheckOperandType(irOp, el2.Symbol.Type())
+	if el1.Symbol.Type() != el2.Symbol.Type() {
+		return nil, errors.New("operands on either side of binary expression don't have the same type")
+	}
+
 	// Comparison and jmp to true label
 	code = append(code, codegen.IRIns{
 		Typ:  codegen.CBR,
@@ -182,6 +199,7 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 		Dst: entry.Symbol,
 		Arg1: &codegen.LiteralEntry{
 			Value: 0,
+			LType: boolType,
 		},
 	})
 	code = append(code, codegen.IRIns{
@@ -199,6 +217,7 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 		Dst: entry.Symbol,
 		Arg1: &codegen.LiteralEntry{
 			Value: 1,
+			LType: boolType,
 		},
 	})
 	code = append(code, codegen.IRIns{
@@ -228,10 +247,15 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 	endLbl := &codegen.TargetEntry{
 		Target: fmt.Sprintf("_rel_op_%d_end", relOpCount),
 	}
+	CheckOperandType(codegen.AND, el1.Symbol.Type())
+	CheckOperandType(codegen.AND, el2.Symbol.Type())
+	if el1.Symbol.Type() != el2.Symbol.Type() {
+		return nil, errors.New("operands on either side of binary expression don't have the same type")
+	}
 
 	relOpCount++
 
-	entry := CreateTemporary()
+	entry := CreateTemporary(boolType)
 	code := append(el1.Code)
 	code = append(code, entry.Code...)
 	code = append(code, codegen.IRIns{
@@ -240,6 +264,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		Dst: falseLbl,
 		Arg1: &codegen.LiteralEntry{
 			Value: 1,
+			LType: boolType,
 		},
 		Arg2: el1.Symbol,
 	})
@@ -250,6 +275,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		Dst: falseLbl,
 		Arg1: &codegen.LiteralEntry{
 			Value: 1,
+			LType: boolType,
 		},
 		Arg2: el2.Symbol,
 	})
@@ -259,6 +285,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		Dst: entry.Symbol,
 		Arg1: &codegen.LiteralEntry{
 			Value: 1,
+			LType: boolType,
 		},
 	})
 	code = append(code, codegen.IRIns{
@@ -276,6 +303,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 		Dst: entry.Symbol,
 		Arg1: &codegen.LiteralEntry{
 			Value: 0,
+			LType: boolType,
 		},
 	})
 	code = append(code, codegen.IRIns{
@@ -305,9 +333,14 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Target: fmt.Sprintf("_rel_op_%d_end", relOpCount),
 	}
 
+	CheckOperandType(codegen.OR, el1.Symbol.Type())
+	CheckOperandType(codegen.OR, el2.Symbol.Type())
+	if el1.Symbol.Type() != el2.Symbol.Type() {
+		return nil, errors.New("operands on either side of binary expression don't have the same type")
+	}
 	relOpCount++
 
-	entry := CreateTemporary()
+	entry := CreateTemporary(boolType)
 	code := append(el1.Code)
 	code = append(code, entry.Code...)
 	code = append(code, codegen.IRIns{
@@ -316,6 +349,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Dst: trueLbl,
 		Arg1: &codegen.LiteralEntry{
 			Value: 1,
+			LType: boolType,
 		},
 		Arg2: el1.Symbol,
 	})
@@ -326,6 +360,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Dst: trueLbl,
 		Arg1: &codegen.LiteralEntry{
 			Value: 1,
+			LType: boolType,
 		},
 		Arg2: el2.Symbol,
 	})
@@ -335,6 +370,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Dst: entry.Symbol,
 		Arg1: &codegen.LiteralEntry{
 			Value: 0,
+			LType: boolType,
 		},
 	})
 	code = append(code, codegen.IRIns{
@@ -352,6 +388,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 		Dst: entry.Symbol,
 		Arg1: &codegen.LiteralEntry{
 			Value: 1,
+			LType: boolType,
 		},
 	})
 	code = append(code, codegen.IRIns{

@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"errors"
 	"fmt"
 	"tango/src/codegen"
 	"tango/src/token"
@@ -56,6 +57,12 @@ func ModAssignment(a, b, c Attrib) (*AddrCode, error) {
 	default:
 		return nil, ErrUnsupported
 	}
+	CheckOperandType(irOp, el1.Symbol.Type())
+	CheckOperandType(irOp, el2.Symbol.Type())
+	if el1.Symbol.Type() != el2.Symbol.Type() {
+		return nil, errors.New("operands on either side of binary expression don't have the same type")
+	}
+
 	code = append(code, codegen.IRIns{
 		Typ:  irType,
 		Op:   irOp,
@@ -88,6 +95,7 @@ func IncDec(a, b Attrib) (*AddrCode, error) {
 	case "--":
 		irOp = codegen.DEC
 	}
+	CheckOperandType(irOp, el1.Symbol.Type())
 	code = append(code, codegen.IRIns{
 		Typ:  codegen.KEY,
 		Op:   irOp,
@@ -132,7 +140,7 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 		// For each expression, store its value in a temporary variable
 		for i, expr := range rhsList {
 			code = append(code, expr.Code...)
-			entry := CreateTemporary()
+			entry := CreateTemporary(expr.Symbol.Type())
 			entries[i] = entry.Symbol
 			code = append(code, entry.Code...)
 			ins := codegen.IRIns{
@@ -142,6 +150,12 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 				Arg1: expr.Symbol,
 			}
 			code = append(code, ins)
+		}
+	}
+
+	for i := range lhsList {
+		if lhsList[i].Symbol.Type() != rhsList[i].Symbol.Type() {
+			return nil, fmt.Errorf("wrong type of rhs in assignment. expected %v, got %v", lhsList[i].Symbol.Type(), rhsList[i].Symbol.Type())
 		}
 	}
 

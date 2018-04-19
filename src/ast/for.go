@@ -68,12 +68,16 @@ func EvalForBody(a, b Attrib) (*AddrCode, error) {
 	})
 	// Check Expression
 	if header.Expr != nil {
+		if header.Expr.Symbol.Type() != boolType {
+			return nil, fmt.Errorf("wrong type of expression in for. expected %v, got %v", boolType, header.Expr.Symbol.Type())
+		}
 		code = append(code, header.Expr.Code...)
 		code = append(code, codegen.IRIns{
 			Typ: codegen.CBR,
 			Op:  codegen.BRNEQ,
 			Arg1: &codegen.LiteralEntry{
 				Value: 1,
+				LType: boolType,
 			},
 			Arg2: header.Expr.Symbol,
 			Dst:  end,

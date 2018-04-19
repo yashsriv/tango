@@ -29,6 +29,12 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 		if len(declnamelistAs) != len(exprlistAs) {
 			return nil, fmt.Errorf("unequal number of elements in lhs and rhs: %d and %d", len(declnamelistAs), len(exprlistAs))
 		}
+
+		for i := range exprlistAs {
+			if types.(codegen.TypeEntry) != exprlistAs[i].Symbol.Type() {
+				return nil, fmt.Errorf("wrong type of rhs in declaration. expected %v, got %v", types.(codegen.TypeEntry), exprlistAs[i].Symbol.Type())
+			}
+		}
 	} else if isConst {
 		// for a constant declaration, rhs is compulsory
 		return nil, fmt.Errorf("constant declaration must have rhs")
@@ -47,7 +53,7 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 		// For each expression, store its value in a temporary variable
 		for i, expr := range exprlistAs {
 			code = append(code, expr.Code...)
-			entry := CreateTemporary()
+			entry := CreateTemporary(expr.Symbol.Type())
 			entries[i] = entry.Symbol
 			code = append(code, entry.Code...)
 			ins := codegen.IRIns{
@@ -63,6 +69,7 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 	// For each element in the rhs, perform some operations
 	for i, declName := range declnamelistAs {
 		declName.Symbol.(*codegen.VariableEntry).Constant = isConst
+		declName.Symbol.(*codegen.VariableEntry).VType = types.(codegen.TypeEntry)
 		code = append(code, declName.Code...)
 		// if there is a rhs
 		if exprlist != nil {
@@ -135,6 +142,7 @@ func FuncDecl(a, b Attrib) (*AddrCode, error) {
 	addrcode := &AddrCode{
 		Code: code,
 	}
+	currentRetType = nil
 	return addrcode, nil
 }
 
@@ -152,7 +160,7 @@ func NewName(a Attrib) (*AddrCode, error) {
 		code = append(code, codegen.IRIns{
 			Typ:  codegen.KEY,
 			Op:   codegen.ALLOC,
-			Arg1: &codegen.LiteralEntry{Value: 4},
+			Arg1: &codegen.LiteralEntry{Value: 4, LType: intType},
 		})
 	}
 	symbol := &codegen.VariableEntry{
@@ -177,7 +185,7 @@ func Name(a Attrib) (symbol codegen.SymbolTableEntry, err error) {
 }
 
 // CreateTemporary creates a temporary variable
-func CreateTemporary() *AddrCode {
+func CreateTemporary(types codegen.TypeEntry) *AddrCode {
 	var location codegen.MemoryLocation
 	var code = make([]codegen.IRIns, 0)
 	if codegen.SymbolTable.IsRoot() {
@@ -189,12 +197,13 @@ func CreateTemporary() *AddrCode {
 		code = append(code, codegen.IRIns{
 			Typ:  codegen.KEY,
 			Op:   codegen.ALLOC,
-			Arg1: &codegen.LiteralEntry{Value: 4},
+			Arg1: &codegen.LiteralEntry{Value: 4, LType: intType},
 		})
 	}
 	symbol := &codegen.VariableEntry{
 		MemoryLocation: location,
 		Name:           fmt.Sprintf("rtmp%d", tempCount),
+		VType:          types,
 	}
 	codegen.CreateAddrDescEntry(symbol)
 	tempCount++

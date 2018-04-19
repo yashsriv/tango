@@ -112,10 +112,15 @@ func NewSourceFile(declList Attrib) (*AddrCode, error) {
 
 var tempCount int
 
+// var predecID = []string{
+// 	"bool", "byte", "error", "float32",
+// 	"int", "int8", "int16", "int32", "rune", "string",
+// 	"uint", "uint8", "uint16", "uint32", "uintptr",
+// }
+
 var predecID = []string{
-	"bool", "byte", "error", "float32",
-	"int", "int8", "int16", "int32", "rune", "string",
-	"uint", "uint8", "uint16", "uint32", "uintptr",
+	"bool",
+	"int",
 }
 
 var predecConst = []string{
@@ -127,16 +132,29 @@ var predecFunc = []string{
 	"printf",
 }
 
+var boolType codegen.TypeEntry
+var intType codegen.TypeEntry
+var VoidType codegen.TypeEntry
+
 func init() {
+	VoidType = &codegen.VoidType{}
+
+	codegen.SymbolTable.InsertSymbol("", VoidType)
 	for _, v := range predecID {
-		// TODO: Make this symboltable type entry or something
-		codegen.SymbolTable.InsertSymbol(v, nil)
+		codegen.SymbolTable.InsertSymbol(v, &codegen.BasicType{
+			Name: v,
+		})
 	}
+	boolType_, _ := codegen.SymbolTable.GetSymbol("bool")
+	intType_, _ := codegen.SymbolTable.GetSymbol("int")
+	boolType = boolType_.(codegen.TypeEntry)
+	intType = intType_.(codegen.TypeEntry)
 	for _, v := range predecConst {
 		symbol := &codegen.VariableEntry{
 			MemoryLocation: codegen.GlobalMemory{Location: v},
 			Name:           v,
 			Constant:       true,
+			VType:          boolType,
 		}
 		codegen.SymbolTable.InsertSymbol(v, symbol)
 		codegen.CreateAddrDescEntry(symbol)

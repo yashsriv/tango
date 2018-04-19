@@ -15,6 +15,7 @@ func IntLit(l Attrib) (*AddrCode, error) {
 	}
 	entry := &codegen.LiteralEntry{
 		Value: int(val),
+		LType: intType,
 	}
 	addrcode := &AddrCode{
 		Symbol: entry,

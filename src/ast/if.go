@@ -17,6 +17,9 @@ func EvalIfHeader(a, b Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
 	}
+	if expr.Symbol.Type() != boolType {
+		return nil, fmt.Errorf("wrong type of expression in if check. expected %v, got %v", boolType, expr.Symbol.Type())
+	}
 	code := append(stmt.Code, expr.Code...)
 	addrCode := &AddrCode{
 		Code:   code,
@@ -35,6 +38,9 @@ func EvalElseIf(a, b Attrib) (*ifElse, error) {
 	expr, ok := a.(*AddrCode)
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", a)
+	}
+	if expr.Symbol.Type() != boolType {
+		return nil, fmt.Errorf("wrong type of expression in else if check. expected %v, got %v", boolType, expr.Symbol.Type())
 	}
 	body, ok := b.(*AddrCode)
 	if !ok {
@@ -81,6 +87,7 @@ func EvalIf(a, b, c, d Attrib) (*AddrCode, error) {
 		Op:  codegen.BRNEQ,
 		Arg1: &codegen.LiteralEntry{
 			Value: 1,
+			LType: boolType,
 		},
 		Arg2: ifexpr.Symbol,
 		Dst:  entry,
@@ -111,6 +118,7 @@ func EvalIf(a, b, c, d Attrib) (*AddrCode, error) {
 			Op:  codegen.BRNEQ,
 			Arg1: &codegen.LiteralEntry{
 				Value: 1,
+				LType: boolType,
 			},
 			Arg2: v.expr.Symbol,
 			Dst:  entry,

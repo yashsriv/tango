@@ -69,6 +69,8 @@ func EvalGoto(a Attrib) (*AddrCode, error) {
 	}, nil
 }
 
+var currentRetType codegen.TypeEntry
+
 // EvalReturn evaluates a return statement
 func EvalReturn(a Attrib) (*AddrCode, error) {
 	expr, ok := a.([]*AddrCode)
@@ -78,11 +80,17 @@ func EvalReturn(a Attrib) (*AddrCode, error) {
 	code := make([]codegen.IRIns, 0)
 	switch len(expr) {
 	case 0:
+		if currentRetType != VoidType {
+			return nil, fmt.Errorf("Expected a return value of type: %v", currentRetType)
+		}
 		code = append(code, codegen.IRIns{
 			Typ: codegen.KEY,
 			Op:  codegen.RET,
 		})
 	case 1:
+		if currentRetType != expr[0].Symbol.Type() {
+			return nil, fmt.Errorf("Expected a return value of type: %v", currentRetType)
+		}
 		code = append(code, expr[0].Code...)
 		code = append(code, codegen.IRIns{
 			Typ:  codegen.KEY,
@@ -108,8 +116,15 @@ func EvalCall(a, b Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to []*AddrCode", b)
 	}
+
+	if len(exprList) != len(entry.InType) {
+		return nil, fmt.Errorf("wrong number of arguments in function call. expected %d, got %d", len(entry.InType), len(exprList))
+	}
 	code := make([]codegen.IRIns, 0)
 	for i := len(exprList) - 1; i >= 0; i-- {
+		if exprList[i].Symbol.Type() != entry.InType[i] {
+			return nil, fmt.Errorf("wrong type of argument %d in function call. expected %v, got %v", i, entry.InType[i], exprList[i].Symbol.Type())
+		}
 		code = append(code, exprList[i].Code...)
 		code = append(code, codegen.IRIns{
 			Typ:  codegen.KEY,
@@ -127,9 +142,10 @@ func EvalCall(a, b Attrib) (*AddrCode, error) {
 		Op:  codegen.UNALLOC,
 		Arg1: &codegen.LiteralEntry{
 			Value: len(exprList) * 4,
+			LType: intType,
 		},
 	})
-	entry1 := CreateTemporary()
+	entry1 := CreateTemporary(entry.RetType)
 	code = append(code, entry1.Code...)
 	code = append(code, codegen.IRIns{
 		Typ:  codegen.KEY,

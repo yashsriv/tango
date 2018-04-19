@@ -5,29 +5,37 @@ import "fmt"
 // SymbolTableEntry is an entry in the SymbolTable
 type SymbolTableEntry interface {
 	symbolTableEntryDummy()
+	Type() TypeEntry
 	String() string
 }
 
 // LiteralEntry refers to a literal in the symbol table
 type LiteralEntry struct {
 	Value int
+	LType TypeEntry
 }
 
 func (*LiteralEntry) symbolTableEntryDummy() {}
-
 func (l *LiteralEntry) String() string {
 	return fmt.Sprintf("$%d", l.Value)
+}
+func (l *LiteralEntry) Type() TypeEntry {
+	return l.LType
 }
 
 // TargetEntry refers to a target in the symbol table
 type TargetEntry struct {
-	Target string
+	Target  string
+	RetType TypeEntry
+	InType  []TypeEntry
 }
 
 func (*TargetEntry) symbolTableEntryDummy() {}
-
 func (t *TargetEntry) String() string {
 	return fmt.Sprintf("#%s", t.Target)
+}
+func (t *TargetEntry) Type() TypeEntry {
+	return t.RetType
 }
 
 // VariableEntry refers to a register in the symbol table
@@ -35,10 +43,45 @@ type VariableEntry struct {
 	Constant       bool
 	MemoryLocation MemoryLocation
 	Name           string
+	VType          TypeEntry
 }
 
 func (*VariableEntry) symbolTableEntryDummy() {}
-
 func (v *VariableEntry) String() string {
 	return fmt.Sprintf("%s", v.Name)
+}
+func (v *VariableEntry) Type() TypeEntry {
+	return v.VType
+}
+
+// TypeEntry represents a type in the symbol table
+type TypeEntry interface {
+	SymbolTableEntry
+	typeEntryDummy()
+}
+
+// BasicType represents an inbuilt word-aligned type
+type BasicType struct {
+	Name string
+}
+
+func (*BasicType) symbolTableEntryDummy() {}
+func (*BasicType) typeEntryDummy()        {}
+func (b *BasicType) String() string {
+	return fmt.Sprintf("%s", b.Name)
+}
+func (b *BasicType) Type() TypeEntry {
+	return b
+}
+
+type VoidType struct {
+}
+
+func (*VoidType) symbolTableEntryDummy() {}
+func (*VoidType) typeEntryDummy()        {}
+func (*VoidType) String() string {
+	return "VoidType"
+}
+func (v *VoidType) Type() TypeEntry {
+	return v
 }

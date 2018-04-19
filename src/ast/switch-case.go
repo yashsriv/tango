@@ -74,6 +74,7 @@ func EvalSwitch(a, b Attrib) (*AddrCode, error) {
 				Dst: endBlockLbl,
 				Arg1: &codegen.LiteralEntry{
 					Value: 1,
+					LType: boolType,
 				},
 				Arg2: orExpr.Symbol,
 			})

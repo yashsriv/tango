@@ -158,13 +158,13 @@ CommonDecl : keyword_const ConstDecl                                            
            | keyword_type left_paren right_paren                                          << nil, ast.ErrUnsupported >>
            ; 
 
-VarDecl   : DeclNameList NType	                        << ast.Decl($0, $1, nil, false) >>
-          | DeclNameList NType norm_assign_op ExprList	<< ast.Decl($0, $1, $3, false) >>
-          | DeclNameList norm_assign_op ExprList	      << nil, ast.ErrUnsupported >>
+VarDecl   : DeclNameList NType                                                            << ast.Decl($0, $1, nil, false) >>
+          | DeclNameList NType norm_assign_op ExprList                                    << ast.Decl($0, $1, $3, false) >>
+          | DeclNameList norm_assign_op ExprList                                          << nil, ast.ErrUnsupported >>
           ;
 
-ConstDecl : DeclNameList NType norm_assign_op ExprList	<< ast.Decl($0, $1, $3, true) >>
-          | DeclNameList norm_assign_op ExprList	      << nil, ast.ErrUnsupported >>
+ConstDecl : DeclNameList NType norm_assign_op ExprList  << ast.Decl($0, $1, $3, true) >>
+          | DeclNameList norm_assign_op ExprList        << nil, ast.ErrUnsupported >>
           ;
 
 ConstDecl1 : ConstDecl	        << $0, nil >>
@@ -228,7 +228,7 @@ ForBody : ForHeader LoopBody	                        << ast.EvalForBody($0, $1) 
 ForStmt : keyword_for NewScope ForBody EndScope	              << $2, nil >>
         ;
 
-IfHeader : Expr       	                              << $0, nil >>
+IfHeader : Expr       	                              << ast.EvalIfHeader(&ast.AddrCode{}, $0) >>
          | OSimpleStmt stmt_end Expr       	          << ast.EvalIfHeader($0, $2) >>
          ;
 
@@ -246,11 +246,11 @@ Else : empty	                                        << &ast.AddrCode{}, nil >>
      | keyword_else CompoundStmt	                    << $1, nil >>
      ;
 
-NType : FuncType                      << ast.AddNode("NType", $0) >>
-      |	OtherType	                    << ast.AddNode("NType", $0) >>
-      |	PtrType	                      << ast.AddNode("NType", $0) >>
-      |	DotName	                      << ast.AddNode("NType", $0) >>
-      |	left_paren NType right_paren	<< ast.AddNode("NType", $0, $1, $2) >>
+NType : FuncType                      << nil, ast.ErrUnsupported >>
+      |	OtherType	                    << nil, ast.ErrUnsupported >>
+      |	PtrType	                      << nil, ast.ErrUnsupported >>
+      |	DotName	                      << $0, nil >>
+      |	left_paren NType right_paren	<< $1, nil >>
       ;
 
 NonExprType : FuncType	        << ast.AddNode("NonExprType", $0) >>
@@ -291,9 +291,9 @@ FuncBody : empty                                            << &ast.AddrCode{}, 
          | left_block_bracket StmtList right_block_bracket  << ast.MergeCodeList($1) >>
          ;
 
-FuncRes : empty                                     << ast.AddNode("FuncRes") >>
-        | FuncRetType                               << ast.AddNode("FuncRes", $0) >>
-        | left_tuple OArgTypeListOComma right_tuple << ast.AddNode("FuncRes", $0, $1, $2) >>
+FuncRes : empty                                     << ast.VoidType, nil >>
+        | FuncRetType                               << $0, nil >>
+        | left_tuple OArgTypeListOComma right_tuple << nil, ast.ErrUnsupported >>
         ;
 
 StructDeclList : StructDecl	                        << ast.AddNode("StructDeclList", $0) >>
@@ -326,14 +326,14 @@ LabelName : identifier   << ast.EvalLabelName($0) >>
 PtrType : star NType	<< ast.AddNode("PtrType", $0, $1) >>
         ;
 
-FuncRetType : FuncType  << ast.AddNode("FuncRetType", $0) >>
-            | OtherType << ast.AddNode("FuncRetType", $0) >>
-            | PtrType   << ast.AddNode("FuncRetType", $0) >>
-            | DotName   << ast.AddNode("FuncRetType", $0) >>
+FuncRetType : FuncType  << nil, ast.ErrUnsupported >>
+            | OtherType << nil, ast.ErrUnsupported >>
+            | PtrType   << nil, ast.ErrUnsupported >>
+            | DotName   << $0, nil >>
             ;
 
-DotName : Name                << ast.AddNode("DotName", $0) >>
-        | Name dot identifier << ast.AddNode("DotName", $0, $1, $2) >>
+DotName : Name                << ast.IsType($0) >>
+        | Name dot identifier << nil, ast.ErrUnsupported >>
         ;
 
 OComma : empty
@@ -520,7 +520,7 @@ ExprOrType : Expr         << $0, nil >>
            | NonExprType  << nil, ast.ErrUnsupported >>
            ;
 
-NameOrType : NType        << ast.AddNode("NameOrType", $0) >>
+NameOrType : NType        << $0, nil >>
            ;
 
 SwitchStmt : keyword_switch NewScope IfHeader left_block_bracket CaseBlockList EndScope right_block_bracket	<< ast.EvalSwitch($2, $4) >>
@@ -556,7 +556,7 @@ Expr       : Prec2Expr_	                        << $0, nil >>
 UExpr : PExpr	                                  << $0, nil >>
       | unary_op UExpr	                        << ast.UnaryOp($0, $1) >>
       | star UExpr	                            << ast.UnaryOp($0, $1) >>
-      | plus UExpr	                            << $1, nil >>
+      | plus UExpr	                            << ast.UnaryOp($0, $1) >>
       | minus UExpr	                            << ast.UnaryOp($0, $1) >>
       | xor UExpr	                              << ast.UnaryOp($0, $1) >>
       ;
