@@ -19,7 +19,7 @@ test-debug: test
 vendor:
 	dep ensure -v
 
-bin/tango: src/main/tango/tango.go src/lexer/*.go src/parser/*.go src/ast/*.go src/codegen/*.go
+bin/tango: src/main/tango/tango.go src/lexer/lexer.go src/parser/parser.go src/ast/*.go src/codegen/*.go
 	@echo -e "\e[1;32mCompiling Tango \e[0m"
 	go install $(GOFLAGS) $(current_dir)/src/main/tango/tango.go
 
