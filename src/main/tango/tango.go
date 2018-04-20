@@ -82,7 +82,12 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		gccCmd.Wait()
+		err = gccCmd.Wait()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "gcc closed with an error. Assembly code written to %s\n", *outFile+".s")
+			outFile, _ := os.Create(*outFile + ".s")
+			fmt.Fprintln(outFile, codegen.Code)
+		}
 
 	default:
 		fmt.Fprintf(os.Stderr, "Error: Unsupported -x param: %s\n", *langPtr)
