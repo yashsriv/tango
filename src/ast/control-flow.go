@@ -150,14 +150,14 @@ func EvalCall(a, b Attrib) (*AddrCode, error) {
 		Op:   codegen.CALL,
 		Arg1: entry,
 	})
-	code = append(code, codegen.IRIns{
-		Typ: codegen.KEY,
-		Op:  codegen.UNALLOC,
-		Arg1: &codegen.LiteralEntry{
-			Value: len(exprList) * 4,
-			LType: intType,
-		},
-	})
+	// code = append(code, codegen.IRIns{
+	// 	Typ: codegen.KEY,
+	// 	Op:  codegen.UNALLOC,
+	// 	Arg1: &codegen.LiteralEntry{
+	// 		Value: len(exprList) * 4,
+	// 		LType: intType,
+	// 	},
+	// })
 	entry1 := CreateTemporary(entry.RetType)
 	code = append(code, entry1.Code...)
 	code = append(code, codegen.IRIns{

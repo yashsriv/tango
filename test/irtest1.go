@@ -40,7 +40,7 @@ koko:
 		}
 	}
 
-	printf(g, x, y)
+	printf("%d %d %d\n", g, x, y)
 
 	return testing()
 }

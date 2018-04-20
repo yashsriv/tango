@@ -16,5 +16,5 @@ func fact(i int) int {
 func main() {
 	var x [2][3]int
 	x[0][0] = 5
-	fact(x[0][0])
+	printf("%d\n", fact(x[0][0]))
 }

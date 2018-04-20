@@ -20,5 +20,5 @@ func fact(i int) int {
 func main() {
 	var s mystruct1
 	s.val.val = 5
-	fact(s.val.val)
+	printf("%d\n", fact(s.val.val))
 }

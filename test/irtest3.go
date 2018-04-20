@@ -13,5 +13,6 @@ func main() {
 	var j int = 5
 	var k *int = &j
 	*k = 6
-	fact(j)
+	var z int = fact(j)
+	printf("%d\n", z)
 }
