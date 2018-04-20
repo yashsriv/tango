@@ -91,6 +91,8 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 				Arg1: arg1,
 			}
 			code = append(code, ins)
+		} else {
+			code = append(code, Alloc(declName.Symbol.(*codegen.VariableEntry))...)
 		}
 	}
 

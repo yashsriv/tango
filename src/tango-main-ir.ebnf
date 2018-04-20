@@ -160,12 +160,12 @@ CommonDecl : keyword_const ConstDecl                                            
            ; 
 
 VarDecl   : DeclNameList NType                                                            << ast.Decl($0, $1, nil, false) >>
-          | DeclNameList NType norm_assign_op ExprList                                    << ast.Decl($0, $1, $3, false) >>
+          | DeclNameList NType norm_assign_op RVal ExprList LVal                          << ast.Decl($0, $1, $4, false) >>
           | DeclNameList norm_assign_op ExprList                                          << nil, ast.ErrUnsupported >>
           ;
 
-ConstDecl : DeclNameList NType norm_assign_op ExprList  << ast.Decl($0, $1, $3, true) >>
-          | DeclNameList norm_assign_op ExprList        << nil, ast.ErrUnsupported >>
+ConstDecl : DeclNameList NType norm_assign_op RVal ExprList LVal                          << ast.Decl($0, $1, $4, true) >>
+          | DeclNameList norm_assign_op ExprList                                          << nil, ast.ErrUnsupported >>
           ;
 
 ConstDecl1 : ConstDecl	        << $0, nil >>
@@ -254,21 +254,21 @@ Else : empty	                                        << &ast.AddrCode{}, nil >>
      ;
 
 NType : FuncType                      << nil, ast.ErrUnsupported >>
-      |	OtherType	                    << nil, ast.ErrUnsupported >>
+      |	OtherType	                    << $0, nil >>
       |	PtrType	                      << $0, nil >>
       |	DotName	                      << $0, nil >>
       |	left_paren NType right_paren	<< $1, nil >>
       ;
 
-NonExprType : FuncType	        << ast.AddNode("NonExprType", $0) >>
-            | OtherType	        << ast.AddNode("NonExprType", $0) >>
-            | star NonExprType	<< ast.AddNode("NonExprType", $0, $1) >>
+NonExprType : FuncType	        << nil, ast.ErrUnsupported >>
+            | OtherType	        << $0, nil >>
+            | star NonExprType	<< ast.EvalPtrType($1) >>
             ;
 
-OtherType : left_sq_paren OExpr right_sq_paren NType	            << ast.AddNode("OtherType", $0, $1, $2, $3) >>
-          | keyword_map left_sq_paren NType right_sq_paren NType	<< ast.AddNode("OtherType", $0, $1, $2, $3, $4) >>
-          | StructType	                                          << ast.AddNode("OtherType", $0) >>
-          | InterfaceType                                         << ast.AddNode("OtherType", $0) >>
+OtherType : left_sq_paren OExpr right_sq_paren NType	            << ast.EvalArrType($1, $3) >>
+          | keyword_map left_sq_paren NType right_sq_paren NType	<< nil, ast.ErrUnsupported >>
+          | StructType	                                          << nil, ast.ErrUnsupported >>
+          | InterfaceType                                         << nil, ast.ErrUnsupported >>
           ;
 
 StructType : keyword_struct left_block_bracket StructDeclList OSemi right_block_bracket	<< ast.AddNode("StructType", $0, $1, $2, $3, $4) >>
@@ -334,7 +334,7 @@ PtrType : star NType	   << ast.EvalPtrType($1) >>
         ;
 
 FuncRetType : FuncType  << nil, ast.ErrUnsupported >>
-            | OtherType << nil, ast.ErrUnsupported >>
+            | OtherType << $0, nil >>
             | PtrType   << $0, nil >>
             | DotName   << $0, nil >>
             ;
@@ -428,14 +428,14 @@ NewNameList : NewName	<< ast.AddNode("NewNameList", $0) >>
             | NewNameList comma NewName	<< ast.AddNode("NewNameList", $0, $1, $2) >>
             ;
 
-KeyvalList : Keyval	<< ast.AddNode("KeyvalList", $0) >>
-           | BareCompLitExpr	<< ast.AddNode("KeyvalList", $0) >>
-           | KeyvalList comma Keyval	<< ast.AddNode("KeyvalList", $0, $1, $2) >>
-           | KeyvalList comma BareCompLitExpr	<< ast.AddNode("KeyvalList", $0, $1, $2) >>
+KeyvalList : Keyval	                          << nil, ast.ErrUnsupported >>
+           | BareCompLitExpr	                << ast.NewList($0) >>
+           | KeyvalList comma Keyval	        << nil, ast.ErrUnsupported >>
+           | KeyvalList comma BareCompLitExpr	<< ast.AddToList($0, $2) >>
            ;
 
-BracedKeyvalList : empty	<< ast.AddNode("BracedKeyvalList") >>
-                 | KeyvalList OComma	<< ast.AddNode("BracedKeyvalList", $0, $1) >>
+BracedKeyvalList : empty	            << nil, nil >>
+                 | KeyvalList OComma	<< $0, nil >>
                  ;
 
 DeclName : NewName  << $0, nil >>
@@ -495,28 +495,28 @@ PExprNoParen : Literal                                                          
              | PExpr dot identifier	                                                  << nil, ast.ErrUnsupported >>
              | PExpr dot left_paren ExprOrType right_paren	                          << nil, ast.ErrUnsupported >>
              | PExpr dot left_paren keyword_type right_paren	                        << nil, ast.ErrUnsupported >>
-             | PExpr left_sq_paren Expr right_sq_paren	                              << nil, ast.ErrUnsupported >>
-             | PExpr left_sq_paren OExpr label_op OExpr right_sq_paren	              << nil, ast.ErrUnsupported >>
+             | PExpr left_sq_paren Expr right_sq_paren	                              << ast.EvalArrAccess($0, $2) >>
+             | PExpr left_sq_paren OExpr label_op OExpr right_sq_paren	              << ast.EvalArrSlice($0, $2, $4) >>
              | PExpr left_sq_paren OExpr label_op OExpr label_op OExpr right_sq_paren	<< nil, ast.ErrUnsupported >>
              | ConvType left_angle Expr OComma right_angle                            << nil, ast.ErrUnsupported >>
-             | CompType left_banana BracedKeyvalList right_banana                     << nil, ast.ErrUnsupported >>
+             | CompType left_banana BracedKeyvalList right_banana                     << ast.EvalCompType($0, $2) >>
              | PExpr left_banana BracedKeyvalList right_banana                        << nil, ast.ErrUnsupported >>
              | FuncLiteral                                                            << nil, ast.ErrUnsupported >>
              | ForCompExpr                                                            << nil, ast.ErrUnsupported >>
              ;
 
-ConvType : FuncType   << ast.AddNode("ConvType", $0) >>
-         | OtherType  << ast.AddNode("ConvType", $0) >>
+ConvType : FuncType   << nil, ast.ErrUnsupported >>
+         | OtherType  << $0, nil >>
          ;
 
-CompType : OtherType  << ast.AddNode("CompType", $0) >>
+CompType : OtherType  << $0, nil >>
          ;
 
 Keyval : Expr label_op CompLitExpr  << nil, ast.ErrUnsupported >>
        ;
 
-BareCompLitExpr : Expr                                      << ast.AddNode("BareCompLitExpr", $0) >>
-                | left_banana BracedKeyvalList right_banana << ast.AddNode("BareCompLitExpr", $0, $1, $2) >>
+BareCompLitExpr : Expr                                      << $0, nil >>
+                | left_banana BracedKeyvalList right_banana << nil, ast.ErrUnsupported >>
                 ;
 
 CompLitExpr : Expr                                      << $0, nil >>
@@ -524,7 +524,7 @@ CompLitExpr : Expr                                      << $0, nil >>
             ;
 
 ExprOrType : Expr         << $0, nil >>
-           | NonExprType  << nil, ast.ErrUnsupported >>
+           | NonExprType  << $0, nil >>
            ;
 
 NameOrType : NType        << $0, nil >>

@@ -104,6 +104,7 @@ const (
 	SCANSTR        = "scans"
 	ALLOC          = "alloc"
 	UNALLOC        = "unalloc"
+	MALLOC         = "malloc"
 )
 
 // GetType of an IROp
@@ -131,7 +132,7 @@ func GetType(op IROp) IRType {
 		op == SETRET || op == HALT || op == PRINTINT || op == PRINTCHAR ||
 		op == PRINTSTR || op == SCANINT || op == SCANCHAR ||
 		op == SCANSTR || op == INC || op == DEC || op == ALLOC || op == UNALLOC ||
-		op == TAKE || op == PUT {
+		op == TAKE || op == PUT || op == MALLOC {
 		return KEY
 	}
 

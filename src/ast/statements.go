@@ -186,13 +186,25 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 		}
 		var ins codegen.IRIns
 		if entry.Extra != nil {
-			v := entry.Extra.(*codegen.VariableEntry)
-			ins = codegen.IRIns{
-				Typ:  codegen.KEY,
-				Op:   codegen.PUT,
-				Dst:  v,
-				Arg1: &codegen.LiteralEntry{Value: 0, LType: intType},
-				Arg2: arg1,
+			switch e := entry.Extra.(type) {
+			case ptrWrap:
+				ins = codegen.IRIns{
+					Typ:  codegen.KEY,
+					Op:   codegen.PUT,
+					Dst:  e.dest,
+					Arg1: &codegen.LiteralEntry{Value: 0, LType: intType},
+					Arg2: arg1,
+				}
+			case arrWrap:
+				ins = codegen.IRIns{
+					Typ:  codegen.KEY,
+					Op:   codegen.PUT,
+					Dst:  e.dest,
+					Arg1: e.index,
+					Arg2: arg1,
+				}
+			default:
+				return nil, ErrUnsupported
 			}
 		} else {
 			ins = codegen.IRIns{

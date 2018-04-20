@@ -7,6 +7,56 @@ import (
 	"tango/src/token"
 )
 
+type arrWrap struct {
+	dest  codegen.SymbolTableEntry
+	index codegen.SymbolTableEntry
+}
+
+type ptrWrap struct {
+	dest codegen.SymbolTableEntry
+}
+
+func EvalArrAccess(a, b Attrib) (*AddrCode, error) {
+	el, ok := a.(*AddrCode)
+	if !ok {
+		return nil, fmt.Errorf("[EvalArrAccess] unable to type cast %v to *AddrCode", a)
+	}
+
+	arrType, isArr := el.Symbol.Type().(codegen.ArrType)
+	if !isArr {
+		return nil, fmt.Errorf("indexing operation on non-array type: %s", el.Symbol.Type())
+	}
+
+	index, ok := b.(*AddrCode)
+	if !ok {
+		return nil, fmt.Errorf("[EvalArrAccess] unable to typecast %v to *AddrCode", b)
+	}
+
+	code := el.Code
+	code = append(code, index.Code...)
+
+	entry := CreateTemporary(arrType.Of)
+
+	if lvalMode {
+		entry.Symbol.(*codegen.VariableEntry).Extra = arrWrap{dest: el.Symbol, index: index.Symbol}
+	} else {
+		code = append(code, entry.Code...)
+		code = append(code, codegen.IRIns{
+			Typ:  codegen.KEY,
+			Op:   codegen.TAKE,
+			Dst:  entry.Symbol,
+			Arg1: el.Symbol,
+			Arg2: index.Symbol,
+		})
+	}
+
+	return &AddrCode{Symbol: entry.Symbol, Code: code}, nil
+}
+
+func EvalArrSlice(a, b, c Attrib) (*AddrCode, error) {
+	return nil, ErrUnsupported
+}
+
 func PointerOp(op string, el *AddrCode) (*AddrCode, error) {
 	var entry *AddrCode
 	switch op {
@@ -32,10 +82,10 @@ func PointerOp(op string, el *AddrCode) (*AddrCode, error) {
 		}
 		entry = CreateTemporary(ptr.To)
 		code := el.Code
-		code = append(code, entry.Code...)
-		if lvalMode && starCounter == 0 {
-			entry.Symbol.(*codegen.VariableEntry).Extra = el.Symbol
+		if lvalMode {
+			entry.Symbol.(*codegen.VariableEntry).Extra = ptrWrap{dest: el.Symbol}
 		} else {
+			code = append(code, entry.Code...)
 			code = append(code, codegen.IRIns{
 				Typ:  codegen.UOP,
 				Op:   codegen.VAL,

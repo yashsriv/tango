@@ -136,7 +136,7 @@ func genCode() {
 			arg1res, arg2res, dstres := getReg(ins, bbl.Info[i])
 
 			if i == len(bbl.Block)-1 && isEndBlock(ins.Typ, ins.Op) {
-				saveBBL()
+				saveBBL(false)
 			}
 
 			genOpCode(ins, [3]registerResult{arg1res, arg2res, dstres})
@@ -149,7 +149,7 @@ func genCode() {
 			}
 
 			// if i == len(bbl.Block)-1 && !isEndBlock(ins.Typ, ins.Op) {
-			saveBBL()
+			saveBBL(true)
 			// }
 
 		}
@@ -188,20 +188,34 @@ func clearBBL() {
 	}
 }
 
-func saveBBL() {
-	// Code += "\n\n# Saving Stuff\n"
+func saveBBL(clear bool) {
+	// Code += "# Saving Stuff\n"
+	// if clear {
+	// 	fmt.Println(regDesc)
+	// }
 	for register, variables := range regDesc {
 		for variable := range variables {
 			if val, ok := addrDesc[variable]; ok {
 				if val.memLocation == nil {
 					Code += fmt.Sprintf("movl %s, %s\n", register, variable.MemoryLocation)
+					if clear {
+						addrDesc[variable] = address{
+							regLocation: "",
+							memLocation: variable.MemoryLocation,
+						}
+					} else {
+						addrDesc[variable] = address{
+							regLocation: val.regLocation,
+							memLocation: variable.MemoryLocation,
+						}
+					}
 				}
 			} else {
 				log.Fatalf("[saveBBL] addrDesc missing")
 			}
 		}
 	}
-	// Code += "# Done Saving Stuff\n\n"
+	// Code += "# Done Saving Stuff\n"
 }
 
 func genMisc() {

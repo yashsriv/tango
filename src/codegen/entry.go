@@ -113,3 +113,20 @@ func (p PtrType) String() string {
 func (p PtrType) Type() TypeEntry {
 	return p
 }
+
+// ArrType is an array of other types
+type ArrType struct {
+	Of   TypeEntry
+	Size int
+}
+
+func (ArrType) symbolTableEntryDummy() {}
+func (ArrType) typeEntryDummy()        {}
+func (a ArrType) String() string {
+	return fmt.Sprintf("array of %s", a.Of)
+}
+
+// Type is necessary
+func (a ArrType) Type() TypeEntry {
+	return a
+}

@@ -171,6 +171,8 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 		} else {
 			Code += fmt.Sprintf("movl (%s, %s, 4), %s\n", regs[0].Register, op1, regs[2].Register)
 		}
+		dst := ins.Dst.(*VariableEntry)
+		updateVariable(dst, regs[2].Register)
 	case PUT:
 		load(regs[2], ins.Dst)
 		var op1, op2 string
@@ -190,6 +192,17 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 		} else {
 			Code += fmt.Sprintf("movl %s, (%s, %s, 4)\n", op2, regs[2].Register, op1)
 		}
+		dst := ins.Dst.(*VariableEntry)
+		updateVariable(dst, regs[2].Register)
+	case MALLOC:
+		if regs[0].Register == "" {
+			// This is a literal. Push directly.
+			Code += fmt.Sprintf("push $%d\n", ins.Arg1.(*LiteralEntry).Value*4)
+		} else {
+			log.Fatalf("non constant value not supported for malloc ops")
+		}
+		Code += fmt.Sprintf("call malloc\n")
+
 	default:
 		log.Fatalf("Unknown op code for key op: %s", ins.Op)
 	}
