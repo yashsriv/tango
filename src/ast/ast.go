@@ -123,6 +123,7 @@ var tempCount int
 var predecID = []string{
 	"bool",
 	"int",
+	"string",
 }
 
 var predecConst = []string{
@@ -132,10 +133,12 @@ var predecConst = []string{
 
 var predecFunc = []string{
 	"printf",
+	"scanf",
 }
 
 var boolType codegen.TypeEntry
 var intType codegen.TypeEntry
+var stringType codegen.TypeEntry
 var VoidType codegen.TypeEntry
 
 func init() {
@@ -149,8 +152,10 @@ func init() {
 	}
 	boolType_, _ := codegen.SymbolTable.GetSymbol("bool")
 	intType_, _ := codegen.SymbolTable.GetSymbol("int")
+	stringType_, _ := codegen.SymbolTable.GetSymbol("string")
 	boolType = boolType_.(codegen.TypeEntry)
 	intType = intType_.(codegen.TypeEntry)
+	stringType = stringType_.(codegen.TypeEntry)
 	for _, v := range predecConst {
 		symbol := &codegen.VariableEntry{
 			MemoryLocation: codegen.GlobalMemory{Location: v},
@@ -163,7 +168,8 @@ func init() {
 	}
 	for _, v := range predecFunc {
 		codegen.SymbolTable.InsertSymbol(v, &codegen.TargetEntry{
-			Target: v,
+			Target:  v,
+			RetType: VoidType,
 		})
 	}
 }

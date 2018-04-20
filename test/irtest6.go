@@ -19,6 +19,8 @@ func fact(i int) int {
 
 func main() {
 	var s mystruct
-	s.val = 5
-	fact(s.Val())
+	var i int
+	scanf("%d", &i)
+	s.val = i
+	printf("Hello %d\n", fact(s.Val()))
 }

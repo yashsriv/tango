@@ -287,7 +287,7 @@ FuncDecl_ : identifier ArgList FuncRes                                          
           | left_tuple OArgTypeListOComma right_tuple identifier ArgList FuncRes  << ast.FuncSign($3, $4, $5, $1) >>
           ;
 
-FuncType : keyword_func ArgList FuncRes	<< ast.AddNode("FuncType", $0, $1, $2) >>
+FuncType : keyword_func ArgList FuncRes                                            << ast.FuncType($1, $2) >>
          ;
 
 ArgList : left_paren OArgTypeListOComma right_paren	        << $1, nil >>
@@ -386,7 +386,7 @@ ExprOrTypeList : ExprOrType                       << ast.NewList($0) >>
 Literal : int_lit         << ast.IntLit($0) >>
         | float_lit	      << nil, ast.ErrUnsupported >>
         | rune_lit	      << nil, ast.ErrUnsupported >>
-        | string_literal  << nil, ast.ErrUnsupported >>
+        | string_literal  << ast.StringLit($0) >>
         ;
 
 Embed : Name	<< $0, nil >>

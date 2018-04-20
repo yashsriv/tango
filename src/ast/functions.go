@@ -105,3 +105,7 @@ func EvalArgType(a, b Attrib) (*ArgType, error) {
 	retType := b.(codegen.TypeEntry)
 	return &ArgType{ArgName: identifier, Type: retType}, nil
 }
+
+func FuncType(a, b Attrib) (Attrib, error) {
+	return nil, nil
+}

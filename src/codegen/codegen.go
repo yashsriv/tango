@@ -168,7 +168,11 @@ func genData() {
 	for v, address := range addrDesc {
 		if v.Name != "true" && v.Name != "false" {
 			if glob, ok := address.memLocation.(GlobalMemory); ok {
-				Code += fmt.Sprintf("%s: .long 0\n", glob.Location)
+				if v.Type().String() != "string" {
+					Code += fmt.Sprintf("%s: .long 0\n", glob.Location)
+				} else {
+					Code += fmt.Sprintf("%s: .string %s\n", glob.Location, Strings[glob.Location])
+				}
 			}
 		}
 	}
@@ -241,4 +245,10 @@ func GenerateASM() {
 	genMisc()
 	genCode()
 	genData()
+}
+
+var Strings map[string]string
+
+func init() {
+	Strings = make(map[string]string)
 }

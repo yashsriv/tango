@@ -118,13 +118,24 @@ func EvalCall(a, b Attrib) (*AddrCode, error) {
 		return nil, fmt.Errorf("unable to type cast %v to []*AddrCode", b)
 	}
 
-	if len(exprList) != len(entry.InType) {
+	var isSystem bool
+
+	if entry.Target == "printf" || entry.Target == "scanf" {
+		isSystem = true
+	}
+
+	if !isSystem && len(exprList) != len(entry.InType) {
 		return nil, fmt.Errorf("wrong number of arguments in function call. expected %d, got %d", len(entry.InType), len(exprList))
 	}
 	code := a.(*AddrCode).Code
 	for i := len(exprList) - 1; i >= 0; i-- {
-		if !SameType(exprList[i].Symbol.Type(), entry.InType[i]) {
+		if !isSystem && !SameType(exprList[i].Symbol.Type(), entry.InType[i]) {
 			return nil, fmt.Errorf("wrong type of argument %d in function call. expected %v, got %v", i, entry.InType[i], exprList[i].Symbol.Type())
+		}
+		if isSystem && i == 0 {
+			if !SameType(exprList[i].Symbol.Type(), stringType) {
+				return nil, fmt.Errorf("wrong type of 1st argument in function call. expected %v, got %v", stringType, exprList[i].Symbol.Type())
+			}
 		}
 		evaluatedExpr := EvalWrapped(exprList[i])
 		code = append(code, evaluatedExpr.Code...)

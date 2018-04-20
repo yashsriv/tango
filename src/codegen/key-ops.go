@@ -16,8 +16,12 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 		} else {
 			// TODO: Instead of loading to register. If not in a register,
 			// then directly push from memory otherwise push from register
-			load(regs[0], ins.Arg1)
-			Code += fmt.Sprintf("push %s\n", regs[0].Register)
+			if ins.Arg1.(*VariableEntry).Type().String() == "string" {
+				Code += fmt.Sprintf("push $%s\n", ins.Arg1.(*VariableEntry).MemoryLocation.(GlobalMemory).Location)
+			} else {
+				load(regs[0], ins.Arg1)
+				Code += fmt.Sprintf("push %s\n", regs[0].Register)
+			}
 		}
 	case SETRET:
 		regDesc[returnRegister][ins.Arg1.(*VariableEntry)] = true
