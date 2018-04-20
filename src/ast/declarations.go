@@ -148,6 +148,17 @@ func FuncDecl(a, b Attrib) (*AddrCode, error) {
 	return addrcode, nil
 }
 
+// EvalTypeDecl defines a new type
+func EvalTypeDecl(a, b Attrib) (*AddrCode, error) {
+	identifier := string(a.(*token.Token).Lit)
+	symbol := b.(codegen.TypeEntry)
+	err := codegen.SymbolTable.InsertSymbol(identifier, symbol)
+	if err != nil {
+		return nil, err
+	}
+	return &AddrCode{}, nil
+}
+
 // NewName creates a new symbol table entry for a variable
 func NewName(a Attrib) (*AddrCode, error) {
 	identifier := string(a.(*token.Token).Lit)

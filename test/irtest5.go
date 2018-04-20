@@ -2,6 +2,10 @@ package main
 
 import "fmt"
 
+type mystruct struct {
+	val int
+}
+
 func fact(i int) int {
 	if i == 0 {
 		return 1
@@ -10,7 +14,8 @@ func fact(i int) int {
 }
 
 func main() {
-	var arr []int = []int[(1, 5, 6)]
-	var j int = arr[4] + 2
+	var x [2][3]int
+	x[0][0] = 5
+	var j int = x[0][1]
 	fact(j)
 }

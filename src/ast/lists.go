@@ -3,6 +3,7 @@ package ast
 import (
 	"fmt"
 	"tango/src/codegen"
+	"tango/src/token"
 )
 
 // NewList creates a new list of attrib with initial element
@@ -26,7 +27,7 @@ func AddToList(list Attrib, el Attrib) ([]*AddrCode, error) {
 	}
 	elAsAddrCode, ok := el.(*AddrCode)
 	if !ok {
-		return nil, fmt.Errorf("[AddToList] unable to type cast %v to *AddrCode", el)
+		return nil, fmt.Errorf("[AddToList] unable to type cast %v, %T to *AddrCode", el, el)
 	}
 	return append(asList, elAsAddrCode), nil
 }
@@ -47,30 +48,29 @@ func MergeCodeList(list Attrib) (*AddrCode, error) {
 	return addrcode, nil
 }
 
-// NewIdList creates a new list of identifiers with initial element
-func NewIdList(el Attrib) ([]*codegen.VariableEntry, error) {
-	list := make([]*codegen.VariableEntry, 0)
+// NewIdentifierList creates a new list of identifiers with initial element
+func NewIdentifierList(el Attrib) (map[string]bool, error) {
+	list := make(map[string]bool, 0)
 	if el != nil {
-		elAsToken, ok := el.(*codegen.VariableEntry)
-		if !ok {
-			return nil, fmt.Errorf("[NewIdList] unable to type cast %v to *SymbolTableVariableEntry", el)
-		}
-		list = append(list, elAsToken)
+		elAsToken := string(el.(*token.Token).Lit)
+		list[elAsToken] = true
 	}
 	return list, nil
 }
 
-// AddToIdList adds an element to the list
-func AddToIdList(list Attrib, el Attrib) ([]*codegen.VariableEntry, error) {
-	asList, ok := list.([]*codegen.VariableEntry)
+// AddToIdentifierList adds an element to the list
+func AddToIdentifierList(list Attrib, el Attrib) (map[string]bool, error) {
+	asList, ok := list.(map[string]bool)
 	if !ok {
-		return nil, fmt.Errorf("[AddToIdList] unable to type cast %v to []*SymbolTableVariableEntry", list)
+		return nil, fmt.Errorf("[AddToIdList] unable to type cast %v to map[string]bool", list)
 	}
-	elAsAddrCode, ok := el.(*codegen.VariableEntry)
-	if !ok {
-		return nil, fmt.Errorf("[AddToIdList] unable to type cast %v to *SymbolTableVariableEntry", el)
+	elAsToken := string(el.(*token.Token).Lit)
+	_, ok = asList[elAsToken]
+	if ok {
+		return nil, fmt.Errorf("identifier being redefined")
 	}
-	return append(asList, elAsAddrCode), nil
+	asList[elAsToken] = true
+	return asList, nil
 }
 
 func NewArgTypeList(el Attrib) ([]*ArgType, error) {

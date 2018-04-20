@@ -29,6 +29,8 @@ func ModAssignment(a, b, c Attrib) (*AddrCode, error) {
 	var irOp codegen.IROp
 	var irType = codegen.BOP
 	code := append(el1.Code, el2.Code...)
+	el1Evaluated := EvalWrapped(el1.Symbol)
+	code = append(code, el1Evaluated.Code...)
 	switch op {
 	case "|=":
 		irOp = codegen.BOR
@@ -66,10 +68,42 @@ func ModAssignment(a, b, c Attrib) (*AddrCode, error) {
 	code = append(code, codegen.IRIns{
 		Typ:  irType,
 		Op:   irOp,
-		Dst:  el1.Symbol,
-		Arg1: el1.Symbol,
+		Dst:  el1Evaluated.Symbol,
+		Arg1: el1Evaluated.Symbol,
 		Arg2: el2.Symbol,
 	})
+	if el1.Symbol.(*codegen.VariableEntry).Extra != nil {
+		var ins codegen.IRIns
+		switch e := el1.Symbol.(*codegen.VariableEntry).Extra.(type) {
+		case ptrWrap:
+			ins = codegen.IRIns{
+				Typ:  codegen.KEY,
+				Op:   codegen.PUT,
+				Dst:  e.dest,
+				Arg1: &codegen.LiteralEntry{Value: 0, LType: intType},
+				Arg2: el1Evaluated.Symbol,
+			}
+		case arrWrap:
+			ins = codegen.IRIns{
+				Typ:  codegen.KEY,
+				Op:   codegen.PUT,
+				Dst:  e.dest,
+				Arg1: e.index,
+				Arg2: el1Evaluated.Symbol,
+			}
+		case structWrap:
+			ins = codegen.IRIns{
+				Typ:  codegen.KEY,
+				Op:   codegen.PUT,
+				Dst:  e.dest,
+				Arg1: &codegen.LiteralEntry{Value: e.index, LType: intType},
+				Arg2: el1Evaluated.Symbol,
+			}
+		default:
+			return nil, ErrUnsupported
+		}
+		code = append(code, ins)
+	}
 	addrcode := &AddrCode{
 		Code: code,
 	}
@@ -201,6 +235,14 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 					Op:   codegen.PUT,
 					Dst:  e.dest,
 					Arg1: e.index,
+					Arg2: arg1,
+				}
+			case structWrap:
+				ins = codegen.IRIns{
+					Typ:  codegen.KEY,
+					Op:   codegen.PUT,
+					Dst:  e.dest,
+					Arg1: &codegen.LiteralEntry{Value: e.index, LType: intType},
 					Arg2: arg1,
 				}
 			default:

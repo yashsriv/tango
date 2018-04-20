@@ -130,3 +130,20 @@ func (a ArrType) String() string {
 func (a ArrType) Type() TypeEntry {
 	return a
 }
+
+// StructType is a struct
+type StructType struct {
+	FieldMap   map[string]int
+	FieldTypes []TypeEntry
+}
+
+func (StructType) symbolTableEntryDummy() {}
+func (StructType) typeEntryDummy()        {}
+func (s StructType) String() string {
+	return fmt.Sprintf("struct%v", s.FieldTypes)
+}
+
+// Type is necessary
+func (s StructType) Type() TypeEntry {
+	return s
+}
