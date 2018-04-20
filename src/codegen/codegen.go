@@ -209,6 +209,11 @@ func saveBBL(clear bool) {
 							memLocation: variable.MemoryLocation,
 						}
 					}
+				} else if val.regLocation != "" && clear {
+					addrDesc[variable] = address{
+						regLocation: "",
+						memLocation: val.memLocation,
+					}
 				}
 			} else {
 				log.Fatalf("[saveBBL] addrDesc missing")
