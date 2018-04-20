@@ -22,6 +22,7 @@ func main() {
 
 	if len(flag.Args()) != 1 {
 		fmt.Printf("Usage: %s [<options>] <file name>\n", os.Args[0])
+		flag.Usage()
 		os.Exit(1)
 	}
 	lex, err := lexer.NewWrapperFile(flag.Args()[0])
