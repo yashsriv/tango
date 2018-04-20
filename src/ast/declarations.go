@@ -152,6 +152,10 @@ func FuncDecl(a, b Attrib) (*AddrCode, error) {
 func EvalTypeDecl(a, b Attrib) (*AddrCode, error) {
 	identifier := string(a.(*token.Token).Lit)
 	symbol := b.(codegen.TypeEntry)
+	if s, isStruct := symbol.(codegen.StructType); isStruct {
+		s.Name = identifier
+		symbol = s
+	}
 	err := codegen.SymbolTable.InsertSymbol(identifier, symbol)
 	if err != nil {
 		return nil, err
@@ -194,6 +198,9 @@ func NewName(a Attrib) (*AddrCode, error) {
 func Name(a Attrib) (symbol codegen.SymbolTableEntry, err error) {
 	identifier := string(a.(*token.Token).Lit)
 	symbol, err = codegen.SymbolTable.GetSymbol(identifier)
+	if identifier == "s" {
+		// fmt.Printf("found %s with type %T and location %s\n", identifier, symbol, symbol.(*codegen.VariableEntry).MemoryLocation)
+	}
 	return
 }
 

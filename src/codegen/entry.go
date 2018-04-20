@@ -123,7 +123,7 @@ type ArrType struct {
 func (ArrType) symbolTableEntryDummy() {}
 func (ArrType) typeEntryDummy()        {}
 func (a ArrType) String() string {
-	return fmt.Sprintf("array of %s", a.Of)
+	return fmt.Sprintf("[]%s", a.Of)
 }
 
 // Type is necessary
@@ -135,6 +135,7 @@ func (a ArrType) Type() TypeEntry {
 type StructType struct {
 	FieldMap   map[string]int
 	FieldTypes []TypeEntry
+	Name       string
 }
 
 func (StructType) symbolTableEntryDummy() {}

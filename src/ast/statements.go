@@ -28,9 +28,8 @@ func ModAssignment(a, b, c Attrib) (*AddrCode, error) {
 
 	var irOp codegen.IROp
 	var irType = codegen.BOP
-	code := append(el1.Code, el2.Code...)
-	el1Evaluated := EvalWrapped(el1.Symbol)
-	code = append(code, el1Evaluated.Code...)
+	el1Evaluated := EvalWrapped(el1)
+	code := append(el1Evaluated.Code, el2.Code...)
 	switch op {
 	case "|=":
 		irOp = codegen.BOR

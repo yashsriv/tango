@@ -480,8 +480,8 @@ PExpr : PExprNoParen                      << $0, nil >>
 PExprNoParen : Literal                                                                << $0, nil >>
              | PseudoCall                                                             << $0, nil >>
              | Name                                                                   << ast.ProcessName($0) >>
-             | PExpr dot identifier	                                                  << ast.EvalStructAccess($0, $2) >>
-             | PExpr left_sq_paren Expr right_sq_paren	                              << ast.EvalArrAccess($0, $2) >>
+             | PExpr dot identifier	                                                  << ast.EvalStructAccess(ast.EvalWrapped($0), $2) >>
+             | PExpr left_sq_paren Expr right_sq_paren	                              << ast.EvalArrAccess(ast.EvalWrapped($0), $2) >>
              | PExpr left_sq_paren OExpr label_op OExpr right_sq_paren	              << ast.EvalArrSlice($0, $2, $4) >>
              | CompType left_banana BracedKeyvalList right_banana                     << ast.EvalCompType($0, $2) >>
              | PExpr left_sq_paren OExpr label_op OExpr label_op OExpr right_sq_paren	<< nil, ast.ErrUnsupported >>
@@ -551,7 +551,7 @@ Expr       : Prec2Expr_	                        << $0, nil >>
 
 UExpr : PExpr	                                  << $0, nil >>
       | unary_op UExpr	                        << ast.UnaryOp($0, $1) >>
-      | star UExpr                              << ast.UnaryOp($0, $1) >>
+      | star UExpr                              << ast.UnaryOp($0, ast.EvalWrapped($1)) >>
       | and UExpr                               << ast.UnaryOp($0, $1) >>
       | plus UExpr	                            << ast.UnaryOp($0, $1) >>
       | minus UExpr	                            << ast.UnaryOp($0, $1) >>

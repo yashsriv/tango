@@ -13,6 +13,7 @@ type caseDecl struct {
 	isFall   bool
 }
 
+// EvalCaseDecl evaluates case declaration
 func EvalCaseDecl(a, b Attrib, isFall bool) (*caseDecl, error) {
 	exprList, ok := a.([]*AddrCode)
 	if !ok {
@@ -26,6 +27,7 @@ func EvalCaseDecl(a, b Attrib, isFall bool) (*caseDecl, error) {
 	return &caseDecl{exprList, caseBody, isFall}, nil
 }
 
+// EvalSwitch evaluates a switch
 func EvalSwitch(a, b Attrib) (*AddrCode, error) {
 	expr, ok := a.(*AddrCode)
 	if !ok {

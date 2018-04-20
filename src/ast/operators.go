@@ -22,13 +22,14 @@ type structWrap struct {
 }
 
 // EvalWrapped evaluates a wrapped up type
-func EvalWrapped(el codegen.SymbolTableEntry) *AddrCode {
-	symbol := el.(*codegen.VariableEntry)
-	if symbol.Extra == nil {
-		return &AddrCode{Symbol: symbol}
+func EvalWrapped(el Attrib) *AddrCode {
+	addrCode := el.(*AddrCode)
+	symbol, ok := addrCode.Symbol.(*codegen.VariableEntry)
+	if !ok || symbol.Extra == nil {
+		return addrCode
 	}
 
-	code := make([]codegen.IRIns, 0)
+	code := addrCode.Code
 	switch e := symbol.Extra.(type) {
 	case ptrWrap:
 		code = append(code, codegen.IRIns{
@@ -53,6 +54,8 @@ func EvalWrapped(el codegen.SymbolTableEntry) *AddrCode {
 			Arg1: e.dest,
 			Arg2: &codegen.LiteralEntry{Value: e.index},
 		})
+	default:
+		panic(ErrUnsupported)
 	}
 
 	return &AddrCode{Symbol: symbol, Code: code}
@@ -74,23 +77,36 @@ func EvalStructAccess(a, b Attrib) (*AddrCode, error) {
 
 	index, ok := structType.FieldMap[identifier]
 	if !ok {
+		if structType.Name != "" {
+			methodName := fmt.Sprintf("0%s_%s", structType, identifier)
+			entry, err := codegen.SymbolTable.GetSymbol(methodName)
+			if err == nil {
+				if _, isTarget := entry.(*codegen.TargetEntry); isTarget {
+					return &AddrCode{Symbol: entry, Code: append(el.Code,
+						codegen.IRIns{
+							Typ:  codegen.KEY,
+							Op:   codegen.PARAM,
+							Arg1: el.Symbol,
+						},
+					)}, nil
+				}
+			}
+		}
 		return nil, fmt.Errorf("unknown field %s in %v", identifier, structType)
 	}
 
 	code := el.Code
-	el1 := EvalWrapped(el.Symbol)
-	code = append(code, el1.Code...)
 	entry := CreateTemporary(structType.FieldTypes[index])
 	code = append(code, entry.Code...)
 
 	if lvalMode {
-		entry.Symbol.(*codegen.VariableEntry).Extra = structWrap{dest: el1.Symbol, index: index}
+		entry.Symbol.(*codegen.VariableEntry).Extra = structWrap{dest: el.Symbol, index: index}
 	} else {
 		code = append(code, codegen.IRIns{
 			Typ:  codegen.KEY,
 			Op:   codegen.TAKE,
 			Dst:  entry.Symbol,
-			Arg1: el1.Symbol,
+			Arg1: el.Symbol,
 			Arg2: &codegen.LiteralEntry{Value: index},
 		})
 	}
@@ -116,21 +132,20 @@ func EvalArrAccess(a, b Attrib) (*AddrCode, error) {
 	}
 
 	code := el.Code
-	el1 := EvalWrapped(el.Symbol)
-	code = append(code, el1.Code...)
+	code = append(code, el.Code...)
 	code = append(code, index.Code...)
 
 	entry := CreateTemporary(arrType.Of)
 	code = append(code, entry.Code...)
 
 	if lvalMode {
-		entry.Symbol.(*codegen.VariableEntry).Extra = arrWrap{dest: el1.Symbol, index: index.Symbol}
+		entry.Symbol.(*codegen.VariableEntry).Extra = arrWrap{dest: el.Symbol, index: index.Symbol}
 	} else {
 		code = append(code, codegen.IRIns{
 			Typ:  codegen.KEY,
 			Op:   codegen.TAKE,
 			Dst:  entry.Symbol,
-			Arg1: el1.Symbol,
+			Arg1: el.Symbol,
 			Arg2: index.Symbol,
 		})
 	}
@@ -169,17 +184,15 @@ func PointerOp(op string, el *AddrCode) (*AddrCode, error) {
 		}
 		entry = CreateTemporary(ptr.To)
 		code := el.Code
-		el1 := EvalWrapped(el.Symbol)
-		code = append(code, el1.Code...)
 		code = append(code, entry.Code...)
 		if lvalMode {
-			entry.Symbol.(*codegen.VariableEntry).Extra = ptrWrap{dest: el1.Symbol}
+			entry.Symbol.(*codegen.VariableEntry).Extra = ptrWrap{dest: el.Symbol}
 		} else {
 			code = append(code, codegen.IRIns{
 				Typ:  codegen.UOP,
 				Op:   codegen.VAL,
 				Dst:  entry.Symbol,
-				Arg1: el1.Symbol,
+				Arg1: el.Symbol,
 			})
 		}
 		addrcode := &AddrCode{

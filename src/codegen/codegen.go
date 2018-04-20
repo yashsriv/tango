@@ -148,9 +148,9 @@ func genCode() {
 				}
 			}
 
-			// if i == len(bbl.Block)-1 && !isEndBlock(ins.Typ, ins.Op) {
-			saveBBL(true)
-			// }
+			if i == len(bbl.Block)-1 {
+				saveBBL(true)
+			}
 
 		}
 		clearBBL()

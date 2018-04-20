@@ -11,6 +11,6 @@ func fact(i int) int {
 
 func main() {
 	var arr []int = []int[(1, 5, 6)]
-	var j int = arr[4] + 2
+	var j int = arr[0] + 2
 	fact(j)
 }

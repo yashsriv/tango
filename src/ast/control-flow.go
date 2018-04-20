@@ -91,11 +91,12 @@ func EvalReturn(a Attrib) (*AddrCode, error) {
 		if !SameType(currentRetType, expr[0].Symbol.Type()) {
 			return nil, fmt.Errorf("Expected a return value of type: %v", currentRetType)
 		}
-		code = append(code, expr[0].Code...)
+		evalExpr := EvalWrapped(expr[0])
+		code = append(code, evalExpr.Code...)
 		code = append(code, codegen.IRIns{
 			Typ:  codegen.KEY,
 			Op:   codegen.RETI,
-			Arg1: expr[0].Symbol,
+			Arg1: evalExpr.Symbol,
 		})
 	default:
 		return nil, ErrUnsupported
@@ -120,16 +121,17 @@ func EvalCall(a, b Attrib) (*AddrCode, error) {
 	if len(exprList) != len(entry.InType) {
 		return nil, fmt.Errorf("wrong number of arguments in function call. expected %d, got %d", len(entry.InType), len(exprList))
 	}
-	code := make([]codegen.IRIns, 0)
+	code := a.(*AddrCode).Code
 	for i := len(exprList) - 1; i >= 0; i-- {
 		if !SameType(exprList[i].Symbol.Type(), entry.InType[i]) {
 			return nil, fmt.Errorf("wrong type of argument %d in function call. expected %v, got %v", i, entry.InType[i], exprList[i].Symbol.Type())
 		}
-		code = append(code, exprList[i].Code...)
+		evaluatedExpr := EvalWrapped(exprList[i])
+		code = append(code, evaluatedExpr.Code...)
 		code = append(code, codegen.IRIns{
 			Typ:  codegen.KEY,
 			Op:   codegen.PARAM,
-			Arg1: exprList[i].Symbol,
+			Arg1: evaluatedExpr.Symbol,
 		})
 	}
 	code = append(code, codegen.IRIns{

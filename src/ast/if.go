@@ -17,9 +17,6 @@ func EvalIfHeader(a, b Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
 	}
-	if !SameType(expr.Symbol.Type(), boolType) {
-		return nil, fmt.Errorf("wrong type of expression in if check. expected %v, got %v", boolType, expr.Symbol.Type())
-	}
 	code := append(stmt.Code, expr.Code...)
 	addrCode := &AddrCode{
 		Code:   code,
@@ -78,6 +75,9 @@ func EvalIf(a, b, c, d Attrib) (*AddrCode, error) {
 	}
 	code := make([]codegen.IRIns, 0)
 
+	if !SameType(ifexpr.Symbol.Type(), boolType) {
+		return nil, fmt.Errorf("wrong type of expression in if check. expected %v, got %v", boolType, ifexpr.Symbol.Type())
+	}
 	// Evaluate Expression
 	code = append(code, ifexpr.Code...)
 

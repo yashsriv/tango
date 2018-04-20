@@ -6,6 +6,10 @@ type mystruct struct {
 	val int
 }
 
+func (| s mystruct |) Val() int {
+	return s.val
+}
+
 func fact(i int) int {
 	if i == 0 {
 		return 1
@@ -14,7 +18,7 @@ func fact(i int) int {
 }
 
 func main() {
-	var x [2][3]int
-	x[0][0] = 5
-	fact(x[0][0])
+	var s mystruct
+	s.val = 5
+	fact(s.Val())
 }
