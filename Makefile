@@ -76,6 +76,21 @@ asgn4: clean
 	zip -r asgn4 asgn4
 	rm -rf asgn4
 
+final: clean
+	mkdir -p final
+	mkdir -p final/src
+	mkdir -p final/test
+	cp README.md final/
+	cp Gopkg.lock final/
+	cp Gopkg.toml final/
+	cp Makefile final/
+	cp EffortSheet.pdf final/
+	cp -r src final/
+	cp -r test final/
+	zip -r final final
+	rm -rf final
+
+
 clean:
 	@echo -e "\e[1;31mCleaning Files \e[0m"
 	@echo -e "\e[1;31m  Clearing pkg and bin \e[0m"

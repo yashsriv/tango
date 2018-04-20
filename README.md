@@ -24,12 +24,12 @@ go get github.com/Vektah/gorunpkg
 
 After that ensure that the files are placed in `$GOPATH/src/tango`.
 
-For example, if we have submitted `asgn2.zip`, unzip it and then:
+For example, if we have submitted `final.zip`, unzip it and then:
 ```
-unzip asgn2.zip
-mv asgn2 $GOPATH/src/
+unzip final.zip
+mv final $GOPATH/src/
 cd $GOPATH/src
-mv asgn2 tango
+mv final tango
 ```
 
 After that, just `cd` into the folder and run:
@@ -39,6 +39,17 @@ make
 ```
 
 to fetch the necessary libs and tools and to generate the lexer and codegen.
+
+To run, follow:
+
+```
+Usage: bin/tango [<options>] <file name>
+Usage of bin/tango:
+  -o string
+        Filename of output executable. Only valid with language None (default "./a.out")
+  -x string
+        Language to output. Possible values are IR, ASM and None (default "None")
+```
 
 ## Changes from Asgn1 in Asgn3
 
