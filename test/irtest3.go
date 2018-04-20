@@ -11,5 +11,7 @@ func fact(i int) int {
 
 func main() {
 	var j int = 5
-	fact(5)
+	var k *int = &j
+	*k = 6
+	fact(j)
 }

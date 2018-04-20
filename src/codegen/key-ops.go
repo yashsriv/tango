@@ -149,6 +149,30 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 	case UNALLOC:
 		arg1 := ins.Arg1.(*LiteralEntry)
 		Code += fmt.Sprintf("add %s, %%esp\n", arg1)
+	case TAKE:
+		log.Fatalf("Unhandled pointer stuff")
+		// TODO: Discuss with Sir
+		// Maintain a pointer map while dereferencing. Check if what we
+		// want to dereference is in registers
+	case PUT:
+		load(regs[2], ins.Dst)
+		var op1, op2 string
+		if regs[0].Register != "" {
+			load(regs[0], ins.Arg1)
+			op1 = string(regs[0].Register)
+		}
+		if regs[1].Register == "" {
+			op2 = fmt.Sprintf("$%d", ins.Arg2.(*LiteralEntry).Value)
+		} else {
+			load(regs[1], ins.Arg2)
+			op2 = string(regs[1].Register)
+		}
+		if op1 == "" {
+			offset := ins.Arg1.(*LiteralEntry).Value * 4
+			Code += fmt.Sprintf("movl %s, %d(%s)\n", op2, offset, regs[2].Register)
+		} else {
+			Code += fmt.Sprintf("movl %s, (%s, %s, 4)\n", op2, regs[2].Register, op1)
+		}
 	default:
 		log.Fatalf("Unknown op code for key op: %s", ins.Op)
 	}

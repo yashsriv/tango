@@ -194,6 +194,23 @@ func getReg(ins IRIns, uinfo map[*VariableEntry]UseInfo) (arg1res, arg2res, dstr
 		arg1res = assignRegister(dst)
 		dstres = arg1res
 	case KEY:
+
+		if ins.Op == TAKE || ins.Op == PUT {
+			dst := ins.Dst.(*VariableEntry)
+			canReplace := ins.Dst != ins.Arg1 && ins.Dst != ins.Arg2
+			assignRegister := assignHelper(uinfo, dst, canReplace, make(map[MachineRegister]bool))
+			if arg1, isRegister := ins.Arg1.(*VariableEntry); isRegister {
+				//  i is a SymbolTableRegister
+				arg1res = assignRegister(arg1)
+			}
+			if arg2, isRegister := ins.Arg2.(*VariableEntry); isRegister {
+				//  i is a SymbolTableRegister
+				arg2res = assignRegister(arg2)
+			}
+			dstres = assignRegister(dst)
+			return
+		}
+
 		assignRegister := assignHelper(uinfo, nil, false, make(map[MachineRegister]bool))
 		if !(ins.Op == RET || ins.Op == HALT) {
 			if arg1, isRegister := ins.Arg1.(*VariableEntry); isRegister {

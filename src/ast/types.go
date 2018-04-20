@@ -13,6 +13,14 @@ func IsType(a Attrib) (codegen.TypeEntry, error) {
 	return nil, fmt.Errorf("%v should be a TypeEntry", a)
 }
 
+func EvalPtrType(a Attrib) (codegen.TypeEntry, error) {
+	t, err := IsType(a)
+	if err != nil {
+		return nil, err
+	}
+	return codegen.PtrType{To: t}, nil
+}
+
 var opTypeMap = map[codegen.IROp]map[codegen.TypeEntry]bool{
 	codegen.ADD:   map[codegen.TypeEntry]bool{intType: true},
 	codegen.SUB:   map[codegen.TypeEntry]bool{intType: true},
@@ -34,6 +42,7 @@ var opTypeMap = map[codegen.IROp]map[codegen.TypeEntry]bool{
 	codegen.DEC:   map[codegen.TypeEntry]bool{intType: true},
 	codegen.AND:   map[codegen.TypeEntry]bool{boolType: true},
 	codegen.OR:    map[codegen.TypeEntry]bool{boolType: true},
+	codegen.NOT:   map[codegen.TypeEntry]bool{boolType: true},
 	codegen.BREQ:  map[codegen.TypeEntry]bool{intType: true, boolType: true},
 	codegen.BRNEQ: map[codegen.TypeEntry]bool{intType: true, boolType: true},
 }

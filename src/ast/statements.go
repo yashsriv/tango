@@ -161,6 +161,7 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 
 	// For each element in the rhs, perform some operations
 	for i, declName := range lhsList {
+		code = append(code, declName.Code...)
 		// TODO: Check Addressable
 		entry, ok := declName.Symbol.(*codegen.VariableEntry)
 		if !ok {
@@ -183,11 +184,23 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 			code = append(code, rhsList[i].Code...)
 			arg1 = rhsList[i].Symbol
 		}
-		ins := codegen.IRIns{
-			Typ:  codegen.ASN,
-			Op:   codegen.ASNO,
-			Dst:  declName.Symbol,
-			Arg1: arg1,
+		var ins codegen.IRIns
+		if entry.Extra != nil {
+			v := entry.Extra.(*codegen.VariableEntry)
+			ins = codegen.IRIns{
+				Typ:  codegen.KEY,
+				Op:   codegen.PUT,
+				Dst:  v,
+				Arg1: &codegen.LiteralEntry{Value: 0, LType: intType},
+				Arg2: arg1,
+			}
+		} else {
+			ins = codegen.IRIns{
+				Typ:  codegen.ASN,
+				Op:   codegen.ASNO,
+				Dst:  declName.Symbol,
+				Arg1: arg1,
+			}
 		}
 		code = append(code, ins)
 	}

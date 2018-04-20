@@ -19,6 +19,8 @@ func (*LiteralEntry) symbolTableEntryDummy() {}
 func (l *LiteralEntry) String() string {
 	return fmt.Sprintf("$%d", l.Value)
 }
+
+// Type is necessary
 func (l *LiteralEntry) Type() TypeEntry {
 	return l.LType
 }
@@ -34,6 +36,8 @@ func (*TargetEntry) symbolTableEntryDummy() {}
 func (t *TargetEntry) String() string {
 	return fmt.Sprintf("#%s", t.Target)
 }
+
+// Type is necessary
 func (t *TargetEntry) Type() TypeEntry {
 	return t.RetType
 }
@@ -44,12 +48,15 @@ type VariableEntry struct {
 	MemoryLocation MemoryLocation
 	Name           string
 	VType          TypeEntry
+	Extra          interface{}
 }
 
 func (*VariableEntry) symbolTableEntryDummy() {}
 func (v *VariableEntry) String() string {
 	return fmt.Sprintf("%s", v.Name)
 }
+
+// Type is necessary
 func (v *VariableEntry) Type() TypeEntry {
 	return v.VType
 }
@@ -70,10 +77,13 @@ func (*BasicType) typeEntryDummy()        {}
 func (b *BasicType) String() string {
 	return fmt.Sprintf("%s", b.Name)
 }
+
+// Type is necessary
 func (b *BasicType) Type() TypeEntry {
 	return b
 }
 
+// VoidType represents a void type
 type VoidType struct {
 }
 
@@ -82,6 +92,24 @@ func (*VoidType) typeEntryDummy()        {}
 func (*VoidType) String() string {
 	return "VoidType"
 }
+
+// Type is necessary
 func (v *VoidType) Type() TypeEntry {
 	return v
+}
+
+// PtrType is a pointer to some other type
+type PtrType struct {
+	To TypeEntry
+}
+
+func (PtrType) symbolTableEntryDummy() {}
+func (PtrType) typeEntryDummy()        {}
+func (p PtrType) String() string {
+	return fmt.Sprintf("pointer to %s", p.To)
+}
+
+// Type is necessary
+func (p PtrType) Type() TypeEntry {
+	return p
 }

@@ -23,15 +23,10 @@ func genUOpCode(ins IRIns, regs [3]registerResult) {
 		Code += fmt.Sprintf("movl %s, %s\n", regs[0].Register, regs[2].Register)
 		Code += fmt.Sprintf("notl %s\n", regs[2].Register)
 	case VAL:
-		log.Fatalf("Unhandled pointer stuff")
-		// TODO: Discuss with Sir
-		// Maintain a pointer map while dereferencing. Check if what we
-		// want to dereference is in registers
+		load(regs[0], ins.Arg1)
+		Code += fmt.Sprintf("movl 0(%s), %s\n", regs[0].Register, regs[2].Register)
 	case ADDR:
-		log.Fatalf("Unhandled pointer stuff")
-		// TODO: Discuss with Sir
-		// Maintain a pointer map while dereferencing. Check if what we
-		// want to dereference is in registers
+		Code += fmt.Sprintf("lea %s, %s\n", ins.Arg1.(*VariableEntry).MemoryLocation, regs[2].Register)
 	default:
 		log.Fatalf("Unknown op code for unary op: %s", ins.Op)
 	}

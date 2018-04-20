@@ -7,6 +7,52 @@ import (
 	"tango/src/token"
 )
 
+func PointerOp(op string, el *AddrCode) (*AddrCode, error) {
+	var entry *AddrCode
+	switch op {
+	case "&":
+		code := el.Code
+		entry = CreateTemporary(codegen.PtrType{To: el.Symbol.Type()})
+		code = append(code, entry.Code...)
+		code = append(code, codegen.IRIns{
+			Typ:  codegen.UOP,
+			Op:   codegen.ADDR,
+			Dst:  entry.Symbol,
+			Arg1: el.Symbol,
+		})
+		addrcode := &AddrCode{
+			Symbol: entry.Symbol,
+			Code:   code,
+		}
+		return addrcode, nil
+	case "*":
+		ptr, isPtr := el.Symbol.Type().(codegen.PtrType)
+		if !isPtr {
+			return nil, fmt.Errorf("trying to dereference non-pointer type %v", el.Symbol.Type())
+		}
+		entry = CreateTemporary(ptr.To)
+		code := el.Code
+		code = append(code, entry.Code...)
+		if lvalMode && starCounter == 0 {
+			entry.Symbol.(*codegen.VariableEntry).Extra = el.Symbol
+		} else {
+			code = append(code, codegen.IRIns{
+				Typ:  codegen.UOP,
+				Op:   codegen.VAL,
+				Dst:  entry.Symbol,
+				Arg1: el.Symbol,
+			})
+		}
+		addrcode := &AddrCode{
+			Symbol: entry.Symbol,
+			Code:   code,
+		}
+		return addrcode, nil
+	default:
+		return nil, ErrUnsupported
+	}
+}
+
 // UnaryOp generates code for a unary expression
 func UnaryOp(a Attrib, b Attrib) (*AddrCode, error) {
 	op := string(a.(*token.Token).Lit)
@@ -19,12 +65,16 @@ func UnaryOp(a Attrib, b Attrib) (*AddrCode, error) {
 	code = append(code, entry.Code...)
 	var irOp codegen.IROp
 	switch op {
+	case "*", "&":
+		return PointerOp(op, el)
 	case "+":
 		irOp = codegen.ADD
 	case "-":
 		irOp = codegen.NEG
 	case "^":
 		irOp = codegen.BNOT
+	case "!":
+		irOp = codegen.NOT
 	default:
 		return nil, ErrUnsupported
 	}

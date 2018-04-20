@@ -40,8 +40,9 @@ func AddNode(name string, attribs ...Attrib) (Attrib, error) {
 
 // AddrCode is a struct representing the SymbolTableEntry and Code
 type AddrCode struct {
-	Symbol codegen.SymbolTableEntry
-	Code   []codegen.IRIns
+	Symbol   codegen.SymbolTableEntry
+	Code     []codegen.IRIns
+	TopLevel bool
 }
 
 // ErrUnsupported is used to report unsupported errors in the code
@@ -105,7 +106,8 @@ func NewSourceFile(declList Attrib) (*AddrCode, error) {
 	code = append(code, funcCode.Code...)
 
 	addrcode := &AddrCode{
-		Code: code,
+		Code:     code,
+		TopLevel: true,
 	}
 	return addrcode, nil
 }
@@ -164,4 +166,27 @@ func init() {
 			Target: v,
 		})
 	}
+}
+
+var lvalMode = true
+var starCounter = 0
+
+func LVal() (Attrib, error) {
+	lvalMode = true
+	return nil, nil
+}
+
+func RVal() (Attrib, error) {
+	lvalMode = false
+	return nil, nil
+}
+
+func StarPP() (Attrib, error) {
+	starCounter++
+	return nil, nil
+}
+
+func StarMM() (Attrib, error) {
+	starCounter--
+	return nil, nil
 }

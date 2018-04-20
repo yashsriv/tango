@@ -130,7 +130,8 @@ func GetType(op IROp) IRType {
 	if op == PARAM || op == CALL || op == RET || op == RETI ||
 		op == SETRET || op == HALT || op == PRINTINT || op == PRINTCHAR ||
 		op == PRINTSTR || op == SCANINT || op == SCANCHAR ||
-		op == SCANSTR || op == INC || op == DEC || op == ALLOC || op == UNALLOC {
+		op == SCANSTR || op == INC || op == DEC || op == ALLOC || op == UNALLOC ||
+		op == TAKE || op == PUT {
 		return KEY
 	}
 
@@ -149,8 +150,7 @@ func GetType(op IROp) IRType {
 
 	if op == ADD || op == SUB || op == MUL ||
 		op == AND || op == OR || op == BAND ||
-		op == BOR || op == XOR || op == TAKE ||
-		op == PUT {
+		op == BOR || op == XOR {
 		return BOP
 	}
 
