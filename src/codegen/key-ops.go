@@ -150,10 +150,27 @@ func genKeyCode(ins IRIns, regs [3]registerResult) {
 		arg1 := ins.Arg1.(*LiteralEntry)
 		Code += fmt.Sprintf("add %s, %%esp\n", arg1)
 	case TAKE:
-		log.Fatalf("Unhandled pointer stuff")
-		// TODO: Discuss with Sir
-		// Maintain a pointer map while dereferencing. Check if what we
-		// want to dereference is in registers
+		// Dst where to write the value
+		load(regs[2], ins.Dst)
+		// From which memory location we want to read the value
+		load(regs[0], ins.Arg1)
+
+		if regs[0].Register == "" || regs[2].Register == "" {
+			log.Fatalf("[TAKE] cannot have empty register")
+		}
+
+		var op1 string
+		// Memory offset
+		if regs[1].Register != "" {
+			load(regs[1], ins.Arg2)
+			op1 = string(regs[1].Register)
+		}
+		if op1 == "" {
+			offset := ins.Arg2.(*LiteralEntry).Value * 4
+			Code += fmt.Sprintf("movl %d(%s), %s\n", offset, regs[0].Register, regs[2].Register)
+		} else {
+			Code += fmt.Sprintf("movl (%s, %s, 4), %s\n", regs[0].Register, op1, regs[2].Register)
+		}
 	case PUT:
 		load(regs[2], ins.Dst)
 		var op1, op2 string
