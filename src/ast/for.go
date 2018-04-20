@@ -68,7 +68,7 @@ func EvalForBody(a, b Attrib) (*AddrCode, error) {
 	})
 	// Check Expression
 	if header.Expr != nil {
-		if header.Expr.Symbol.Type() != boolType {
+		if !SameType(header.Expr.Symbol.Type(), boolType) {
 			return nil, fmt.Errorf("wrong type of expression in for. expected %v, got %v", boolType, header.Expr.Symbol.Type())
 		}
 		code = append(code, header.Expr.Code...)

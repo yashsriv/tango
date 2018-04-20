@@ -3,6 +3,7 @@ package ast
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"tango/src/codegen"
 )
 
@@ -158,4 +159,8 @@ func EvalCompType(a, b Attrib) (*AddrCode, error) {
 	default:
 		return nil, ErrUnsupported
 	}
+}
+
+func SameType(a1 codegen.TypeEntry, a2 codegen.TypeEntry) bool {
+	return reflect.DeepEqual(a1, a2)
 }

@@ -88,7 +88,7 @@ func EvalReturn(a Attrib) (*AddrCode, error) {
 			Op:  codegen.RET,
 		})
 	case 1:
-		if currentRetType != expr[0].Symbol.Type() {
+		if !SameType(currentRetType, expr[0].Symbol.Type()) {
 			return nil, fmt.Errorf("Expected a return value of type: %v", currentRetType)
 		}
 		code = append(code, expr[0].Code...)
@@ -122,7 +122,7 @@ func EvalCall(a, b Attrib) (*AddrCode, error) {
 	}
 	code := make([]codegen.IRIns, 0)
 	for i := len(exprList) - 1; i >= 0; i-- {
-		if exprList[i].Symbol.Type() != entry.InType[i] {
+		if !SameType(exprList[i].Symbol.Type(), entry.InType[i]) {
 			return nil, fmt.Errorf("wrong type of argument %d in function call. expected %v, got %v", i, entry.InType[i], exprList[i].Symbol.Type())
 		}
 		code = append(code, exprList[i].Code...)

@@ -31,7 +31,7 @@ func Decl(declnamelist, types, exprlist Attrib, isConst bool) (*AddrCode, error)
 		}
 
 		for i := range exprlistAs {
-			if types.(codegen.TypeEntry) != exprlistAs[i].Symbol.Type() {
+			if !SameType(types.(codegen.TypeEntry), exprlistAs[i].Symbol.Type()) {
 				return nil, fmt.Errorf("wrong type of rhs in declaration. expected %v, got %v", types.(codegen.TypeEntry), exprlistAs[i].Symbol.Type())
 			}
 		}

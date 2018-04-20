@@ -195,7 +195,7 @@ func BinaryOp(a Attrib, b Attrib, c Attrib) (*AddrCode, error) {
 	}
 	CheckOperandType(irOp, el1.Symbol.Type())
 	CheckOperandType(irOp, el2.Symbol.Type())
-	if el1.Symbol.Type() != el2.Symbol.Type() {
+	if !SameType(el1.Symbol.Type(), el2.Symbol.Type()) {
 		return nil, errors.New("operands on either side of binary expression don't have the same type")
 	}
 	code = append(code, codegen.IRIns{
@@ -281,7 +281,7 @@ func RelOp(a Attrib, op string, c Attrib) (*AddrCode, error) {
 
 	CheckOperandType(irOp, el1.Symbol.Type())
 	CheckOperandType(irOp, el2.Symbol.Type())
-	if el1.Symbol.Type() != el2.Symbol.Type() {
+	if !SameType(el1.Symbol.Type(), el2.Symbol.Type()) {
 		return nil, errors.New("operands on either side of binary expression don't have the same type")
 	}
 
@@ -349,7 +349,7 @@ func AndOp(a, b Attrib) (*AddrCode, error) {
 	}
 	CheckOperandType(codegen.AND, el1.Symbol.Type())
 	CheckOperandType(codegen.AND, el2.Symbol.Type())
-	if el1.Symbol.Type() != el2.Symbol.Type() {
+	if !SameType(el1.Symbol.Type(), el2.Symbol.Type()) {
 		return nil, errors.New("operands on either side of binary expression don't have the same type")
 	}
 
@@ -435,7 +435,7 @@ func OrOp(a, b Attrib) (*AddrCode, error) {
 
 	CheckOperandType(codegen.OR, el1.Symbol.Type())
 	CheckOperandType(codegen.OR, el2.Symbol.Type())
-	if el1.Symbol.Type() != el2.Symbol.Type() {
+	if !SameType(el1.Symbol.Type(), el2.Symbol.Type()) {
 		return nil, errors.New("operands on either side of binary expression don't have the same type")
 	}
 	relOpCount++

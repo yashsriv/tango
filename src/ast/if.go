@@ -17,7 +17,7 @@ func EvalIfHeader(a, b Attrib) (*AddrCode, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", b)
 	}
-	if expr.Symbol.Type() != boolType {
+	if !SameType(expr.Symbol.Type(), boolType) {
 		return nil, fmt.Errorf("wrong type of expression in if check. expected %v, got %v", boolType, expr.Symbol.Type())
 	}
 	code := append(stmt.Code, expr.Code...)
@@ -39,7 +39,7 @@ func EvalElseIf(a, b Attrib) (*ifElse, error) {
 	if !ok {
 		return nil, fmt.Errorf("unable to type cast %v to *AddrCode", a)
 	}
-	if expr.Symbol.Type() != boolType {
+	if !SameType(expr.Symbol.Type(), boolType) {
 		return nil, fmt.Errorf("wrong type of expression in else if check. expected %v, got %v", boolType, expr.Symbol.Type())
 	}
 	body, ok := b.(*AddrCode)

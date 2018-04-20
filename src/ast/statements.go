@@ -59,7 +59,7 @@ func ModAssignment(a, b, c Attrib) (*AddrCode, error) {
 	}
 	CheckOperandType(irOp, el1.Symbol.Type())
 	CheckOperandType(irOp, el2.Symbol.Type())
-	if el1.Symbol.Type() != el2.Symbol.Type() {
+	if !SameType(el1.Symbol.Type(), el2.Symbol.Type()) {
 		return nil, errors.New("operands on either side of binary expression don't have the same type")
 	}
 
@@ -154,7 +154,7 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 	}
 
 	for i := range lhsList {
-		if lhsList[i].Symbol.Type() != rhsList[i].Symbol.Type() {
+		if !SameType(lhsList[i].Symbol.Type(), rhsList[i].Symbol.Type()) {
 			return nil, fmt.Errorf("wrong type of rhs in assignment. expected %v, got %v", lhsList[i].Symbol.Type(), rhsList[i].Symbol.Type())
 		}
 	}
@@ -165,7 +165,7 @@ func Assignments(lhs, rhs Attrib) (*AddrCode, error) {
 		// TODO: Check Addressable
 		entry, ok := declName.Symbol.(*codegen.VariableEntry)
 		if !ok {
-			return nil, fmt.Errorf("[Assignments] lhs %s of expression should be a literal", declName)
+			return nil, fmt.Errorf("[Assignments] lhs %v of expression should be a literal", declName)
 		}
 
 		if entry.Constant {
