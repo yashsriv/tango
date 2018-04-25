@@ -253,14 +253,14 @@ Else : empty	                                        << &ast.AddrCode{}, nil >>
      | keyword_else CompoundStmt	                    << $1, nil >>
      ;
 
-NType : FuncType                      << nil, ast.ErrUnsupported >>
+NType : FuncType                      << $0, nil >>
       |	OtherType	                    << $0, nil >>
       |	PtrType	                      << $0, nil >>
       |	DotName	                      << $0, nil >>
       |	left_paren NType right_paren	<< $1, nil >>
       ;
 
-NonExprType : FuncType	        << nil, ast.ErrUnsupported >>
+NonExprType : FuncType	        << $0, nil >>
             | OtherType	        << $0, nil >>
             | star NonExprType	<< ast.EvalPtrType($1) >>
             ;
@@ -287,7 +287,7 @@ FuncDecl_ : identifier ArgList FuncRes                                          
           | left_tuple OArgTypeListOComma right_tuple identifier ArgList FuncRes  << ast.FuncSign($3, $4, $5, $1) >>
           ;
 
-FuncType : keyword_func ArgList FuncRes                                            << ast.FuncType($1, $2) >>
+FuncType : keyword_func ArgList FuncRes                                           << ast.FuncType($1, $2) >>
          ;
 
 ArgList : left_paren OArgTypeListOComma right_paren	        << $1, nil >>
@@ -333,7 +333,7 @@ LabelName : identifier   << ast.EvalLabelName($0) >>
 PtrType : star NType	   << ast.EvalPtrType($1) >>
         ;
 
-FuncRetType : FuncType  << nil, ast.ErrUnsupported >>
+FuncRetType : FuncType  << $0, nil >>
             | OtherType << $0, nil >>
             | PtrType   << $0, nil >>
             | DotName   << $0, nil >>
@@ -367,10 +367,10 @@ OExprList : empty     << ast.NewList(nil) >>
           | ExprList  << $0, nil >>
           ;
 
-FuncLiteralDecl : FuncType	<< ast.AddNode("FuncLiteralDecl", $0) >>
+FuncLiteralDecl : FuncType	<< $0, nil >>
                 ;
 
-FuncLiteral : FuncLiteralDecl left_block_bracket StmtList right_block_bracket	<< ast.AddNode("FuncLiteral", $0, $1, $2, $3) >>
+FuncLiteral : FuncLiteralDecl left_block_bracket StmtList right_block_bracket EndScope	<< ast.EvalFuncLiteral($0, $2) >>
 //            | FuncLiteralDecl error
             ;
 
@@ -488,12 +488,12 @@ PExprNoParen : Literal                                                          
              | PExpr left_banana BracedKeyvalList right_banana                        << nil, ast.ErrUnsupported >>
              | ConvType left_angle Expr OComma right_angle                            << nil, ast.ErrUnsupported >>
              | ForCompExpr                                                            << nil, ast.ErrUnsupported >>
-             | FuncLiteral                                                            << nil, ast.ErrUnsupported >>
+             | FuncLiteral                                                            << $0, nil >>
              | PExpr dot left_paren ExprOrType right_paren	                          << nil, ast.ErrUnsupported >>
              | PExpr dot left_paren keyword_type right_paren	                        << nil, ast.ErrUnsupported >>
              ;
 
-ConvType : FuncType   << nil, ast.ErrUnsupported >>
+ConvType : FuncType   << $0, nil >>
          | OtherType  << $0, nil >>
          ;
 

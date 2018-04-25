@@ -110,8 +110,18 @@ func EvalReturn(a Attrib) (*AddrCode, error) {
 func EvalCall(a, b Attrib) (*AddrCode, error) {
 	entry_ := a.(*AddrCode).Symbol
 	entry, ok := entry_.(*codegen.TargetEntry)
+	var varEntry *codegen.VariableEntry
 	if !ok {
-		return nil, fmt.Errorf("invalid function call statement")
+		if variable, ok1 := entry_.(*codegen.VariableEntry); ok1 {
+			if t, ok2 := variable.Type().(codegen.FuncType); ok2 {
+				entry = t.Target
+				varEntry = variable
+			} else {
+				return nil, fmt.Errorf("invalid function call statement")
+			}
+		} else {
+			return nil, fmt.Errorf("invalid function call statement")
+		}
 	}
 	exprList, ok := b.([]*AddrCode)
 	if !ok {
@@ -145,11 +155,19 @@ func EvalCall(a, b Attrib) (*AddrCode, error) {
 			Arg1: evaluatedExpr.Symbol,
 		})
 	}
-	code = append(code, codegen.IRIns{
-		Typ:  codegen.KEY,
-		Op:   codegen.CALL,
-		Arg1: entry,
-	})
+	if varEntry == nil {
+		code = append(code, codegen.IRIns{
+			Typ:  codegen.KEY,
+			Op:   codegen.CALL,
+			Arg1: entry,
+		})
+	} else {
+		code = append(code, codegen.IRIns{
+			Typ:  codegen.KEY,
+			Op:   codegen.CALL,
+			Arg1: varEntry,
+		})
+	}
 	// code = append(code, codegen.IRIns{
 	// 	Typ: codegen.KEY,
 	// 	Op:  codegen.UNALLOC,

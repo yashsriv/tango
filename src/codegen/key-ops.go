@@ -8,7 +8,11 @@ import (
 func genKeyCode(ins IRIns, regs [3]registerResult) {
 	switch ins.Op {
 	case CALL:
-		Code += fmt.Sprintf("call %s\n", ins.Arg1.(*TargetEntry).Target)
+		if regs[0].Register == "" {
+			Code += fmt.Sprintf("call %s\n", ins.Arg1.(*TargetEntry).Target)
+		} else {
+			Code += fmt.Sprintf("call *%s\n", regs[0].Register)
+		}
 	case PARAM:
 		if regs[0].Register == "" {
 			// This is a literal. Push directly.

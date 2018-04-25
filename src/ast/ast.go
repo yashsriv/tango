@@ -105,6 +105,13 @@ func NewSourceFile(declList Attrib) (*AddrCode, error) {
 	// Add remaining stuff
 	code = append(code, funcCode.Code...)
 
+	extraC, err := MergeCodeList(extras)
+	if err != nil {
+		return nil, err
+	}
+
+	code = append(code, extraC.Code...)
+
 	addrcode := &AddrCode{
 		Code:     code,
 		TopLevel: true,

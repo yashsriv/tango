@@ -102,6 +102,16 @@ func NewScope() {
 	}
 }
 
+func NewGlobScope() {
+	pushToStack()
+	SymbolTable = &symbolTable{
+		symbolMap: make(map[string]SymbolTableEntry),
+		parent:    rootTable,
+		offset:    0,
+		curOffset: 0,
+	}
+}
+
 // EndScope ends a scope
 func EndScope() (err error) {
 	SymbolTable, err = popFromStack()

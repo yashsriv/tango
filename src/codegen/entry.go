@@ -148,3 +148,19 @@ func (s StructType) String() string {
 func (s StructType) Type() TypeEntry {
 	return s
 }
+
+// FuncType is a function pointer
+type FuncType struct {
+	Target *TargetEntry
+}
+
+func (FuncType) symbolTableEntryDummy() {}
+func (FuncType) typeEntryDummy()        {}
+func (s FuncType) String() string {
+	return fmt.Sprintf("function ptr")
+}
+
+// Type is necessary
+func (s FuncType) Type() TypeEntry {
+	return s
+}

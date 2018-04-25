@@ -198,8 +198,8 @@ func NewName(a Attrib) (*AddrCode, error) {
 func Name(a Attrib) (symbol codegen.SymbolTableEntry, err error) {
 	identifier := string(a.(*token.Token).Lit)
 	symbol, err = codegen.SymbolTable.GetSymbol(identifier)
-	if identifier == "s" {
-		// fmt.Printf("found %s with type %T and location %s\n", identifier, symbol, symbol.(*codegen.VariableEntry).MemoryLocation)
+	if err != nil {
+		fmt.Printf("not found %s\n", identifier)
 	}
 	return
 }
